@@ -1,0 +1,9 @@
+- Should there be separate flows for 'initial submission' vs 'editing existing submission'? The BRD mentions editing offline submissions in /my-requests, but not a dedicated edit screen.
+- What should happen when staff clicks 'Refresh Cache' for damage reasons? Should it show a loading state or error handling?
+- For the photo compression indicator, should it show estimated final size before capture or actual size after compression?
+- In SupervisorReview, when adjusting quantity for MANUAL_REVIEW items, should there be validation (1-1000) and audit trail?
+- Should there be a separate 'dashboard' screen for supervisors showing overall metrics, or is the review queue sufficient?
+- What authentication flow should be shown? The BRD mentions Azure AD SSO but not the UI for login states.
+- For the global barcode scanner, should there be a toggle to enable/disable it, or always-on with visual indicator?
+- Should there be offline submission limits or warnings when many pending submissions exist?
+- These screens could not be generated and need another pass: AdminSettings
