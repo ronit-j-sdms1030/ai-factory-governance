@@ -1,0 +1,88 @@
+erDiagram
+    write_off_request ||--o{ write_off_photo : has
+    write_off_request }o--|| user : submitted_by
+    write_off_request }o--|| user : decided_by
+    write_off_request }o--|| site : belongs_to
+    user }o--|| site : works_at
+    write_off_request }o--|| offline_sync_queue : synced_from
+    
+    write_off_request {
+        uuid id PK
+        uuid staff_id FK
+        uuid site_id FK
+        varchar item_sku
+        text item_description
+        varchar damage_reason_code
+        integer severity_tier
+        integer damaged_quantity_counted
+        varchar status
+        timestamp submitted_at
+        timestamp validated_at
+        varchar sap_validation_status
+        text sap_validation_error
+        uuid supervisor_id FK
+        timestamp decision_at
+        text decision_comment
+        varchar sap_inventory_doc_num
+        varchar sap_fi_doc_num
+        text sap_sync_error
+        integer sap_sync_attempts
+        varchar offline_submission_id
+        timestamp last_sync_attempt
+    }
+    
+    write_off_photo {
+        uuid id PK
+        uuid write_off_request_id FK
+        varchar s3_bucket
+        varchar s3_key
+        timestamp uploaded_at
+        integer file_size_bytes
+        varchar content_type
+        decimal compression_ratio
+        varchar original_file_name
+        varchar upload_status
+    }
+    
+    audit_log {
+        uuid id PK
+        timestamp timestamp
+        uuid user_id FK
+        varchar action
+        varchar entity_type
+        uuid entity_id
+        json old_values
+        json new_values
+        varchar ip_address
+        varchar sync_context
+    }
+    
+    site {
+        uuid id PK
+        varchar name
+        varchar sap_plant_code
+        varchar timezone
+    }
+    
+    user {
+        uuid id PK
+        varchar azure_ad_id
+        varchar email
+        varchar full_name
+        varchar role
+        uuid site_id FK
+        boolean is_active
+    }
+    
+    offline_sync_queue {
+        uuid id PK
+        varchar device_id
+        uuid staff_id FK
+        varchar offline_submission_id
+        json submission_data
+        varchar sync_status
+        timestamp created_at
+        timestamp synced_at
+        integer sync_attempts
+        text last_error
+    }

@@ -1,0 +1,274 @@
+{
+  "objective": "Build a production-ready Damaged Stock Write-Off System that enables warehouse staff across three retail sites (40 staff, 8 supervisors) to efficiently document damaged stock via mobile devices with offline-first capability, have supervisors review and approve write-offs, and automatically synchronize approved write-offs to SAP inventory management and financial ledger systems via REST API, handling peak loads of 200 daily submissions with robust security for internal commercial data.",
+  "architecture": "Warehouse staff at site warehouses use Chrome browser on Zebra TC53 mobile computers with offline-first Progressive Web App. Staff scans damaged item barcode via global barcode listener that captures regardless of browser focus, photographs damage (photos compressed to 200-300KB JPEG using Canvas API), selects damage classification and enters explicit damaged quantity counted (validated against reasonable limits, not SAP stock), and submits to local IndexedDB with OFFLINE_PENDING status immediately without SAP connectivity check. Service Worker caches app assets aggressively using Workbox, allows submission in Wi-Fi dead zones. When network available, background sync uploads to backend: Spring Boot backend on AWS Fargate receives via API Gateway, validates item exists in SAP asynchronously (moving to AWAITING_VALIDATION status), stores compressed photos in S3. Staff can continue submitting other damaged items while validation proceeds. Supervisor users access PWA on desktop, navigate to /supervisor-dashboard to see validated requests (status VALIDATED) grouped by site, review photos and classification, approve or reject with optional comment. Approved requests trigger SAP sync job via Quartz scheduler with enhanced monitoring: attempts inventory deduction and FI posting, on failure (insufficient stock, locked period) moves to MANUAL_REVIEW status and alerts finance team via SNS. Success moves to COMPLETED. All actions logged. Staff view submission history with real-time sync status. Finance team accesses reports with failure queue visibility. Token refresh handled in background with 12-hour expiry matching warehouse shifts.",
+  "architecture_diagram": "graph TD\n    subgraph \"Offline Mobile Device\"\n        A[Zebra TC53 Mobile<br/>Chrome Browser<br/>React PWA with Service Worker]\n        A -->|Global barcode listener<br/>regardless of focus| B[IndexedDB<br/>Local submissions storage]\n        A -->|Photo compression<br/>Canvas API 200-300KB JPEG| C[Local Storage<br/>Photos until uploaded]\n        A -->|Background sync<br/>when online| D[Sync Manager<br/>Retries with exponential backoff]\n    end\n    \n    D -->|HTTPS POST /api/write-offs| E[Amazon API Gateway<br/>with JWT validation]\n    E --> F[AWS Fargate Container<br/>Spring Boot App<br/>vCPU: 2, RAM: 4GB]\n    F -->|Async REST GET<br/>via SQS queue| G[SAP ERP System<br/>Inventory Validation]\n    F -->|Store compressed photos| H[Amazon S3 Bucket<br/>write-offs-photos<br/>SSE-KMS encryption]\n    F -->|Insert/update request| I[Amazon RDS PostgreSQL<br/>write-offs-db<br/>Multi-AZ]\n    \n    J[Supervisor Desktop<br/>Chrome Browser] -->|HTTPS GET /api/validated| E\n    J -->|HTTPS PUT /api/write-offs/{id}/approve| E\n    \n    F -->|Quartz Job with monitoring| K[SAP ERP System<br/>Inventory Deduction & FI Posting]\n    K -->|On failure| L[SNS Topic<br/>Finance Team Alerts]\n    F -->|Status updates| I\n    \n    M[AWS CloudWatch<br/>Logs & Metrics] -->|Monitor SAP sync failures| F\n    N[Amazon SQS<br/>Async SAP validation queue] -->|Process validation requests| F\n    O[Service Worker Cache<br/>Workbox strategy] -->|Cache-first for app assets| A\n    \n    P[AWS Lambda<br/>Failure Escalation] -->|Check MANUAL_REVIEW queue| I\n    Q[Finance Team Desktop] -->|HTTPS GET /reports| E",
+  "tech_stack": [
+    {
+      "layer": "Frontend",
+      "choice": "React 18 with TypeScript, Vite, and Workbox",
+      "rationale": "React's component model fits mobile-first PWA requirements, TypeScript prevents classification errors, Workbox enables offline-first capabilities critical for warehouse dead zones. Vite delivers fast development. Rejected Angular due to heavier bundle affecting offline caching; React Native considered but rejected because warehouse already uses Chrome. Limitation: Service Worker complexity requires careful cache invalidation strategy during deployments, may cause version mismatch if not managed."
+    },
+    {
+      "layer": "Backend/API",
+      "choice": "Spring Boot 3.2 with Java 17",
+      "rationale": "Spring Boot's mature REST controller pattern handles SAP integration complexity, Java's type safety prevents financial errors, Spring Integration supports async SQS processing for offline submissions. Rejected Node.js due to weaker type safety for financial transactions. Limitation: Container memory footprint demands careful Fargate sizing for combined web and async processing loads."
+    },
+    {
+      "layer": "Database",
+      "choice": "Amazon RDS PostgreSQL 15",
+      "rationale": "PostgreSQL's JSONB supports flexible metadata, referential integrity ensures proper workflow state transitions. Rejected DynamoDB because relational joins for supervisor dashboards are complex. Limitation: Multi-AZ RDS latency acceptable but adds overhead to frequent status updates."
+    },
+    {
+      "layer": "File Storage",
+      "choice": "Amazon S3 with SSE-KMS",
+      "rationale": "S3's durability guarantees compressed photo preservation, KMS encryption meets internal data policy. Rejected EFS due to complexity with mobile uploads. Limitation: Requires lifecycle policy for compressed photo volume."
+    },
+    {
+      "layer": "Queue Service",
+      "choice": "Amazon SQS Standard Queue",
+      "rationale": "SQS provides reliable async processing for SAP validation of offline submissions, decouples submission from SAP availability. Rejected Redis because SQS integrates better with Spring Cloud AWS; Kafka considered but overkill for 200 daily transactions. Limitation: SQS standard queue doesn't guarantee order, but write-off validation order isn't critical."
+    },
+    {
+      "layer": "Hosting",
+      "choice": "AWS Fargate on ECS",
+      "rationale": "Fargate's serverless containers eliminate EC2 patching, scales with API Gateway requests and SQS queue depth. Rejected EKS due to complexity; Lambda rejected due to long-running SAP sync jobs. Limitation: Cold starts may affect initial supervisor login, warm pool needed."
+    },
+    {
+      "layer": "Auth",
+      "choice": "AWS Cognito with JWT (12-hour expiry)",
+      "rationale": "Cognito integrates with Azure AD via SAML for staff SSO, extended 12-hour token matches warehouse shifts, JWT validation at API Gateway. Rejected custom auth due to password management burden. Limitation: Background token refresh must handle network interruptions gracefully."
+    },
+    {
+      "layer": "CI/CD",
+      "choice": "GitHub Actions with AWS deployment",
+      "rationale": "GitHub Actions integrates with existing GitHub Enterprise, builds React and Spring Boot, handles Service Worker cache versioning. Rejected Jenkins due to skill gap; GitLab CI duplicates workflow. Limitation: Service Worker cache invalidation requires careful deployment sequencing."
+    },
+    {
+      "layer": "Monitoring",
+      "choice": "AWS CloudWatch with custom metrics",
+      "rationale": "CloudWatch integrates with API Gateway, Fargate, SQS; custom metrics track offline submission sync rates and SAP failure escalation. Rejected Datadog due to cost. Limitation: Requires careful metric selection to monitor both online and offline flows."
+    }
+  ],
+  "user_flow": [
+    "Warehouse staff powers on Zebra TC53, opens Chrome, navigates to write-offs PWA (cached by Service Worker if previously visited, works offline)",
+    "Staff logs in via Azure AD SSO (cached credentials possible), redirected to /submit-request",
+    "Staff scans damaged item barcode - global listener captures scan regardless of field focus, provides audible beep confirmation",
+    "System validates barcode format locally (EAN-13 or SKU pattern), displays temporary item placeholder without SAP check",
+    "Staff enters damaged quantity counted (numeric input, minimum 1, maximum reasonable limit of 1000), not derived from severity",
+    "Staff clicks 'Take Photos', grants camera permission, captures 2-3 photos - frontend compresses to 200-300KB JPEG using Canvas API before storage",
+    "Staff selects damage reason from cached dropdown (refreshes when online), selects severity tier 1-3",
+    "Staff clicks 'Submit Write-Off' - system stores in local IndexedDB immediately with OFFLINE_PENDING status, shows success confirmation",
+    "When device regains network, Service Worker background sync uploads to backend via retry logic",
+    "Backend receives submission, queues SAP validation via SQS, moves to AWAITING_VALIDATION status, stores compressed photos in S3",
+    "Async SAP validation completes - if item exists: VALIDATED status; if not: INVALID_ITEM status visible to staff",
+    "Supervisor logs in on desktop, sees validated requests at /supervisor-dashboard grouped by site",
+    "Supervisor reviews photos (compressed but clear), sees explicit damaged quantity, classification details",
+    "Supervisor approves or rejects with comment (mandatory for rejection)",
+    "If approved: backend updates to APPROVED, triggers SAP sync job with enhanced monitoring",
+    "SAP sync attempts inventory deduction and FI posting - success moves to COMPLETED, failure (insufficient stock, locked period) moves to MANUAL_REVIEW and alerts finance",
+    "If rejected: REJECTED status with comment visible to original staff",
+    "Staff views all submissions at /my-requests with real-time sync status indicators",
+    "Finance team accesses /reports with MANUAL_REVIEW queue visibility, can export reconciliation data"
+  ],
+  "data_model": [
+    {
+      "name": "write_off_request",
+      "fields": [
+        "id",
+        "staff_id",
+        "site_id",
+        "item_sku",
+        "item_description",
+        "damage_reason_code",
+        "severity_tier",
+        "damaged_quantity_counted",
+        "status",
+        "submitted_at",
+        "validated_at",
+        "sap_validation_status",
+        "sap_validation_error",
+        "supervisor_id",
+        "decision_at",
+        "decision_comment",
+        "sap_inventory_doc_num",
+        "sap_fi_doc_num",
+        "sap_sync_error",
+        "sap_sync_attempts",
+        "offline_submission_id",
+        "last_sync_attempt"
+      ],
+      "description": "Core write-off request entity. status enum: OFFLINE_PENDING, AWAITING_VALIDATION, VALIDATED, INVALID_ITEM, APPROVED, REJECTED, SAP_SYNC_IN_PROGRESS, COMPLETED, SAP_SYNC_FAILED, MANUAL_REVIEW. damaged_quantity_counted is explicit user input (min 1, max 1000). offline_submission_id tracks local IndexedDB ID for sync reconciliation. sap_validation_status tracks async SAP check result."
+    },
+    {
+      "name": "write_off_photo",
+      "fields": [
+        "id",
+        "write_off_request_id",
+        "s3_bucket",
+        "s3_key",
+        "uploaded_at",
+        "file_size_bytes",
+        "content_type",
+        "compression_ratio",
+        "original_file_name",
+        "upload_status"
+      ],
+      "description": "Damage photos stored in S3 after compression. upload_status: LOCAL_STORED, UPLOAD_PENDING, UPLOADED, UPLOAD_FAILED. compression_ratio records % reduction from original. s3_key pattern includes compression indicator."
+    },
+    {
+      "name": "audit_log",
+      "fields": [
+        "id",
+        "timestamp",
+        "user_id",
+        "action",
+        "entity_type",
+        "entity_id",
+        "old_values",
+        "new_values",
+        "ip_address",
+        "sync_context"
+      ],
+      "description": "All state changes. action includes OFFLINE_SUBMISSION, SYNC_TO_CLOUD, SAP_VALIDATION_START, SAP_VALIDATION_COMPLETE. sync_context indicates 'online' or 'offline-sync'."
+    },
+    {
+      "name": "site",
+      "fields": [
+        "id",
+        "name",
+        "sap_plant_code",
+        "timezone"
+      ],
+      "description": "Warehouse sites mapping to SAP plant codes."
+    },
+    {
+      "name": "user",
+      "fields": [
+        "id",
+        "azure_ad_id",
+        "email",
+        "full_name",
+        "role",
+        "site_id",
+        "is_active"
+      ],
+      "description": "Synced from Azure AD. role: STAFF, SUPERVISOR, FINANCE."
+    },
+    {
+      "name": "offline_sync_queue",
+      "fields": [
+        "id",
+        "device_id",
+        "staff_id",
+        "offline_submission_id",
+        "submission_data",
+        "sync_status",
+        "created_at",
+        "synced_at",
+        "sync_attempts",
+        "last_error"
+      ],
+      "description": "Tracks offline submissions pending sync to cloud. sync_status: PENDING, SYNCING, COMPLETED, FAILED. submission_data stores full JSON payload for retry."
+    }
+  ],
+  "db_schema_diagram": "erDiagram\n    write_off_request ||--o{ write_off_photo : has\n    write_off_request }o--|| user : submitted_by\n    write_off_request }o--|| user : decided_by\n    write_off_request }o--|| site : belongs_to\n    user }o--|| site : works_at\n    write_off_request }o--|| offline_sync_queue : synced_from\n    \n    write_off_request {\n        uuid id PK\n        uuid staff_id FK\n        uuid site_id FK\n        varchar item_sku\n        text item_description\n        varchar damage_reason_code\n        integer severity_tier\n        integer damaged_quantity_counted\n        varchar status\n        timestamp submitted_at\n        timestamp validated_at\n        varchar sap_validation_status\n        text sap_validation_error\n        uuid supervisor_id FK\n        timestamp decision_at\n        text decision_comment\n        varchar sap_inventory_doc_num\n        varchar sap_fi_doc_num\n        text sap_sync_error\n        integer sap_sync_attempts\n        varchar offline_submission_id\n        timestamp last_sync_attempt\n    }\n    \n    write_off_photo {\n        uuid id PK\n        uuid write_off_request_id FK\n        varchar s3_bucket\n        varchar s3_key\n        timestamp uploaded_at\n        integer file_size_bytes\n        varchar content_type\n        decimal compression_ratio\n        varchar original_file_name\n        varchar upload_status\n    }\n    \n    audit_log {\n        uuid id PK\n        timestamp timestamp\n        uuid user_id FK\n        varchar action\n        varchar entity_type\n        uuid entity_id\n        json old_values\n        json new_values\n        varchar ip_address\n        varchar sync_context\n    }\n    \n    site {\n        uuid id PK\n        varchar name\n        varchar sap_plant_code\n        varchar timezone\n    }\n    \n    user {\n        uuid id PK\n        varchar azure_ad_id\n        varchar email\n        varchar full_name\n        varchar role\n        uuid site_id FK\n        boolean is_active\n    }\n    \n    offline_sync_queue {\n        uuid id PK\n        varchar device_id\n        uuid staff_id FK\n        varchar offline_submission_id\n        json submission_data\n        varchar sync_status\n        timestamp created_at\n        timestamp synced_at\n        integer sync_attempts\n        text last_error\n    }",
+  "page_behavior": [
+    {
+      "page": "/submit-request",
+      "description": "Mobile-optimized offline-first form. Global barcode listener with audible confirmation on scan, populates field regardless of focus. Damaged quantity input with numeric keyboard, validation (1-1000). Photo capture with compression indicator showing 'Compressing to 300KB...', preview of compressed images. Reason dropdown from local cache (with 'refresh cache' button when online). Submit button always enabled for offline submission - stores locally immediately, shows 'Saved offline' confirmation with sync status indicator. Sync progress bar visible when online, showing pending uploads count. Offline submissions list visible at bottom for review."
+    },
+    {
+      "page": "/supervisor-dashboard",
+      "description": "Desktop dashboard with enhanced status filters including VALIDATED, MANUAL_REVIEW. Each card shows: request ID, staff, item, damaged quantity (not derived), sync status indicator. Expanded modal shows compressed photos (clear at 200-300KB), SAP validation result, explicit quantity. Approve/Reject with comment. MANUAL_REVIEW queue visible in separate tab with SAP failure reasons, allows supervisor to adjust quantity or cancel request. Real-time updates via WebSocket for status changes."
+    },
+    {
+      "page": "/my-requests",
+      "description": "Mobile/desktop table with comprehensive sync status: OFFLINE_PENDING (cloud icon), SYNCING (spinner), VALIDATED (check), MANUAL_REVIEW (warning). Details panel shows photos, validation errors if any. Offline submissions editable before sync (can update quantity, photos). Filter by sync status. SAP posting failure details visible for MANUAL_REVIEW items."
+    },
+    {
+      "page": "/reports",
+      "description": "Finance page with MANUAL_REVIEW queue prominently displayed. Date range, site multiselect. Export includes SAP failure reasons. Dashboard shows: total write-off value, sync success rate, pending manual review count. Real-time data with refresh button. Ability to bulk-approve adjusted quantities for MANUAL_REVIEW items after verification."
+    }
+  ],
+  "security_design": [
+    "Authentication: AWS Cognito with SAML 2.0 to Azure AD. JWT tokens extended to 12-hour expiry matching warehouse shifts. Background token refresh with exponential backoff, stores refresh token in secure HttpOnly cookie. Offline submissions encrypted in IndexedDB using Web Crypto API with user-specific key derived from Cognito ID token.",
+    "Authorization: Role-based access at API Gateway. Offline submissions accepted from 'staff' group without immediate SAP validation. /api/write-offs/sync endpoint for background upload with device ID verification. Database queries include site_id segregation. MANUAL_REVIEW access requires 'supervisor' or 'finance' group.",
+    "Data Encryption: S3 photos encrypted with SSE-KMS. PostgreSQL encryption at rest. HTTPS only. IndexedDB offline data encrypted using AES-GCM with key derived from user credential.",
+    "Input Validation: Barcode validation locally via regex. Photo compression prevents large uploads - max 300KB per photo after compression. Damaged quantity validated locally (1-1000) and against SAP stock during async validation. Reason codes cached and validated.",
+    "Audit Trail: Enhanced to track offline-to-online transitions. sync_context field distinguishes online vs offline-sync actions. Offline submission IDs logged for reconciliation. Nightly export to S3 with 7-year retention.",
+    "Network Security: Fargate in private subnets. SAP integration via VPC endpoint. API Gateway WAF blocks excessive requests but allows offline sync bursts. Service Worker cache limited to same-origin, validated on each fetch.",
+    "Offline Security: IndexedDB data encrypted per user, cleared on logout. Device ID stored for sync reconciliation prevents cross-device data access. Service Worker cache includes version hash to prevent stale code execution.",
+    "Commercial Data Classification: System 'Internal Commercial - Confidential'. Compressed photos retain evidentiary value for audit. Offline data considered transient, encrypted at rest on device."
+  ],
+  "deployment_and_operations": [
+    "Environments: dev, staging, prod in ap-southeast-1. Prod: Fargate 2 containers minimum plus async worker containers for SQS processing, RDS Multi-AZ, SQS queues for validation.",
+    "CI/CD Pipeline: GitHub Actions builds React with Service Worker cache versioning (generates unique hash), Spring Boot with SQS integration. Deployment to dev auto, staging/prod manual approval. Service Worker cache invalidation handled via versioned precache manifest.",
+    "Monitoring: CloudWatch alarms for: SQS queue depth >100 (offline submission backlog), SAP validation failure rate >10%, MANUAL_REVIEW queue growth >20 items/day. Custom metrics for offline sync success rate. Logs to S3 for Splunk.",
+    "Backup: RDS automated daily snapshots. S3 versioning for photos. Offline device data not backed up (transient), sync queue in RDS backed up.",
+    "Scaling: Fargate auto-scaling based on API Gateway requests AND SQS queue depth. Async worker containers scale separately based on SQS messages visible.",
+    "Disaster Recovery: Multi-AZ RDS failover. S3 cross-region replication. Recovery point objective: 24 hours (offline submissions at risk if devices lost). Recovery time objective: 4 hours.",
+    "Maintenance: Weekly Fargate updates during off-hours. Service Worker cache updates deployed with version rollover strategy to avoid mixed versions. Database maintenance weekly.",
+    "Offline Support: Regular connectivity testing at warehouse sites. Device cache health monitoring via heartbeat API. Cache refresh prompted when online with user consent."
+  ],
+  "timeline": [
+    {
+      "phase": "Foundation & Offline Architecture",
+      "duration": "3 weeks",
+      "description": "Set up AWS infrastructure, implement Service Worker with Workbox for offline caching, IndexedDB schema for offline submissions, encryption for local storage. Spring Boot with SQS integration for async processing. Deliver: PWA works fully offline, submissions stored locally, basic sync mechanism."
+    },
+    {
+      "phase": "Core Submission Flow with Compression",
+      "duration": "2 weeks",
+      "description": "Build mobile form with global barcode listener, photo compression (Canvas API), explicit quantity input, offline submission flow. Implement background sync with retry logic. Deliver: Staff can submit complete requests offline, photos compressed, sync works when network restored."
+    },
+    {
+      "phase": "Async SAP Validation & Supervisor Workflow",
+      "duration": "2 weeks",
+      "description": "Implement SQS processing for SAP validation, enhanced supervisor dashboard with VALIDATED status filtering, MANUAL_REVIEW queue. Audit logging for offline-to-online transitions. Deliver: Offline submissions validate async, supervisors see validated requests, failure handling implemented."
+    },
+    {
+      "phase": "Enhanced SAP Sync with Failure Escalation",
+      "duration": "2 weeks",
+      "description": "Build SAP sync job with monitoring, MANUAL_REVIEW status for posting failures, finance alerts via SNS, reporting with failure queue. Token refresh with 12-hour expiry. Deliver: SAP posting with proper failure handling, finance team alerted to issues, extended session management."
+    },
+    {
+      "phase": "Testing & Deployment",
+      "duration": "2 weeks",
+      "description": "Offline scenario testing in warehouse mock environment, load testing with offline submissions, security review of local encryption, production deployment with data migration, training for offline usage patterns. Deliver: System live with offline capability, all sites onboarded, staff trained on offline workflow."
+    }
+  ],
+  "assumptions": [
+    "Zebra TC53 devices support Service Worker API in Chrome 100+, IndexedDB available for offline storage.",
+    "Azure AD SAML integration supports 12-hour token expiry (configurable in Cognito).",
+    "SAP exposes async-capable endpoints for validation (can accept queue processing) and posting endpoints with proper error responses.",
+    "Warehouse staff can be trained on offline submission workflow - understand 'Saved offline' status and sync indicators.",
+    "Photo compression to 200-300KB JPEG retains sufficient detail for damage assessment and audit evidence.",
+    "Maximum damaged quantity of 1000 units covers all realistic damage scenarios without needing dynamic SAP stock validation during offline entry.",
+    "Finance team will monitor MANUAL_REVIEW queue daily and resolve posting failures.",
+    "Device storage capacity sufficient for multiple offline submissions (each ~1MB with compressed photos).",
+    "Background sync will complete within shift when staff move to areas with Wi-Fi coverage."
+  ],
+  "open_questions": [
+    "What is the exact SAP OData service endpoint for material master lookup? Required fields: material number, description, plant stock level.",
+    "Does SAP require batch processing for financial postings or individual posting per write-off?",
+    "What is the minimum photo resolution acceptable for audit evidence after compression? Current design assumes 1280x720 JPEG at 200-300KB sufficient.",
+    "Are there regulatory retention requirements beyond 7 years for compressed damage photos?",
+    "How should system handle items scanned that exist in SAP but have zero stock? Current design: async validation will show INVALID_ITEM status for staff review.",
+    "What is the backup authentication method if Azure AD is unavailable? Currently: offline submissions possible without re-authentication, sync requires valid token.",
+    "Does finance team require real-time dashboard of write-off value totals? Current reports show real-time data with manual refresh.",
+    "Are there specific barcode formats beyond EAN-13 and SKU pattern? Global listener can be extended with additional regex patterns.",
+    "What business process handles SAP posting failures due to insufficient stock, master data mismatches, or locked periods? Current design: MANUAL_REVIEW status with supervisor adjustment capability, but need confirmation on whether finance team or supervisors should resolve.",
+    "What maximum quantity limit is reasonable for offline validation? Currently 1000 units, but some high-volume items may exceed.",
+    "How to handle device loss/stolen with encrypted offline data? Currently: data encrypted with user key, inaccessible without login.",
+    "Should offline submissions expire if not synced within certain period? Currently: persist indefinitely until sync success.",
+    "Unresolved design review finding (high, architecture): SAP integration design ignores established SAP integration patterns. The proposal uses \"async REST GET via SQS queue\" for validation and \"Quartz Job with monitoring\" for posting, but SAP systems typically require transaction-safe integration via IDocs, BAPIs, or RFCs with proper commit handling. The REST API approach will fail when SAP experiences posting failures during financial month-end closing periods or when material master data is locked for inventory counting. Without proper SAP transaction handling, failed postings will leave inconsistent state between the write-off system and SAP. Suggested fix: Replace general-purpose REST approach with established SAP integration: use SAP Java Connector (JCo) for RFC calls or implement proper IDoc processing via SAP Process Integration (PI/PO). For validation, implement synchronous RFC call with timeout, not async queue. For posting, use BAPI_GOODSMVT_CREATE for goods movement and BAPI_ACC_DOCUMENT_POST for FI document with proper commit and rollback handling.",
+    "Unresolved design review finding (high, tech_stack): Frontend uses \"global barcode listener that captures regardless of browser focus\" on Zebra TC53 devices. In real warehouse environments, TC53 devices run multiple applications (inventory scanning, picking systems) that also use barcode scanners. A global listener will capture barcodes intended for other applications, causing incorrect write-off submissions. The design doesn't handle barcode scanner mode switching or app context awareness. Suggested fix: Replace global listener with DataWedge profile integration specific to the write-off app. Configure Zebra DataWedge to only route barcodes to this application when it's in foreground, or implement intent-based scanning with app filtering to prevent cross-application interference.",
+    "Unresolved design review finding (high, data_model): Data model claims 'item_description' field that the chosen components cannot produce. The design states offline submissions happen without SAP connectivity check, storing only barcode. When offline, there's no SAP lookup to populate item_description. Supervisors reviewing VALIDATED requests will see empty descriptions, making damage assessment impossible. The async SAP validation happens after upload, so description remains unknown until validation completes. Suggested fix: Implement local material master cache synchronized from SAP daily. Store item SKU-description mappings in IndexedDB for offline use, with validation during online periods to refresh stale data. Add 'description_source' field indicating 'cached' vs 'live_sap'.",
+    "Unresolved design review finding (high, architecture): Offline-first design with Service Worker background sync fails under real warehouse duty cycles. Warehouse staff work in 8-hour shifts, often moving between Wi-Fi zones. The background sync relies on network availability 'when device regains network,' but Service Worker background sync only triggers when browser is open. If staff close Chrome between Wi-Fi zones (common during breaks), sync won't occur. Submissions remain stuck in OFFLINE_PENDING until next session. Suggested fix: Implement periodic foreground sync check when app is opened, with explicit 'Sync Now' button and visual indicator of pending submissions. Add background task scheduling using Zebra's Mobility Extensions (Mx) for true background processing independent of browser state.",
+    "Unresolved design review finding (medium, user_flow): Damage classification system uses 'severity tier 1-3' without concrete definitions tied to SAP financial treatment. Different damage types have different SAP accounting treatments: scrap vs. rework vs. quality loss. The generic severity tier won't map to SAP's required movement types (201 scrap, 202 damage, etc.). Supervisors approving without knowing SAP accounting implication will cause posting failures. Suggested fix: Replace generic severity tier with SAP movement type mapping. Damage reason codes should directly map to SAP goods movement types. Add business logic to validate reason code against available movement types for the material.",
+    "Unresolved design review finding (medium, data_model): Field 'damaged_quantity_counted' has validation 'reasonable limits, not SAP stock' with max 1000. In high-volume retail, pallets can contain 2000+ units. A single damaged pallet write-off exceeding 1000 units will be rejected by the system, forcing staff to split into multiple submissions, creating audit trail issues and potential SAP posting duplicates. Suggested fix: Remove hard limit or increase to realistic maximum (e.g., 5000). Implement quantity validation during SAP async validation phase, not during offline entry. Add warning when quantity exceeds typical thresholds for the item.",
+    "Unresolved design review finding (medium, assumptions): Assumes 'photo compression to 200-300KB JPEG retains sufficient detail for damage assessment.' In real damage assessment, compressed photos may lose critical details like serial numbers, batch codes, or subtle damage patterns needed for insurance claims or vendor chargebacks. The 1280x720 resolution may not capture small text on labels. Suggested fix: Implement configurable compression: high compression for normal damage, lossless option for critical items (serialized goods, high-value items). Add metadata capture for zoom capability on specific areas of interest.",
+    "Unresolved design review finding (medium, security_design): Offline data encryption using 'Web Crypto API with user-specific key derived from Cognito ID token' fails when token expires. The 12-hour token expiry means offline data becomes inaccessible if staff works beyond shift (overtime) or if token refresh fails due to network issues. Staff cannot access their own offline submissions for review or editing. Suggested fix: Use device-specific key stored in secure storage (Zebra's credential manager) combined with user PIN for offline data access. Implement graceful degradation: allow read-only access to offline submissions even with expired token, require re-auth only for new submissions.",
+    "Unresolved design review finding (medium, deployment_and_operations): Recovery point objective of 24 hours states 'offline submissions at risk if devices lost.' This ignores the financial impact: 24 hours of write-offs at 200 daily submissions represents significant financial exposure. If warehouse fire or theft occurs, unsynced write-offs for high-value goods are permanently lost with no audit trail. Suggested fix: Implement mandatory sync checkpoints: require sync before end of shift, or implement peer-to-peer sync between devices in same warehouse via Bluetooth when central network unavailable. Add supervisor override capability to manually input lost submissions with audit trail."
+  ]
+}

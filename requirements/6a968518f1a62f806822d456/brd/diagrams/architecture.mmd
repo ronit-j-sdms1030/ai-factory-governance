@@ -1,0 +1,27 @@
+graph TD
+    subgraph "Offline Mobile Device"
+        A[Zebra TC53 Mobile<br/>Chrome Browser<br/>React PWA with Service Worker]
+        A -->|Global barcode listener<br/>regardless of focus| B[IndexedDB<br/>Local submissions storage]
+        A -->|Photo compression<br/>Canvas API 200-300KB JPEG| C[Local Storage<br/>Photos until uploaded]
+        A -->|Background sync<br/>when online| D[Sync Manager<br/>Retries with exponential backoff]
+    end
+    
+    D -->|HTTPS POST /api/write-offs| E[Amazon API Gateway<br/>with JWT validation]
+    E --> F[AWS Fargate Container<br/>Spring Boot App<br/>vCPU: 2, RAM: 4GB]
+    F -->|Async REST GET<br/>via SQS queue| G[SAP ERP System<br/>Inventory Validation]
+    F -->|Store compressed photos| H[Amazon S3 Bucket<br/>write-offs-photos<br/>SSE-KMS encryption]
+    F -->|Insert/update request| I[Amazon RDS PostgreSQL<br/>write-offs-db<br/>Multi-AZ]
+    
+    J[Supervisor Desktop<br/>Chrome Browser] -->|HTTPS GET /api/validated| E
+    J -->|HTTPS PUT /api/write-offs/{id}/approve| E
+    
+    F -->|Quartz Job with monitoring| K[SAP ERP System<br/>Inventory Deduction & FI Posting]
+    K -->|On failure| L[SNS Topic<br/>Finance Team Alerts]
+    F -->|Status updates| I
+    
+    M[AWS CloudWatch<br/>Logs & Metrics] -->|Monitor SAP sync failures| F
+    N[Amazon SQS<br/>Async SAP validation queue] -->|Process validation requests| F
+    O[Service Worker Cache<br/>Workbox strategy] -->|Cache-first for app assets| A
+    
+    P[AWS Lambda<br/>Failure Escalation] -->|Check MANUAL_REVIEW queue| I
+    Q[Finance Team Desktop] -->|HTTPS GET /reports| E
