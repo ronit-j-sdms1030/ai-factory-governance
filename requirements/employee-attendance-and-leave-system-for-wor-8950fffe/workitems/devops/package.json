@@ -1,0 +1,134 @@
+{
+  "team": "DevOps",
+  "objective": "Provision and maintain AWS infrastructure, implement CI/CD pipelines, and ensure system scalability and reliability.",
+  "architecture": "AWS cloud infrastructure including EKS cluster with EC2 nodes, PostgreSQL RDS, Redis cluster, S3 storage, networking, monitoring, and deployment pipelines.",
+  "techStack": [
+    {
+      "layer": "Cache",
+      "choice": "Redis 7.2 with Redis Stack",
+      "rationale": "Redis provides sub-millisecond response for session validation during clock-in operations. Redis Stack adds RediSearch for complex attendance pattern queries and rate limiting counters. Alternative: Memcached lacks persistence and search capabilities needed for audit trail caching. Limitation: Redis memory usage grows with 10,000 employee sessions, requiring careful eviction policies."
+    },
+    {
+      "layer": "Storage",
+      "choice": "AWS S3 with SSE-S3 encryption and lifecycle policies",
+      "rationale": "S3 provides durable storage for facial verification images with automatic deletion via lifecycle policies. SSE-S3 encryption meets biometric data protection requirements without key management overhead. Alternative: Azure Blob Storage would tie us to Azure ecosystem when other components are AWS-based. Limitation: S3 eventual consistency requires careful handling of immediately deleted temp images."
+    },
+    {
+      "layer": "Hosting",
+      "choice": "AWS EKS (Elastic Kubernetes Service) with EC2-backed worker nodes",
+      "rationale": "EKS provides Kubernetes orchestration for scaling microservices during peak clock-in periods. EC2-backed nodes eliminate Fargate cold starts, ensuring 3-second response SLA during global morning peaks. Regional pod placement ensures pods are active before timezone workday starts. Alternative: AWS Fargate would cause cold start delays breaching SLA during staggered timezone clock-ins. Limitation: EC2 nodes require more operational management than Fargate."
+    },
+    {
+      "layer": "CI/CD",
+      "choice": "GitHub Actions with AWS CodeDeploy",
+      "rationale": "GitHub Actions integrates with Stark Digital's existing GitHub workflow. AWS CodeDeploy provides blue-green deployments for zero-downtime updates to attendance system. Alternative: Jenkins would require separate infrastructure management. Limitation: GitHub Actions concurrent job limits may slow parallel environment deployments."
+    }
+  ],
+  "dataModel": [
+    {
+      "entity": "Employee",
+      "fields": [
+        "id",
+        "employee_id",
+        "first_name",
+        "last_name",
+        "email",
+        "department_id",
+        "manager_id",
+        "location_id",
+        "joining_date",
+        "employment_status",
+        "shift_type",
+        "timezone",
+        "created_at",
+        "updated_at",
+        "entra_id"
+      ],
+      "ownedByThisDepartment": false
+    },
+    {
+      "entity": "AttendanceRecord",
+      "fields": [
+        "id",
+        "employee_id",
+        "date",
+        "clock_in_time",
+        "clock_out_time",
+        "shift_id",
+        "status",
+        "late_minutes",
+        "overtime_minutes",
+        "device_info",
+        "ip_address",
+        "gps_coordinates",
+        "facial_verified",
+        "timezone_applied",
+        "sync_status",
+        "offline_operation_id",
+        "created_at",
+        "updated_at"
+      ],
+      "ownedByThisDepartment": false
+    },
+    {
+      "entity": "FacialTemplate",
+      "fields": [
+        "id",
+        "employee_id",
+        "encrypted_template",
+        "jurisdiction_compliance_flags",
+        "consent_type",
+        "enrollment_date",
+        "consent_given_date",
+        "consent_expiry_date",
+        "is_active",
+        "created_at"
+      ],
+      "ownedByThisDepartment": false
+    }
+  ],
+  "plan": [
+    {
+      "phase": "Phase 1: Infrastructure Setup",
+      "description": "Provision all AWS resources",
+      "tasks": [
+        "EKS cluster setup",
+        "PostgreSQL RDS with TimescaleDB",
+        "Redis cluster configuration",
+        "S3 buckets with lifecycle policies",
+        "Network infrastructure"
+      ]
+    },
+    {
+      "phase": "Phase 2: Monitoring and Scaling",
+      "description": "Implement monitoring and autoscaling",
+      "tasks": [
+        "Regional pod autoscaling setup",
+        "Monitoring dashboard configuration",
+        "Log aggregation system",
+        "Alert system setup"
+      ]
+    },
+    {
+      "phase": "Phase 3: CI/CD Pipeline",
+      "description": "Build deployment pipelines",
+      "tasks": [
+        "GitHub Actions workflow setup",
+        "AWS CodeDeploy configuration",
+        "Blue-green deployment automation",
+        "Environment management"
+      ]
+    }
+  ],
+  "securityDesign": [
+    "Network security groups and VPC isolation",
+    "S3 bucket policies with encryption",
+    "Database security with encrypted connections",
+    "Redis authentication and encryption",
+    "IAM role management with least privilege"
+  ],
+  "dependencies": [
+    "Microservice container images from Development team",
+    "Database schema definitions from Development team"
+  ]
+}

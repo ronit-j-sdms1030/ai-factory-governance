@@ -1,0 +1,313 @@
+{
+  "work_items": [
+    {
+      "id": "WI-01",
+      "title": "AWS Infrastructure Setup",
+      "department": "DevOps",
+      "description": "Set up EKS cluster with EC2 worker nodes, PostgreSQL RDS with TimescaleDB extension, Redis cluster, S3 buckets with lifecycle policies, and network infrastructure including load balancers and security groups.",
+      "dependsOn": []
+    },
+    {
+      "id": "WI-02",
+      "title": "Microsoft Entra ID Integration",
+      "department": "Development",
+      "description": "Implement OAuth2/OIDC integration with Microsoft Entra ID for authentication, configure JWT token validation, and set up nightly sync service for employee data from Entra ID to PostgreSQL.",
+      "dependsOn": [
+        "WI-01"
+      ]
+    },
+    {
+      "id": "WI 03",
+      "title": "Core Database Schema Migration",
+      "department": "Development",
+      "description": "Create PostgreSQL database migrations for all entities: Employee, AttendanceRecord, Shift, ShiftAssignment, LeaveRequest, LeaveType, LeaveBalance, FacialTemplate, AuditTrail, Holiday, Notification, AttendancePolicy, OfflineOperation.",
+      "dependsOn": [
+        "WI-02"
+      ]
+    },
+    {
+      "id": "WI-04",
+      "title": "Authentication Service Development",
+      "department": "Development",
+      "description": "Build Spring Boot authentication service with token validation, refresh flows, session management via Redis cache, and integration with Microsoft Entra ID.",
+      "dependsOn": [
+        "WI-02",
+        "WI-03"
+      ]
+    },
+    {
+      "id": "WI-05",
+      "title": "Employee Service Development",
+      "department": "Development",
+      "description": "Build employee management service with CRUD operations, manager hierarchy, timezone management, and nightly sync with Microsoft Entra ID.",
+      "dependsOn": [
+        "WI-03",
+        "WI-04"
+      ]
+    },
+    {
+      "id": "WI-06",
+      "title": "Next.js PWA Foundation",
+      "department": "Development",
+      "description": "Set up Next.js 15 with TypeScript, Tailwind CSS, authentication flows, service worker setup with Workbox, and IndexedDB integration for offline storage.",
+      "dependsOn": [
+        "WI-04"
+      ]
+    },
+    {
+      "id": "WI-07",
+      "title": "Shift Service Development",
+      "department": "Development",
+      "description": "Build shift management service with UTC timezone-aware logic, overnight shift handling, grace periods, and threshold calculations.",
+      "dependsOn": [
+        "WI-03",
+        "WI-05"
+      ]
+    },
+    {
+      "id": "WI-08",
+      "title": "Attendance Clock-in/out API",
+      "department": "Development",
+      "description": "Develop clock-in/out endpoints with device logging, IP tracking, GPS coordinates, and 1,000 concurrent request handling within 3-second SLA.",
+      "dependsOn": [
+        "WI-04",
+        "WI-05",
+        "WI-07"
+      ]
+    },
+    {
+      "id": "WI-09",
+      "title": "Attendance Calculation Engine",
+      "department": "Development",
+      "description": "Implement timezone-aware attendance calculation engine with policy versioning, late/overtime/half-day determinations, and daily cron jobs for status updates.",
+      "dependsOn": [
+        "WI-03",
+        "WI-07",
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-10",
+      "title": "PWA Dashboard Implementation",
+      "department": "Development",
+      "description": "Build employee dashboard showing attendance records, shift assignments, leave balances, and upcoming holidays with responsive mobile design.",
+      "dependsOn": [
+        "WI-06",
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-11",
+      "title": "Offline Queue System",
+      "department": "Development",
+      "description": "Implement local SQLite via IndexedDB for offline operations, Background Sync API integration, and conflict resolution with timestamp-based merging.",
+      "dependsOn": [
+        "WI-06",
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-12",
+      "title": "Leave Service Development",
+      "department": "Development",
+      "description": "Build leave management service with type configurations, balance tracking, accrual policies, and carry-over logic.",
+      "dependsOn": [
+        "WI-03",
+        "WI-05"
+      ]
+    },
+    {
+      "id": "WI-13",
+      "title": "Approval Workflow Engine",
+      "department": "Development",
+      "description": "Implement multi-level approval workflow for leave requests with JSON path storage, current approver tracking, and status transitions.",
+      "dependsOn": [
+        "WI-12"
+      ]
+    },
+    {
+      "id": "WI-14",
+      "title": "Notification Service",
+      "department": "Development",
+      "description": "Build notification system with SendGrid integration for email notifications including clock-in reminders, late arrivals, and leave approvals.",
+      "dependsOn": [
+        "WI-03",
+        "WI-08",
+        "WI-13"
+      ]
+    },
+    {
+      "id": "WI-15",
+      "title": "Manager Approval Interface",
+      "department": "Development",
+      "description": "Create manager dashboard for approving leave requests and resolving offline operation conflicts with audit trail logging.",
+      "dependsOn": [
+        "WI-06",
+        "WI-11",
+        "WI-13"
+      ]
+    },
+    {
+      "id": "WI-16",
+      "title": "Azure Face API Integration",
+      "department": "AI",
+      "description": "Integrate Azure Face API for facial verification with liveness detection, implement template encryption, and build enrollment flows.",
+      "dependsOn": [
+        "WI-03",
+        "WI-04"
+      ]
+    },
+    {
+      "id": "WI-17",
+      "title": "Jurisdiction Compliance Workflows",
+      "department": "Development",
+      "description": "Build consent workflows for BIPA, GDPR Article 9 compliance, region-specific requirements tracking, and consent expiry management.",
+      "dependsOn": [
+        "WI-03",
+        "WI-16"
+      ]
+    },
+    {
+      "id": "WI-18",
+      "title": "Audit Trail System",
+      "department": "Development",
+      "description": "Implement immutable audit logging for all manual corrections with JSON diffs, actor tracking, and reason documentation.",
+      "dependsOn": [
+        "WI-03"
+      ]
+    },
+    {
+      "id": "WI-19",
+      "title": "Payroll Export Functionality",
+      "department": "Development",
+      "description": "Build monthly batch jobs to lock attendance periods, generate payroll reports with encryption, and export to S3 with automatic deletion.",
+      "dependsOn": [
+        "WI-03",
+        "WI-09"
+      ]
+    },
+    {
+      "id": "WI-20",
+      "title": "Timezone Calculation Engine",
+      "department": "Development",
+      "description": "Implement complete timezone-aware engine with UTC conversions, daylight saving handling, and regional adjustments.",
+      "dependsOn": [
+        "WI-05",
+        "WI-07"
+      ]
+    },
+    {
+      "id": "WI-21",
+      "title": "Complete Offline Sync",
+      "department": "Development",
+      "description": "Finalize offline sync with conflict resolution workflows, manager review interfaces, and synchronization status tracking.",
+      "dependsOn": [
+        "WI-11",
+        "WI-15"
+      ]
+    },
+    {
+      "id": "WI-22",
+      "title": "Adaptive Rate Limiting",
+      "department": "Development",
+      "description": "Implement Redis-based rate limiting for corporate IP ranges, burst handling during global morning peaks, and regional pod coordination.",
+      "dependsOn": [
+        "WI-01",
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-23",
+      "title": "Regional Pod Autoscaling",
+      "department": "DevOps",
+      "description": "Configure EKS autoscaling with regional pod placement and pre-warming strategies for timezone-based workload anticipation.",
+      "dependsOn": [
+        "WI-01"
+      ]
+    },
+    {
+      "id": "WI-24",
+      "title": "Policy Recalculation Engine",
+      "department": "Development",
+      "description": "Build engine for handling mid-month policy changes with retroactive calculations and version tracking.",
+      "dependsOn": [
+        "WI-03",
+        "WI-09"
+      ]
+    },
+    {
+      "id": "WI-25",
+      "title": "Load Testing Infrastructure",
+      "department": "QA",
+      "description": "Set up load testing framework for 1,000 concurrent clock-ins, simulate timezone-based peak loads, and validate 3-second SLA.",
+      "dependsOn": [
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-26",
+      "title": "Offline Scenario Testing",
+      "department": "QA",
+      "description": "Create comprehensive offline scenario test suite covering field worker operations, conflict resolution, and synchronization recovery.",
+      "dependsOn": [
+        "WI-11",
+        "WI-21"
+      ]
+    },
+    {
+      "id": "WI-27",
+      "title": "Security Penetration Testing",
+      "department": "QA",
+      "description": "Conduct security testing on authentication flows, facial verification encryption, audit trails, and compliance controls.",
+      "dependsOn": [
+        "WI-04",
+        "WI-16",
+        "WI-17"
+      ]
+    },
+    {
+      "id": "WI-28",
+      "title": "Regional Compliance Validation",
+      "department": "QA",
+      "description": "Validate jurisdiction-specific compliance for BIPA, GDPR Article 9, consent workflows, and data retention policies.",
+      "dependsOn": [
+        "WI-17"
+      ]
+    },
+    {
+      "id": "WI-29",
+      "title": "Production Deployment Pipeline",
+      "department": "DevOps",
+      "description": "Set up GitHub Actions with AWS CodeDeploy for blue-green deployments, monitoring, and zero-downtime updates.",
+      "dependsOn": [
+        "WI-01"
+      ]
+    },
+    {
+      "id": "WI-30",
+      "title": "Marketing Website and Documentation",
+      "department": "Sales & Marketing",
+      "description": "Create marketing website, product documentation, user guides, and demo environment setup.",
+      "dependsOn": []
+    }
+  ],
+  "integrity": {
+    "unowned": [],
+    "multiply_owned": [],
+    "inconsistent_spelling": [],
+    "cycles": [],
+    "dangling": [
+      "WI-04 -> WI-03",
+      "WI-05 -> WI-03",
+      "WI-07 -> WI-03",
+      "WI-09 -> WI-03",
+      "WI-12 -> WI-03",
+      "WI-14 -> WI-03",
+      "WI-16 -> WI-03",
+      "WI-17 -> WI-03",
+      "WI-18 -> WI-03",
+      "WI-19 -> WI-03",
+      "WI-24 -> WI-03"
+    ]
+  }
+}
