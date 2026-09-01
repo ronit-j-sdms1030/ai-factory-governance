@@ -1,0 +1,422 @@
+{
+  "objective": "Build WorkPulse - a centralized attendance and leave management system that reduces manual processing for 10,000 employees across office, remote, and field locations. The system must handle 1,000 concurrent clock-ins within 3 seconds, provide payroll-ready monthly exports, enforce attendance policies across multiple time zones, and offer optional facial verification with proper encryption and consent workflows.",
+  "architecture": "Users access the Progressive Web Application (Next.js frontend) through HTTPS, which communicates with the Spring Boot API Gateway. Authentication occurs via Microsoft Entra ID SSO or email/password with JWT tokens. The API Gateway routes requests to microservices: Auth Service validates tokens via Redis cache, Employee Service manages profiles in PostgreSQL, Attendance Service processes clock-ins/outs with device data logging and optional facial verification via Azure Face API, Shift Service handles roster assignments, and Leave Service manages approval workflows. \n\nFor offline scenarios: The PWA uses service workers to cache authentication credentials and implements local SQLite database via IndexedDB for queuing operations. Field workers can clock-in/out offline with operations stored locally, then synchronized via Background Sync API when connectivity returns. Conflict resolution uses timestamp-based merging with manager review for discrepancies.\n\nWhen facial verification is enabled: The Attendance Service calls Azure Face API for verification, stores encrypted biometric templates in PostgreSQL (not raw images), and temporarily processes verification images through S3 encrypted storage which are automatically deleted. Regional compliance workflows enforce jurisdiction-specific consent requirements.\n\nAll attendance data flows to PostgreSQL with Redis caching for active sessions. Attendance calculations use UTC timezone-aware engine with timezone_applied tracking. Policy versions with effective dates allow mid-month changes. Daily cron jobs calculate attendance statuses (late, absent, overtime) using current active policies. Monthly batch jobs lock attendance periods and generate payroll exports to S3. Microsoft Entra ID syncs employee data nightly. Notifications go via SendGrid email service. All manual corrections create immutable audit records in PostgreSQL.",
+  "architectureDiagram": "flowchart TD\n    Employee[Employee Browser/Mobile PWA] --> HTTPS[HTTPS Load Balancer]\n    HTTPS --> Frontend[Next.js Progressive Web App]\n    \n    Frontend --> API[Spring Boot API Gateway]\n    \n    Frontend --> OfflineSync[Offline Sync Service Worker]\n    OfflineSync --> LocalDB[(Local SQLite/IndexedDB)]\n    LocalDB --> BackgroundSync[Background Sync API]\n    BackgroundSync --> API\n    \n    API --> Auth[Auth Service]\n    API --> Attendance[Attendance Service]\n    API --> Shift[Shift Service]\n    API --> Leave[Leave Service]\n    API --> EmployeeService[Employee Service]\n    \n    Auth --> Redis[(Redis Session Cache)]\n    Auth --> EntraID[Microsoft Entra ID]\n    \n    Attendance --> PostgreSQL[(PostgreSQL Attendance DB)]\n    Attendance --> AzureFace[Azure Face API]\n    Attendance --> S3[Encrypted S3 Storage]\n    \n    Shift --> PostgreSQL\n    Leave --> PostgreSQL\n    EmployeeService --> PostgreSQL\n    \n    PostgreSQL --> Cron[Cron Job Processor]\n    Cron --> Batch[Monthly Batch Processor]\n    Batch --> Export[Payroll Export CSV/S3]\n    \n    EmployeeService --> EntraIDSync[Entra ID Sync Service]\n    EntraIDSync --> EntraID\n    \n    Attendance --> Notify[SendGrid Email Service]\n    Leave --> Notify\n    \n    AzureFace --> S3\n    S3 --> Delete[Auto-delete Temp Images]\n    \n    Manager[Manager Interface] --> Frontend\n    HR[HR Admin Interface] --> Frontend\n    Payroll[Payroll Export Interface] --> Frontend\n    \n    PolicyEngine[Policy Engine with Versioning] --> PostgreSQL\n    TimezoneEngine[Timezone-aware Calculation Engine] --> PostgreSQL\n    \n    Autoscaler[Regional Pod Autoscaler] --> EKS[EKS Cluster]\n    EKS --> Frontend\n    EKS --> API",
+  "techStack": [
+    {
+      "layer": "Frontend",
+      "choice": "Next.js 15 with TypeScript, Tailwind CSS, and Workbox",
+      "rationale": "Next.js provides server-side rendering for fast initial loads and excellent PWA capabilities via next-pwa. Workbox enables robust service worker implementation for offline functionality critical for field workers. TypeScript ensures type safety across complex attendance business logic. Tailwind enables responsive designs for mobile field workers. Alternative: React without SSR would compromise initial load times critical for clock-in speed. Limitation: Next.js hydration overhead increases initial bundle size slightly for mobile users."
+    },
+    {
+      "layer": "Backend/API",
+      "choice": "Java Spring Boot 3.3 with Spring Security",
+      "rationale": "Spring Boot handles 1,000 concurrent requests efficiently with built-in connection pooling and thread management. Spring Security provides robust RBAC and OAuth2 integration with Microsoft Entra ID. Alternative: Node.js Express would require manual scaling for concurrent clock-ins and lacks built-in enterprise-grade security patterns. Limitation: Spring Boot memory footprint is higher than lightweight alternatives, requiring larger container instances."
+    },
+    {
+      "layer": "Database",
+      "choice": "PostgreSQL 16 with TimescaleDB extension",
+      "rationale": "PostgreSQL provides ACID compliance for payroll-critical attendance data. TimescaleDB extension optimizes time-series queries for attendance timestamp analysis. Native JSON support stores flexible device metadata and policy versions. Alternative: MySQL lacks native time-series optimizations and JSON query performance. Limitation: TimescaleDB hypertable partitioning adds complexity to standard backup procedures."
+    },
+    {
+      "layer": "Cache",
+      "choice": "Redis 7.2 with Redis Stack",
+      "rationale": "Redis provides sub-millisecond response for session validation during clock-in operations. Redis Stack adds RediSearch for complex attendance pattern queries and rate limiting counters. Alternative: Memcached lacks persistence and search capabilities needed for audit trail caching. Limitation: Redis memory usage grows with 10,000 employee sessions, requiring careful eviction policies."
+    },
+    {
+      "layer": "Storage",
+      "choice": "AWS S3 with SSE-S3 encryption and lifecycle policies",
+      "rationale": "S3 provides durable storage for facial verification images with automatic deletion via lifecycle policies. SSE-S3 encryption meets biometric data protection requirements without key management overhead. Alternative: Azure Blob Storage would tie us to Azure ecosystem when other components are AWS-based. Limitation: S3 eventual consistency requires careful handling of immediately deleted temp images."
+    },
+    {
+      "layer": "Facial Verification",
+      "choice": "Azure Face API (part of Azure Cognitive Services)",
+      "rationale": "Azure Face API provides enterprise-grade face verification with Liveness detection to prevent spoofing. Microsoft's compliance certifications cover biometric data processing across multiple jurisdictions. Alternative: AWS Rekognition lacks dedicated liveness detection features critical for attendance fraud prevention. Limitation: Azure Face API costs scale linearly with verification attempts, requiring budget monitoring."
+    },
+    {
+      "layer": "Authentication",
+      "choice": "Microsoft Entra ID (Azure AD) with OAuth 2.0 and OpenID Connect",
+      "rationale": "Entra ID integrates with existing enterprise directories and provides SAML/SSO for organizations. OAuth 2.0 flows work with both web and mobile PWA. Alternative: Auth0 would add third-party dependency without native Microsoft ecosystem integration. Limitation: Entra ID custom attribute sync requires nightly batch jobs rather than real-time updates."
+    },
+    {
+      "layer": "Notifications",
+      "choice": "SendGrid Transactional Email API",
+      "rationale": "SendGrid provides reliable email delivery with templating for attendance notifications. Transactional API handles burst loads during shift change notifications. Alternative: AWS SES requires domain warm-up and lacks built-in templating system. Limitation: SendGrid is a third-party service requiring external dependency monitoring."
+    },
+    {
+      "layer": "Hosting",
+      "choice": "AWS EKS (Elastic Kubernetes Service) with EC2-backed worker nodes",
+      "rationale": "EKS provides Kubernetes orchestration for scaling microservices during peak clock-in periods. EC2-backed nodes eliminate Fargate cold starts, ensuring 3-second response SLA during global morning peaks. Regional pod placement ensures pods are active before timezone workday starts. Alternative: AWS Fargate would cause cold start delays breaching SLA during staggered timezone clock-ins. Limitation: EC2 nodes require more operational management than Fargate."
+    },
+    {
+      "layer": "CI/CD",
+      "choice": "GitHub Actions with AWS CodeDeploy",
+      "rationale": "GitHub Actions integrates with Stark Digital's existing GitHub workflow. AWS CodeDeploy provides blue-green deployments for zero-downtime updates to attendance system. Alternative: Jenkins would require separate infrastructure management. Limitation: GitHub Actions concurrent job limits may slow parallel environment deployments."
+    }
+  ],
+  "userFlow": [
+    "Employee logs into PWA via Microsoft Entra ID SSO or email/password, receiving JWT token valid for 8 hours cached locally via service worker",
+    "Home dashboard displays today's shift timing, next clock-in/out action, and pending leave requests",
+    "For clock-in with internet: employee taps 'Clock In', system captures timestamp, device info (browser/OS), IP address, and prompts for optional GPS coordinates",
+    "For clock-in offline: PWA stores operation locally in SQLite with timestamp and device info, shows confirmation immediately, queues for background sync",
+    "On reconnection: background sync automatically sends queued operations to server, conflict resolution merges based on timestamps with manager review flag for discrepancies",
+    "If facial verification enabled: frontend captures image via device camera, sends to Azure Face API for liveness check and verification against enrolled template",
+    "On verification success: attendance recorded with 'verified' flag. On failure: fallback to timestamp-only attendance with 'unverified' flag",
+    "System prevents duplicate clock-ins within 15 minutes via Redis lock for online, local duplicate detection for offline",
+    "Employee views attendance history with color-coded statuses (present, late, half-day, absent) using timezone-aware calculations",
+    "Employee requests leave: selects type, dates, enters reason, submits to approval workflow based on department hierarchy",
+    "Manager receives email/SMS notification, reviews team attendance dashboard, approves/rejects leave with comments",
+    "HR admin configures attendance policies with versioning and effective dates: grace periods, overtime rules, holiday calendars by location",
+    "HR creates shift rosters: defines shift patterns with timezone context, assigns employees in bulk, handles overnight shift transitions",
+    "Monthly batch process: system calculates final attendance using policy versions active during period, locks period after HR review, generates payroll export CSV",
+    "Payroll admin downloads CSV from secured export page or accesses via REST API with API key authentication"
+  ],
+  "dataModel": [
+    {
+      "name": "Employee",
+      "fields": [
+        "id",
+        "employee_id",
+        "first_name",
+        "last_name",
+        "email",
+        "department_id",
+        "manager_id",
+        "location_id",
+        "joining_date",
+        "employment_status",
+        "shift_type",
+        "timezone",
+        "created_at",
+        "updated_at",
+        "entra_id"
+      ],
+      "description": "Core employee record synchronized from Microsoft Entra ID with manual overrides for HR. Contains reporting structure via manager_id and timezone for base calculations."
+    },
+    {
+      "name": "AttendanceRecord",
+      "fields": [
+        "id",
+        "employee_id",
+        "date",
+        "clock_in_time",
+        "clock_out_time",
+        "shift_id",
+        "status",
+        "late_minutes",
+        "overtime_minutes",
+        "device_info",
+        "ip_address",
+        "gps_coordinates",
+        "facial_verified",
+        "timezone_applied",
+        "sync_status",
+        "offline_operation_id",
+        "created_at",
+        "updated_at"
+      ],
+      "description": "Daily attendance record with calculated status. device_info stores browser/OS/device model as JSON. status values: present, late, half_day, absent, on_leave. sync_status tracks offline operations: pending, synced, conflict."
+    },
+    {
+      "name": "Shift",
+      "fields": [
+        "id",
+        "name",
+        "type",
+        "start_time_utc",
+        "end_time_utc",
+        "timezone",
+        "grace_period_minutes",
+        "half_day_threshold_hours",
+        "overtime_threshold_hours",
+        "is_overnight",
+        "location_id",
+        "created_at"
+      ],
+      "description": "Shift definition with timing and policy rules. Times stored in UTC with timezone reference for display. type values: fixed, flexible, night, rotating. is_overnight flag handles date rollover logic."
+    },
+    {
+      "name": "ShiftAssignment",
+      "fields": [
+        "id",
+        "employee_id",
+        "shift_id",
+        "effective_from",
+        "effective_to",
+        "created_by",
+        "created_at"
+      ],
+      "description": "Employee to shift assignment with effective date ranges for roster changes."
+    },
+    {
+      "name": "LeaveRequest",
+      "fields": [
+        "id",
+        "employee_id",
+        "leave_type_id",
+        "start_date",
+        "end_date",
+        "reason",
+        "status",
+        "current_approver_id",
+        "approval_path",
+        "created_at",
+        "updated_at"
+      ],
+      "description": "Leave request with multi-level approval workflow. status values: pending, approved, rejected, cancelled. approval_path stores JSON array of approver IDs."
+    },
+    {
+      "name": "LeaveType",
+      "fields": [
+        "id",
+        "name",
+        "code",
+        "is_paid",
+        "max_days_per_year",
+        "accrual_policy",
+        "carry_over_limit",
+        "requires_medical_certificate"
+      ],
+      "description": "Configurable leave types with policy rules. accrual_policy values: monthly, quarterly, annually, none."
+    },
+    {
+      "name": "LeaveBalance",
+      "fields": [
+        "id",
+        "employee_id",
+        "leave_type_id",
+        "balance_days",
+        "accrued_this_year",
+        "used_this_year",
+        "carry_over_from_previous",
+        "fiscal_year"
+      ],
+      "description": "Running balance for each employee's leave types, updated after approvals."
+    },
+    {
+      "name": "FacialTemplate",
+      "fields": [
+        "id",
+        "employee_id",
+        "encrypted_template",
+        "jurisdiction_compliance_flags",
+        "consent_type",
+        "enrollment_date",
+        "consent_given_date",
+        "consent_expiry_date",
+        "is_active",
+        "created_at"
+      ],
+      "description": "Encrypted biometric template from Azure Face API. Raw images never stored. jurisdiction_compliance_flags track region-specific requirements (BIPA, GDPR Article 9, etc.)."
+    },
+    {
+      "name": "AuditTrail",
+      "fields": [
+        "id",
+        "entity_type",
+        "entity_id",
+        "action",
+        "old_value",
+        "new_value",
+        "actor_id",
+        "actor_role",
+        "reason",
+        "ip_address",
+        "created_at"
+      ],
+      "description": "Immutable audit log for all manual corrections. entity_type values: attendance, leave, shift_assignment. old_value/new_value store JSON diffs."
+    },
+    {
+      "name": "Holiday",
+      "fields": [
+        "id",
+        "name",
+        "date",
+        "location_id",
+        "is_recurring",
+        "created_at"
+      ],
+      "description": "Location-specific holiday calendar. is_recurring flag for annual holidays like Christmas."
+    },
+    {
+      "name": "Notification",
+      "fields": [
+        "id",
+        "employee_id",
+        "type",
+        "title",
+        "message",
+        "metadata",
+        "sent_via",
+        "sent_at",
+        "read_at"
+      ],
+      "description": "Notification history for emails/SMS. type values: clock_in_reminder, late_arrival, leave_approval, missing_clock_out."
+    },
+    {
+      "name": "AttendancePolicy",
+      "fields": [
+        "id",
+        "policy_version",
+        "name",
+        "description",
+        "effective_from",
+        "effective_to",
+        "grace_period_minutes",
+        "overtime_threshold_hours",
+        "half_day_threshold_hours",
+        "location_id",
+        "created_by",
+        "created_at"
+      ],
+      "description": "Versioned attendance policies with effective date ranges. Allows mid-month policy changes with retroactive recalculation capability."
+    },
+    {
+      "name": "OfflineOperation",
+      "fields": [
+        "id",
+        "employee_id",
+        "operation_type",
+        "operation_data",
+        "local_timestamp",
+        "device_info",
+        "sync_status",
+        "conflict_resolution",
+        "created_at",
+        "synced_at"
+      ],
+      "description": "Queue for offline clock-in/out operations. operation_type: clock_in, clock_out. sync_status: pending, synced, conflict. conflict_resolution stores manager override decisions."
+    }
+  ],
+  "dbSchemaDiagram": "erDiagram\n    Employee ||--o{ AttendanceRecord : records\n    Employee ||--o{ ShiftAssignment : assigned\n    Employee ||--o{ LeaveRequest : requests\n    Employee ||--o{ LeaveBalance : has\n    Employee ||--|| FacialTemplate : optional\n    Employee ||--o{ Notification : receives\n    Employee ||--o{ OfflineOperation : queues\n    \n    Shift ||--o{ ShiftAssignment : includes\n    Shift ||--o{ AttendanceRecord : defines\n    \n    LeaveType ||--o{ LeaveRequest : of_type\n    LeaveType ||--o{ LeaveBalance : tracks\n    \n    AttendancePolicy ||--o{ AttendanceRecord : governs\n    \n    OfflineOperation ||--|| AttendanceRecord : syncs_to\n    \n    AttendanceRecord {\n        uuid id PK\n        uuid employee_id FK\n        date date\n        timestamp clock_in_time\n        timestamp clock_out_time\n        uuid shift_id FK\n        string status\n        integer late_minutes\n        integer overtime_minutes\n        jsonb device_info\n        inet ip_address\n        point gps_coordinates\n        boolean facial_verified\n        string timezone_applied\n        string sync_status\n        uuid offline_operation_id FK\n        timestamp created_at\n        timestamp updated_at\n    }\n    \n    Employee {\n        uuid id PK\n        string employee_id\n        string first_name\n        string last_name\n        string email\n        uuid department_id FK\n        uuid manager_id FK\n        uuid location_id FK\n        date joining_date\n        string employment_status\n        string shift_type\n        string timezone\n        timestamp created_at\n        timestamp updated_at\n        string entra_id\n    }\n    \n    Shift {\n        uuid id PK\n        string name\n        string type\n        timestamp start_time_utc\n        timestamp end_time_utc\n        string timezone\n        integer grace_period_minutes\n        integer half_day_threshold_hours\n        integer overtime_threshold_hours\n        boolean is_overnight\n        uuid location_id FK\n        timestamp created_at\n    }\n    \n    LeaveRequest {\n        uuid id PK\n        uuid employee_id FK\n        uuid leave_type_id FK\n        date start_date\n        date end_date\n        text reason\n        string status\n        uuid current_approver_id FK\n        jsonb approval_path\n        timestamp created_at\n        timestamp updated_at\n    }\n    \n    FacialTemplate {\n        uuid id PK\n        uuid employee_id FK\n        text encrypted_template\n        jsonb jurisdiction_compliance_flags\n        string consent_type\n        date enrollment_date\n        date consent_given_date\n        date consent_expiry_date\n        boolean is_active\n        timestamp created_at\n    }\n    \n    AuditTrail {\n        uuid id PK\n        string entity_type\n        uuid entity_id\n        string action\n        jsonb old_value\n        jsonb new_value\n        uuid actor_id FK\n        string actor_role\n        text reason\n        inet ip_address\n        timestamp created_at\n    }\n    \n    AttendancePolicy {\n        uuid id PK\n        integer policy_version\n        string name\n        text description\n        date effective_from\n        date effective_to\n        integer grace_period_minutes\n        integer overtime_threshold_hours\n        integer half_day_threshold_hours\n        uuid location_id FK\n        uuid created_by FK\n        timestamp created_at\n    }\n    \n    OfflineOperation {\n        uuid id PK\n        uuid employee_id FK\n        string operation_type\n        jsonb operation_data\n        timestamp local_timestamp\n        jsonb device_info\n        string sync_status\n        jsonb conflict_resolution\n        timestamp created_at\n        timestamp synced_at\n    }",
+  "pageBehavior": [
+    {
+      "page": "/dashboard",
+      "description": "Role-specific dashboard: Employees see today's shift, next clock action, recent attendance. Managers see team attendance grid with color-coded statuses, pending leave approvals. HR sees organization-wide metrics: attendance %, late arrivals, leave utilization. All dashboards refresh via WebSocket for real-time clock-in notifications. Offline status indicator shows sync queue count."
+    },
+    {
+      "page": "/attendance/clock",
+      "description": "Clock-in/out interface with large touch-friendly buttons. Displays current time in employee's timezone. Shows offline capability badge when no internet. If facial verification enabled: shows camera feed with 'Capture' button. On submission: shows spinner for max 3 seconds, then confirmation toast. Includes manual location override button for field workers with poor GPS. Offline submissions show immediate local confirmation."
+    },
+    {
+      "page": "/attendance/history",
+      "description": "Calendar view of attendance records with color coding: green present, orange late, red absent, blue on leave. Filter by month, status, timezone view. Export to CSV option. Clicking a day shows detailed record: clock times, device used, verification status, timezone applied. Offline records highlighted with sync status."
+    },
+    {
+      "page": "/leave/request",
+      "description": "Leave request form with date picker showing blocked dates (holidays, existing leave). Real-time balance display updates as dates selected. Required fields: type, dates, reason. Submit triggers approval workflow email notifications."
+    },
+    {
+      "page": "/leave/approvals",
+      "description": "Manager approval queue showing pending requests from direct reports. Each request shows employee, dates, balance impact, reason. Approve/Reject buttons with comment field. Approval updates attendance calendar immediately. Includes conflict resolution interface for offline attendance discrepancies."
+    },
+    {
+      "page": "/shifts/roster",
+      "description": "HR shift management: calendar view for assigning shifts to employees. Drag-drop interface for bulk assignments. Overnight shift visual indicator with timezone context. Validation prevents overlapping shifts. Bulk export/import via CSV. Timezone selector for multi-region teams."
+    },
+    {
+      "page": "/admin/policies",
+      "description": "HR policy configuration: grace periods, overtime rules, leave accrual rates with versioning. Create new policy versions with effective dates. Location-specific holiday calendar management with recurring pattern setup. Policy history with effective dates and recalculation capability for past periods."
+    },
+    {
+      "page": "/payroll/export",
+      "description": "Secured payroll export: month picker shows lock status. Once locked by HR, generates CSV with columns: employee_id, days_present, late_count, overtime_hours, leave_days. Download button and REST API key management for automated systems. Policy version used for calculations displayed."
+    },
+    {
+      "page": "/admin/audit",
+      "description": "Audit trail search: filter by date range, entity type, actor. Shows diff view between old/new values. Export full audit logs for compliance. IP address tracking for all manual corrections. Includes offline sync audit logs."
+    },
+    {
+      "page": "/profile/facial",
+      "description": "Facial enrollment flow (if enabled): shows jurisdiction-specific consent agreements based on employee location. Camera feed with instructions for neutral expression. Three capture attempts, best template encrypted and stored. Compliance flags set based on regional regulations. Delete enrollment button with confirmation."
+    },
+    {
+      "page": "/offline/sync",
+      "description": "Offline sync management: shows queued operations, sync status, conflict resolution interface. Manual sync trigger button. Conflict list showing timestamp discrepancies requiring manager review. Device info for offline operations."
+    }
+  ],
+  "securityDesign": [
+    "Microsoft Entra ID integration for enterprise SSO with conditional access policies: require MFA for HR/admin roles, location-based restrictions for payroll exports",
+    "JWT tokens with 8-hour expiry for PWA sessions, refresh tokens with 30-day expiry stored in HttpOnly cookies, cached locally for offline access via service worker",
+    "Role-based access control: Employees see only own data, Managers see direct reports plus one level down, HR sees department scope, System admins see all",
+    "Biometric data encryption: Azure Face API templates encrypted at rest using PostgreSQL pgcrypto with jurisdiction-specific compliance flags, keys managed via AWS KMS, raw images auto-deleted from S3 within 1 hour",
+    "Regional compliance workflows: Facial enrollment requires jurisdiction-specific consent (BIPA for Illinois, GDPR Article 9 for EU, etc.) with legal review integration. Opt-in per region based on legal assessment",
+    "Adaptive rate limiting: Employee_id-based (100/min) combined with IP-based (500/min for corporate IP ranges, 100/min for others). Detects office patterns vs suspicious behavior, auto-adjusts for shift change peaks",
+    "Audit trail immutability: AuditTrail records written via database trigger, no update/delete permissions, hashed with previous record hash for chain integrity. Offline operations audit trail maintained",
+    "Payroll export security: requires separate 'payroll_export' role, exports logged with recipient email, CSV files encrypted with PGP before S3 storage",
+    "OWASP Top 10 mitigation: SQL injection prevention via JPA parameterized queries, XSS protection via React DOM escaping, CSRF tokens for state-changing operations",
+    "Network security: VPC isolation for database tier, AWS WAF rules blocking suspicious geographic locations for clock-in attempts. Offline data encrypted locally via IndexedDB encryption",
+    "Data retention: Attendance records retained for 7 years via PostgreSQL table partitioning, automated archive to S3 Glacier after 3 years. Biometric templates deleted after consent expiry or employee termination with regional compliance timelines",
+    "Offline security: Local SQLite encrypted with Web Crypto API, operations signed with employee session hash, conflict resolution requires manager authentication"
+  ],
+  "deploymentAndOperations": [
+    "Three environments: Development (auto-deploy on PR merge), Staging (manual promotion for UAT), Production (blue-green deployment via AWS CodeDeploy)",
+    "CI/CD pipeline: GitHub Actions runs tests (JUnit, Jest, Cypress), builds Docker images, scans for vulnerabilities (Trivy), deploys to EKS",
+    "Monitoring: AWS CloudWatch for infrastructure metrics, Prometheus/Grafana for application metrics (clock-in latency, error rates, offline sync success rate), Sentry for frontend errors",
+    "Alerting: PagerDuty integration for 99.9% SLA breaches: clock-in API >3s response time, database connection pool >80% utilization, facial verification failure rate >5%, offline sync backlog >100 operations",
+    "High availability design: Minimum 2 pod replicas per service always running on EC2-backed EKS nodes. Regional pod placement ensures pods active before timezone workday starts. Pod pre-warming scheduled 30 minutes before regional morning peaks",
+    "Backup strategy: PostgreSQL automated daily snapshots to S3, point-in-time recovery with 35-day retention, tested monthly restore procedure. Local offline database backups via PWA export functionality",
+    "Disaster recovery: Multi-AZ EKS cluster, PostgreSQL read replicas in secondary region, failover tested quarterly with clock-in simulation during switch including offline sync recovery",
+    "Scaling: Horizontal pod autoscaling based on CPU/memory AND time zone patterns (scale up before regional mornings). Redis cluster autoscaling based on connection count, PostgreSQL read replica scaling for report queries",
+    "Maintenance windows: Scheduled via AWS Systems Manager during weekends, employees notified 72 hours prior via email and dashboard banner. Offline mode remains functional during API maintenance",
+    "Capacity planning: Monthly review of employee growth vs. resource usage, auto-provisioning triggers at\u5bf9\u65b060% capacity thresholds. Offline storage capacity monitored per employee device",
+    "Compliance operations: Monthly audit log review for unauthorized access attempts, quarterly penetration testing by external security firm, annual regional biometric compliance assessment per jurisdiction",
+    "Policy change operations: Policy version deployment includes attendance recalculation batch job for retroactive application. Change management process requires HR approval before activation"
+  ],
+  "timeline": [
+    {
+      "phase": "Foundation & Core Authentication",
+      "duration": "3 weeks",
+      "description": "Set up AWS infrastructure (EKS with EC2 nodes, RDS, S3), implement Microsoft Entra ID integration, build employee sync service, create PWA skeleton with authentication flows and service worker foundation"
+    },
+    {
+      "phase": "Attendance Engine & Shift Management",
+      "duration": "4 weeks",
+      "description": "Build clock-in/out APIs with device logging, implement shift roster system with timezone-aware logic, create attendance calculation engine with policy versioning, develop basic dashboards, implement offline queuing system with local SQLite"
+    },
+    {
+      "phase": "Leave Management & Approval Workflows",
+      "duration": "3 weeks",
+      "description": "Implement leave types and balances, build multi-level approval workflow, create notification system (SendGrid), develop manager approval interfaces including conflict resolution for offline operations"
+    },
+    {
+      "phase": "Facial Verification & Advanced Features",
+      "duration": "3 weeks",
+      "description": "Integrate Azure Face API, build jurisdiction-specific consent workflows, implement audit trail system, create payroll export functionality with encryption, develop timezone-aware calculation engine"
+    },
+    {
+      "phase": "Offline Implementation & Regional Scaling",
+      "duration": "2 weeks",
+      "description": "Complete offline sync with background sync API, implement adaptive rate limiting for corporate IP ranges, set up regional pod autoscaling with pre-warming, build policy recalculation engine for mid-month changes"
+    },
+    {
+      "phase": "Testing, Security & Deployment",
+      "duration": "3 weeks",
+      "description": "Comprehensive testing: load testing for 1,000 concurrent clock-ins, offline scenario testing, security penetration testing, regional compliance validation, user acceptance testing with real employee scenarios, production deployment and cutover"
+    }
+  ],
+  "assumptions": [
+    "Microsoft Entra ID is available as identity provider with sufficient licenses for all employees",
+    "Employees have devices capable of running PWA with camera access for facial verification (optional) and modern browser supporting service workers/IndexedDB",
+    "Field workers have intermittent internet connectivity - system implements offline-first design with local storage and background sync",
+    "Payroll department accepts CSV export format with predefined columns - no real-time API integration required initially",
+    "HR policies can be versioned with effective dates - system supports mid-month changes with recalculation capability",
+    "Time zone data is accurate in employee profiles - system tracks timezone_applied per attendance record for travel scenarios",
+    "Legal compliance for biometric data is handled via jurisdiction-specific consent workflows with legal team review",
+    "Organization has defined reporting structure that fits manager_id hierarchy - no matrix reporting required",
+    "Corporate network IP ranges can be identified for adaptive rate limiting configurations",
+    "Regional work patterns are predictable enough for pod pre-warming scheduling"
+  ],
+  "openQuestions": [
+    "What is the exact payroll CSV column format required? Need specification from payroll vendor to ensure compatibility - currently using generic columns",
+    "Should facial verification failures trigger automatic manager notifications? Currently silent failure with unverified flag, but fraud prevention might require alerts",
+    "How to handle employees working across multiple time zones in same month? Now tracks timezone_applied per record, but need policy for which timezone governs status calculations (profile vs record)",
+    "What is the retention period for audit trails? Attendance records 7 years, but audit trails might need longer for compliance investigations",
+    "Should there be a mobile device management component to prevent clock-in from unauthorized devices? Currently only logs device info but doesn't restrict",
+    "How to integrate with existing HRIS for employee data sync? Currently assumes Entra ID as source of truth, but some fields might need HRIS override",
+    "What conflict resolution policy for offline duplicates? Currently timestamp-based with manager review, but need business rules for handling intentional vs system duplicates",
+    "How to determine jurisdiction for biometric compliance? Currently based on employee location, but need legal definition of 'work jurisdiction' for remote employees",
+    "What corporate IP ranges should receive higher rate limits? Need network team input for office/VPN subnet definitions",
+    "How frequently should policy recalculation run for mid-month changes? Currently on-demand but need performance impact assessment"
+  ]
+}
