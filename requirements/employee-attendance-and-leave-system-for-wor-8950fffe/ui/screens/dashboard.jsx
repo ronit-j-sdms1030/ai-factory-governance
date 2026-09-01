@@ -1,650 +1,247 @@
 function Dashboard() {
-  // Mock user role - in reality would come from auth context
-  const userRole = 'employee'; // 'employee', 'manager', or 'hr'
-  
-  // Mock data based on role
-  const userData = {
-    employee: {
-      name: "Amit Sharma",
-      employeeId: "EMP00789",
-      shift: {
-        name: "Day Shift",
-        startTime: "09:00 AM",
-        endTime: "06:00 PM",
-        gracePeriod: 15,
-        isLate: false
-      },
-      nextAction: {
-        type: "Clock In",
-        time: "in 15 minutes"
-      },
-      recentAttendance: [
-        { date: "2023-06-15", status: "present" },
-        { date: "2023-06-14", status: "late", lateMinutes: 22 },
-        { date: "2023-06-13", status: "present" },
-        { date: "2023-06-12", status: "absent" },
-        { date: "2023-06-11", status: "present" }
-      ]
-    },
-    manager: {
-      teamAttendance: [
-        { id: 1, name: "Raj Patel", status: "present" },
-        { id: 2, name: "Priya Nair", status: "late" },
-        { id: 3, name: "Vikram Singh", status: "absent" },
-        { id: 4, name: "Anjali Mehta", status: "present" },
-        { id: 5, name: "Karan Kapoor", status: "present" }
-      ],
-      pendingLeaves: [
-        { id: 101, employee: "Sneha Reddy", type: "Sick Leave", days: 2, submitted: "2023-06-15" },
-        { id: 102, employee: "Manoj Kumar", type: "Casual Leave", days: 1, submitted: "2023-06-14" }
-      ]
-    },
-    hr: {
-      orgMetrics: {
-        attendanceRate: 94.2,
-        lateArrivals: 3.8,
-        leaveRequests: 12,
-        pendingApprovals: 5
-      }
-    }
+  // Mock current user
+  const currentUser = React.useMemo(() => ({
+    id: 42,
+    first_name: "Alex",
+    last_name: "Miller",
+    role: "manager", // could be 'employee', 'manager', 'hr'
+    department: "Engineering",
+    location: "New York"
+  }), []);
+
+  // State hooks
+  const [clockedIn, setClockedIn] = React.useState(false);
+  const [attendance, setAttendance] = React.useState([
+    // last 5 days mock records (most recent first)
+    { date: "2024-08-28", clock_in: "09:02", clock_out: "17:55", status: "present" },
+    { date: "2024-08-27", clock_in: "09:15", clock_out: "18:10", status: "late" },
+    { date: "2024-08-26", clock_in: "09:00", clock_out: "17:45", status: "present" },
+    { date: "2024-08-25", clock_in: "08:58", clock_out: "17:30", status: "present" },
+    { date: "2024-08-24", clock_in: null, clock_out: null, status: "absent" }
+  ]);
+  const [pendingLeaves, setPendingLeaves] = React.useState([
+    { id: 101, type: "Annual Leave", days: 2, start: "2024-09-10", end: "2024-09-11", status: "pending" },
+    { id: 102, type: "Sick Leave", days: 1, start: "2024-08-30", end: "2024-08-30", status: "pending" }
+  ]);
+  const [notifications, setNotifications] = React.useState([
+    { id: 1, title: "Clock‑in reminder", message: "Don’t forget to clock in before 9:00 AM", time: "08:45" },
+    { id: 2, title: "Leave approved", message: "Your sick leave for 30 Aug has been approved", time: "09:20" }
+  ]);
+  const [offlineQueue, setOfflineQueue] = React.useState(0);
+
+  // Simulate a WebSocket that pushes a new notification every 12 seconds
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      const newNotif = {
+        id: Date.now(),
+        title: "Policy update",
+        message: "New overtime policy effective from 1 Sep",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      };
+      setNotifications(prev => [newNotif, ...prev].slice(0, 20)); // keep recent 20
+    }, 12000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handlers
+  const handleClockIn = () => {
+    if (clockedIn) return;
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    // Add to attendance (optimistic)
+    setAttendance(prev => [{ date: today, clock_in: timeStr, clock_out: null, status: "present" }, ...prev].slice(0, 5));
+    setClockedIn(true);
+    // Simulate offline queue increment
+    setOfflineQueue(q => q + 1);
+    // Push notification
+    setNotifications(prev => [{ id: Date.now(), title: "Clocked in", message: `You clocked in at ${timeStr}`, time: timeStr }, ...prev]);
   };
 
-  const currentData = userData[userRole];
-  
-  // Status badge component
-  const StatusBadge = ({ status }) => {
-    const statusStyles = {
-      present: { backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #4caf50' },
-      late: { backgroundColor: '#fff3e0', color: '#ef6c00', border: '1px solid #ff9800' },
-      absent: { backgroundColor: '#ffebee', color: '#c62828', border: '1px solid #f44336' }
-    };
-    
-    return (
-      <span style={{
-        padding: '4px 12px',
-        borderRadius: '20px',
-        fontSize: '0.8rem',
-        fontWeight: '500',
-        ...statusStyles[status]
-      }}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    );
+  const handleClockOut = () => {
+    if (!clockedIn) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    setAttendance(prev => {
+      const updated = prev.map(rec => {
+        if (rec.clock_out === null && rec.clock_in !== null) {
+          return { ...rec, clock_out: timeStr, status: rec.clock_in > "09:00" ? "late" : "present" };
+        }
+        return rec;
+      });
+      return updated;
+    });
+    setClockedIn(false);
+    setOfflineQueue(q => q + 1);
+    setNotifications(prev => [{ id: Date.now(), title: "Clocked out", message: `You clocked out at ${timeStr}`, time: timeStr }, ...prev]);
   };
-  
-  // Quick action button component
-  const QuickActionButton = ({ icon, label, onClick }) => (
-    <button 
-      onClick={onClick}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        border: 'none',
-        borderRadius: '8px',
-        backgroundColor: '#f5f7fa',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        width: '100%',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-      }}
-      onMouseOver={(e) => e.target.style.backgroundColor = '#e3f2fd'}
-      onMouseOut={(e) => e.target.style.backgroundColor = '#f5f7fa'}
-    >
-      <div style={{ fontSize: '24px', marginBottom: '8px' }}>{icon}</div>
-      <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{label}</span>
-    </button>
-  );
-  
+
+  const handleRequestLeave = () => {
+    const type = prompt("Leave type (Annual, Sick, Unpaid):", "Annual");
+    if (!type) return;
+    const days = parseInt(prompt("Number of days:"), 10);
+    if (isNaN(days) || days <= 0) return;
+    const start = prompt("Start date (YYYY-MM-DD):", "2024-09-15");
+    const end = prompt("End date (YYYY-MM-DD):", start);
+    const newLeave = {
+      id: Date.now(),
+      type: `${type} Leave`,
+      days,
+      start,
+      end,
+      status: "pending"
+    };
+    setPendingLeaves(prev => [newLeave, ...prev]);
+    setNotifications(prev => [{ id: Date.now(), title: "Leave requested", message: `${type} leave for ${days} day(s) submitted`, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }, ...prev]);
+  };
+
+  // Styling constants
+  const colors = {
+    primary: "#0d6efd",
+    secondary: "#6c757d",
+    success: "#198754",
+    danger: "#dc3545",
+    bg: "#f8f9fa",
+    cardBg: "#ffffff",
+    border: "#dee2e6"
+  };
+
+  const containerStyle = { display: "flex", minHeight: "100vh", fontFamily: "Arial,Helvetica,sans-serif", background: colors.bg };
+  const sidebarStyle = { width: 240, background: colors.primary, color: "#fff", padding: 20 };
+  const contentStyle = { flex: 1, padding: 20, overflowY: "auto" };
+  const cardStyle = { background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: 8, padding: 16, marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,.1)" };
+  const buttonStyle = (bg) => ({ background: bg, color: "#fff", border: "none", borderRadius: 4, padding: "8px 12px", cursor: "pointer", marginRight: 8, fontWeight: "bold" });
+
+  // Role‑specific metric mock
+  const teamStats = {
+    totalMembers: 42,
+    presentToday: 38,
+    onLeave: 3,
+    absent: 1
+  };
+
   return (
-    <div style={{ 
-      padding: '24px', 
-      backgroundColor: '#fafbfc', 
-      minHeight: '100vh',
-      fontFamily: 'Segoe UI, Roboto, sans-serif'
-    }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '32px' 
-      }}>
-        <div>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '28px', 
-            fontWeight: '600', 
-            color: '#1a237e' 
-          }}>
-            Good morning, {currentData.name || 'HR Team'}
-          </h1>
-          <p style={{ 
-            margin: '4px 0 0 0', 
-            color: '#666', 
-            fontSize: '16px' 
-          }}>
-            Here's what's happening with your attendance today
-          </p>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            padding: '8px 16px', 
-            backgroundColor: '#e3f2fd', 
-            borderRadius: '20px',
-            border: '1px solid #bbdefb'
-          }}>
-            <div style={{ 
-              width: '10px', 
-              height: '10px', 
-              borderRadius: '50%', 
-              backgroundColor: '#4caf50',
-              marginRight: '8px'
-            }}></div>
-            <span style={{ fontSize: '14px', fontWeight: '500' }}>Online</span>
-          </div>
-          
-          <div style={{ position: 'relative' }}>
-            <div style={{ 
-              width: '40px', 
-              height: '40px', 
-              borderRadius: '50%', 
-              backgroundColor: '#3f51b5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '18px'
-            }}>
-              {currentData.name ? currentData.name.charAt(0) : 'H'}
+    <div style={containerStyle}>
+      {/* Sidebar navigation */}
+      <nav style={sidebarStyle}>
+        <h2 style={{ marginTop: 0, marginBottom: 30 }}>WorkPulse</h2>
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          <li style={{ marginBottom: 12 }}><a href="/" style={{ color: "#fff", textDecoration: "none" }}>Dashboard</a></li>
+          <li style={{ marginBottom: 12 }}><a href="/clock" style={{ color: "#fff", textDecoration: "none" }}>Clock</a></li>
+          <li style={{ marginBottom: 12 }}><a href="/attendance" style={{ color: "#fff", textDecoration: "none" }}>Attendance History</a></li>
+          <li style={{ marginBottom: 12 }}><a href="/leave/request" style={{ color: "#fff", textDecoration: "none" }}>Request Leave</a></li>
+          {currentUser.role !== "employee" && (
+            <li style={{ marginBottom: 12 }}><a href="/team" style={{ color: "#fff", textDecoration: "none" }}>Team Management</a></li>
+          )}
+        </ul>
+      </nav>
+
+      {/* Main content */}
+      <main style={contentStyle}>
+        <h1 style={{ marginBottom: 24 }}>Good morning, {currentUser.first_name}!</h1>
+
+        {/* Quick actions */}
+        <section style={cardStyle}>
+          <h3 style={{ marginTop: 0 }}>Quick actions</h3>
+          <button
+            style={buttonStyle(clockedIn ? colors.danger : colors.success)}
+            onClick={clockedIn ? handleClockOut : handleClockIn}
+          >
+            {clockedIn ? "Clock out" : "Clock in"}
+          </button>
+          <button style={buttonStyle(colors.secondary)} onClick={handleRequestLeave}>Request leave</button>
+          <span style={{ marginLeft: 16, color: colors.secondary }}>
+            Offline queue: {offlineQueue} pending
+          </span>
+        </section>
+
+        {/* Shift card */}
+        <section style={cardStyle}>
+          <h3 style={{ marginTop: 0 }}>Today's shift</h3>
+          <p><strong>Shift:</strong> Day (09:00 – 17:45) – New York (EDT)</p>
+          <p><strong>Status:</strong> {clockedIn ? <span style={{ color: colors.success }}>Clocked in</span> : <span style={{ color: colors.danger }}>Not clocked in</span>}</p>
+        </section>
+
+        {/* Role‑specific metrics */}
+        {currentUser.role !== "employee" && (
+          <section style={cardStyle}>
+            <h3 style={{ marginTop: 0 }}>Team overview</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", maxWidth: 400 }}>
+              <div><strong>Total members:</strong> {teamStats.totalMembers}</div>
+              <div><strong>Present today:</strong> {teamStats.presentToday}</div>
+              <div><strong>On leave:</strong> {teamStats.onLeave}</div>
+              <div><strong>Absent:</strong> {teamStats.absent}</div>
             </div>
-            <div style={{
-              position: 'absolute',
-              bottom: '0',
-              right: '0',
-              width: '12px',
-              height: '12px',
-              backgroundColor: '#4caf50',
-              border: '2px solid white',
-              borderRadius: '50%'
-            }}></div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Main Content Grid */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-        gap: '24px' 
-      }}>
-        {/* Today's Shift Card */}
-        {userRole === 'employee' && (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            gridColumn: '1 / -1'
-          }}>
-            <h2 style={{ 
-              margin: '0 0 16px 0', 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              color: '#333' 
-            }}>
-              Today's Shift
-            </h2>
-            
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
-              <div>
-                <h3 style={{ 
-                  margin: '0 0 8px 0', 
-                  fontSize: '24px', 
-                  fontWeight: '600',
-                  color: '#1a237e'
-                }}>
-                  {currentData.shift.name}
-                </h3>
-                <p style={{ 
-                  margin: 0, 
-                  color: '#666', 
-                  fontSize: '16px' 
-                }}>
-                  {currentData.shift.startTime} - {currentData.shift.endTime}
-                </p>
-              </div>
-              
-              <div style={{
-                padding: '8px 16px',
-                backgroundColor: currentData.shift.isLate ? '#fff3e0' : '#e8f5e9',
-                borderRadius: '20px',
-                border: `1px solid ${currentData.shift.isLate ? '#ff9800' : '#4caf50'}`
-              }}>
-                <span style={{ 
-                  fontWeight: '500',
-                  color: currentData.shift.isLate ? '#ef6c00' : '#2e7d32'
-                }}>
-                  {currentData.shift.isLate ? 'Late Arrival' : 'On Time'}
-                </span>
-              </div>
-            </div>
-            
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingTop: '16px',
-              borderTop: '1px solid #eee'
-            }}>
-              <div>
-                <p style={{ 
-                  margin: '0 0 4px 0', 
-                  color: '#666', 
-                  fontSize: '14px' 
-                }}>
-                  Next Action
-                </p>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: '18px', 
-                  fontWeight: '600',
-                  color: '#333'
-                }}>
-                  {currentData.nextAction.type} {currentData.nextAction.time}
-                </p>
-              </div>
-              
-              <button style={{
-                padding: '12px 24px',
-                backgroundColor: '#3f51b5',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#303f9f'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#3f51b5'}>
-                Clock In Now
-              </button>
-            </div>
-          </div>
+          </section>
         )}
-        
-        {/* Recent Attendance */}
-        {userRole === 'employee' && (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-          }}>
-            <h2 style={{ 
-              margin: '0 0 16px 0', 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              color: '#333' 
-            }}>
-              Recent Attendance
-            </h2>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {currentData.recentAttendance.map((record, index) => (
-                <div key={index} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '12px 0',
-                  borderBottom: index !== currentData.recentAttendance.length - 1 ? '1px solid #f0f0f0' : 'none'
-                }}>
-                  <span style={{ fontSize: '16px', color: '#333' }}>
-                    {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                  </span>
-                  <StatusBadge status={record.status} />
-                </div>
+
+        {/* Pending leave requests */}
+        <section style={cardStyle}>
+          <h3 style={{ marginTop: 0 }}>Pending leave requests</h3>
+          {pendingLeaves.length === 0 ? (
+            <p>No pending requests.</p>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: colors.bg }}>
+                  <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Type</th>
+                  <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Days</th>
+                  <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Period</th>
+                  <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingLeaves.map(l => (
+                  <tr key={l.id}>
+                    <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}` }}>{l.type}</td>
+                    <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}` }}>{l.days}</td>
+                    <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}` }}>{l.start} → {l.end}</td>
+                    <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}`, color: colors.danger }}>{l.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+
+        {/* Recent attendance summary */}
+        <section style={cardStyle}>
+          <h3 style={{ marginTop: 0 }}>Attendance (last 5 days)</h3>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: colors.bg }}>
+                <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Date</th>
+                <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Clock‑in</th>
+                <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Clock‑out</th>
+                <th style={{ textAlign: "left", padding: 8, borderBottom: `1px solid ${colors.border}` }}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attendance.map((a, idx) => (
+                <tr key={idx}>
+                  <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}` }}>{a.date}</td>
+                  <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}` }}>{a.clock_in || "—"}</td>
+                  <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}` }}>{a.clock_out || "—"}</td>
+                  <td style={{ padding: 8, borderBottom: `1px solid ${colors.border}`, color: a.status === "present" ? colors.success : a.status === "late" ? colors.danger : colors.secondary }}>{a.status}</td>
+                </tr>
               ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Team Attendance Grid */}
-        {userRole === 'manager' && (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            gridColumn: '1 / -1'
-          }}>
-            <h2 style={{ 
-              margin: '0 0 16px 0', 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              color: '#333' 
-            }}>
-              Team Attendance Today
-            </h2>
-            
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-              gap: '16px' 
-            }}>
-              {currentData.teamAttendance.map(member => (
-                <div key={member.id} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '16px',
-                  backgroundColor: '#f9f9f9',
-                  borderRadius: '8px',
-                  border: '1px solid #eee'
-                }}>
-                  <span style={{ fontWeight: '500', color: '#333' }}>{member.name}</span>
-                  <StatusBadge status={member.status} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Pending Leaves */}
-        {userRole === 'manager' && (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-          }}>
-            <h2 style={{ 
-              margin: '0 0 16px 0', 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              color: '#333' 
-            }}>
-              Pending Leave Approvals
-            </h2>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {currentData.pendingLeaves.map(leave => (
-                <div key={leave.id} style={{
-                  padding: '16px',
-                  backgroundColor: '#fff8e1',
-                  borderRadius: '8px',
-                  border: '1px solid #ffecb3'
-                }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    marginBottom: '8px' 
-                  }}>
-                    <span style={{ fontWeight: '500', color: '#333' }}>{leave.employee}</span>
-                    <span style={{ 
-                      padding: '2px 8px', 
-                      backgroundColor: '#ffecb3', 
-                      borderRadius: '12px', 
-                      fontSize: '0.8rem',
-                      fontWeight: '500'
-                    }}>
-                      {leave.days} {leave.days === 1 ? 'day' : 'days'}
-                    </span>
-                  </div>
-                  <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '14px' }}>
-                    {leave.type}
-                  </p>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center' 
-                  }}>
-                    <span style={{ fontSize: '12px', color: '#999' }}>
-                      Submitted: {leave.submitted}
-                    </span>
-                    <button style={{
-                      padding: '6px 12px',
-                      backgroundColor: '#3f51b5',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}>
-                      Review
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Organization Metrics */}
-        {userRole === 'hr' && (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            gridColumn: '1 / -1'
-          }}>
-            <h2 style={{ 
-              margin: '0 0 16px 0', 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              color: '#333' 
-            }}>
-              Organization Metrics
-            </h2>
-            
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '24px' 
-            }}>
-              <div>
-                <p style={{ 
-                  margin: '0 0 8px 0', 
-                  color: '#666', 
-                  fontSize: '14px' 
-                }}>
-                  Overall Attendance Rate
-                </p>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: '32px', 
-                  fontWeight: '600',
-                  color: '#1a237e'
-                }}>
-                  {currentData.orgMetrics.attendanceRate}%
-                </p>
-              </div>
-              
-              <div>
-                <p style={{ 
-                  margin: '0 0 8px 0', 
-                  color: '#666', 
-                  fontSize: '14px' 
-                }}>
-                  Late Arrivals
-                </p>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: '32px', 
-                  fontWeight: '600',
-                  color: '#ef6c00'
-                }}>
-                  {currentData.orgMetrics.lateArrivals}%
-                </p>
-              </div>
-              
-              <div>
-                <p style={{ 
-                  margin: '0 0 8px 0', 
-                  color: '#666', 
-                  fontSize: '14px' 
-                }}>
-                  Leave Requests Today
-                </p>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: '32px', 
-                  fontWeight: '600',
-                  color: '#333'
-                }}>
-                  {currentData.orgMetrics.leaveRequests}
-                </p>
-              </div>
-              
-              <div>
-                <p style={{ 
-                  margin: '0 0 8px 0', 
-                  color: '#666', 
-                  fontSize: '14px' 
-                }}>
-                  Pending Approvals
-                </p>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: '32px', 
-                  fontWeight: '600',
-                  color: '#c62828'
-                }}>
-                  {currentData.orgMetrics.pendingApprovals}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Quick Actions */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-        }}>
-          <h2 style={{ 
-            margin: '0 0 16px 0', 
-            fontSize: '20px', 
-            fontWeight: '600', 
-            color: '#333' 
-          }}>
-            Quick Actions
-          </h2>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '16px' 
-          }}>
-            <QuickActionButton 
-              icon="⏱️" 
-              label="Clock In/Out" 
-              onClick={() => console.log('Navigate to clock interface')} 
-            />
-            <QuickActionButton 
-              icon="📅" 
-              label="View Calendar" 
-              onClick={() => console.log('Navigate to calendar')} 
-            />
-            <QuickActionButton 
-              icon="📝" 
-              label="Request Leave" 
-              onClick={() => console.log('Navigate to leave request')} 
-            />
-            <QuickActionButton 
-              icon="👤" 
-              label="My Profile" 
-              onClick={() => console.log('Navigate to profile')} 
-            />
-          </div>
-        </div>
-        
-        {/* Offline Sync Status */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-        }}>
-          <h2 style={{ 
-            margin: '0 0 16px 0', 
-            fontSize: '20px', 
-            fontWeight: '600', 
-            color: '#333' 
-          }}>
-            Sync Status
-          </h2>
-          
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            padding: '16px',
-            backgroundColor: '#e8f5e9',
-            borderRadius: '8px',
-            border: '1px solid #4caf50'
-          }}>
-            <div style={{ 
-              width: '12px', 
-              height: '12px', 
-              borderRadius: '50%', 
-              backgroundColor: '#4caf50',
-              marginRight: '12px'
-            }}></div>
-            <div>
-              <p style={{ 
-                margin: '0 0 4px 0', 
-                fontWeight: '500',
-                color: '#2e7d32'
-              }}>
-                Online & Synced
-              </p>
-              <p style={{ 
-                margin: 0, 
-                fontSize: '14px', 
-                color: '#666' 
-              }}>
-                0 queued operations
-              </p>
-            </div>
-          </div>
-          
-          <div style={{ marginTop: '20px' }}>
-            <p style={{ 
-              margin: '0 0 8px 0', 
-              color: '#666', 
-              fontSize: '14px' 
-            }}>
-              Last sync: Just now
-            </p>
-            <button style={{
-              padding: '8px 16px',
-              backgroundColor: '#f5f7fa',
-              color: '#333',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px',
-              cursor: 'pointer'
-            }}>
-              Force Sync
-            </button>
-          </div>
-        </div>
-      </div>
+            </tbody>
+          </table>
+        </section>
+
+        {/* Real‑time notifications feed */}
+        <section style={cardStyle}>
+          <h3 style={{ marginTop: 0 }}>Notifications</h3>
+          <ul style={{ listStyle: "none", padding: 0, maxHeight: 200, overflowY: "auto" }}>
+            {notifications.map(n => (
+              <li key={n.id} style={{ padding: 8, borderBottom: `1px solid ${colors.border}` }}>
+                <strong>{n.title}</strong> – {n.message}
+                <span style={{ float: "right", color: colors.secondary, fontSize: "0.9em" }}>{n.time}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </main>
     </div>
   );
 }

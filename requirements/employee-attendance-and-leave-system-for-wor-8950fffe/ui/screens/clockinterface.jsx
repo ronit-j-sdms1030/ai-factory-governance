@@ -1,219 +1,354 @@
 function ClockInterface() {
-  const [currentTime, setCurrentTime] = React.useState(new Date());
-  const [isClockingIn, setIsClockingIn] = React.useState(true);
+  // Mock employee data
+  const employee = {
+    id: 101,
+    employee_id: 'EMP-00101',
+    first_name: 'Alex',
+    last_name: 'Mendoza',
+    timezone: 'America/New_York',
+    facialVerificationEnabled: true // toggle to show camera UI
+  };
+
+  const [now, setNow] = React.useState(new Date());
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [location, setLocation] = React.useState('Office - New York');
+  const [history, setHistory] = React.useState([
+    { id: 1, type: 'Clock In', time: new Date(Date.now() - 8 * 3600 * 1000), status: 'present' },
+    { id: 2, type: 'Clock Out', time: new Date(Date.now() - 2 * 3600 * 1000), status: 'present' },
+    { id: 3, type: 'Clock In', time: new Date(Date.now() - 24 * 3600 * 1000), status: 'late' }
+  ]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showSuccessToast, setShowSuccessToast] = React.useState(false);
-  const [facialVerificationEnabled, setFacialVerificationEnabled] = React.useState(true);
-  const [offlineMode, setOfflineMode] = React.useState(false);
-  const [locationOverride, setLocationOverride] = React.useState(false);
-  const [capturedImage, setCapturedImage] = React.useState(null);
+  const [toast, setToast] = React.useState(null);
+  const [showCamera, setShowCamera] = React.useState(false);
 
   // Update time every second
   React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const handleClockInOut = () => {
+  // Listen for online/offline events
+  React.useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  const formatTime = (date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true,
+      timeZone: employee.timezone
+    }).format(date);
+  };
+
+  const lastAction = history[0];
+  const nextAction = lastAction && lastAction.type === 'Clock In' ? 'Clock Out' : 'Clock In';
+
+  const handleClock = () => {
     setIsSubmitting(true);
-    
-    // Simulate API call with 3-second timeout
+    // simulate 3‑second processing
     setTimeout(() => {
+      const newEntry = {
+        id: Date.now(),
+        type: nextAction,
+        time: new Date(),
+        status: nextAction === 'Clock In' ? 'present' : 'present'
+      };
+      setHistory([newEntry, ...history].slice(0, 3));
       setIsSubmitting(false);
-      setShowSuccessToast(true);
-      
-      // Hide toast after 3 seconds
-      setTimeout(() => {
-        setShowSuccessToast(false);
-      }, 3000);
+      setToast(`${newEntry.type} recorded at ${formatTime(newEntry.time)}`);
     }, 3000);
   };
 
   const handleCapture = () => {
-    // In a real app, this would capture from camera
-    setCapturedImage("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAiIHk9IjEwMCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzMzMyI+Q2FwdHVyZWQgSW1hZ2U8L3RleHQ+PC9zdmc+");
+    setToast('Face captured and verified');
+    // In real app we would send image to backend
   };
 
-  const toggleOfflineMode = () => {
-    setOfflineMode(!offlineMode);
+  const handleLocationOverride = () => {
+    const newLoc = prompt('Enter location description', location);
+    if (newLoc !== null) setLocation(newLoc);
   };
 
-  const toggleLocationOverride = () => {
-    setLocationOverride(!locationOverride);
-  };
+  // Simple toast component
+  const Toast = ({ message, onClose }) => (
+    <div style={styles.toast} onClick={onClose}>
+      {message}
+    </div>
+  );
+
+  // Spinner overlay
+  const Spinner = () => (
+    <div style={styles.spinnerOverlay}>
+      <div style={styles.spinner} />
+    </div>
+  );
+
+  // Sidebar navigation (static for demo)
+  const NavItem = ({ label, path }) => (
+    <div style={styles.navItem} onClick={() => alert(`Navigate to ${path}`)}>{label}</div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Success Toast */}
-      {showSuccessToast && (
-        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            Successfully clocked {isClockingIn ? 'in' : 'out'}!
+    <div style={styles.container}>
+      {/* Sidebar */}
+      <div style={styles.sidebar}>
+        <h2 style={styles.brand}>WorkPulse</h2>
+        <NavItem label="Dashboard" path="/" />
+        <NavItem label="Clock" path="/clock" />
+        <NavItem label="Attendance" path="/attendance" />
+        <NavItem label="Leave Request" path="/leave/request" />
+        <NavItem label="Team" path="/team" />
+        <NavItem label="Shifts" path="/shifts" />
+        <NavItem label="Policies" path="/policies" />
+        <NavItem label="Payroll" path="/payroll" />
+        <NavItem label="Sync" path="/sync" />
+        <NavItem label="Audit Logs" path="/admin/audit" />
+      </div>
+
+      {/* Main Content */}
+      <div style={styles.main}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>Clock {nextAction}</h1>
+          <div style={styles.statusBar}>
+            <span>{employee.first_name} {employee.last_name}</span>
+            <span style={styles.timeDisplay}>{formatTime(now)}</span>
+            {!isOnline && <span style={styles.offlineBadge}>Offline</span>}
           </div>
         </div>
-      )}
 
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">WorkPulse</h1>
-            <p className="text-sm text-gray-500">Attendance Management System</p>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-semibold text-indigo-600">
-              {currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
+        <div style={styles.content}>
+          {/* Large Clock Button */}
+          <button style={styles.clockButton} onClick={handleClock} disabled={isSubmitting}>
+            {isSubmitting ? 'Processing…' : nextAction}
+          </button>
+
+          {/* Manual location override */}
+          <button style={styles.locationButton} onClick={handleLocationOverride}>
+            Override Location ({location})
+          </button>
+
+          {/* Facial verification UI */}
+          {employee.facialVerificationEnabled && (
+            <div style={styles.faceSection}>
+              <h3 style={styles.subTitle}>Facial Verification</h3>
+              <div style={styles.cameraPlaceholder}>Camera feed (mock)</div>
+              <button style={styles.captureButton} onClick={handleCapture}>Capture</button>
             </div>
-            <div className="text-sm text-gray-500">
-              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} (IST)
-            </div>
-          </div>
-        </div>
-      </header>
+          )}
 
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Clock Section */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Clock In/Out</h2>
-                <p className="text-gray-600">Tap the button below to record your attendance</p>
-              </div>
-
-              <div className="flex flex-col items-center">
-                {/* Clock Button */}
-                <button
-                  onClick={handleClockInOut}
-                  disabled={isSubmitting}
-                  className={`w-64 h-64 rounded-full text-white font-bold text-2xl shadow-lg transform transition-all duration-200 flex items-center justify-center ${
-                    isSubmitting 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : isClockingIn 
-                        ? 'bg-green-500 hover:bg-green-600 hover:scale-105 active:scale-95' 
-                        : 'bg-red-500 hover:bg-red-600 hover:scale-105 active:scale-95'
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <div className="flex flex-col items-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-2"></div>
-                      <span>Processing...</span>
-                    </div>
-                  ) : (
-                    `Clock ${isClockingIn ? 'In' : 'Out'}`
-                  )}
-                </button>
-
-                <div className="mt-6 text-center">
-                  <p className="text-gray-600">
-                    Current Status: <span className="font-semibold text-green-600">Ready to Clock In</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Device Info */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Device Information</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Device:</span>
-                  <span className="font-medium">iPhone 14 Pro</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">OS:</span>
-                  <span className="font-medium">iOS 17.2</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">IP Address:</span>
-                  <span className="font-medium">192.168.1.42</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">GPS:</span>
-                  <span className="font-medium">12.9716° N, 77.5946° E</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Offline & Location Controls */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Connection Settings</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Offline Mode</div>
-                    <div className="text-sm text-gray-500">Records saved locally</div>
-                  </div>
-                  <button
-                    onClick={toggleOfflineMode}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      offlineMode ? 'bg-indigo-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        offlineMode ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Location Override</div>
-                    <div className="text-sm text-gray-500">For field workers</div>
-                  </div>
-                  <button
-                    onClick={toggleLocationOverride}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      locationOverride ? 'bg-indigo-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        locationOverride ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Facial Verification */}
-            {facialVerificationEnabled && (
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Facial Verification</h3>
-                <div className="aspect-video bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
-                  {capturedImage ? (
-                    <img src={capturedImage} alt="Captured" className="w-full h-full object-cover rounded-lg" />
-                  ) : (
-                    <div className="text-gray-500 text-center">
-                      <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                      </svg>
-                      <p className="mt-2">Camera Feed</p>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={handleCapture}
-                  className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                >
-                  Capture Image
-                </button>
-              </div>
-            )}
+          {/* Recent clock history */}
+          <div style={styles.historyBox}>
+            <h3 style={styles.subTitle}>Recent Activity</h3>
+            <table style={styles.historyTable}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Type</th>
+                  <th style={styles.th}>Time ({employee.timezone})</th>
+                  <th style={styles.th}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map(entry => (
+                  <tr key={entry.id}>
+                    <td style={styles.td}>{entry.type}</td>
+                    <td style={styles.td}>{formatTime(entry.time)}</td>
+                    <td style={styles.td}>{entry.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </main>
+      </div>
+
+      {/* Toast */}
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+
+      {/* Spinner */}
+      {isSubmitting && <Spinner />}
     </div>
   );
 }
+
+// Simple style object – using a limited colour palette (teal, slate, white)
+const styles = {
+  container: {
+    display: 'flex',
+    height: '100vh',
+    fontFamily: "'Segoe UI', Tahoma, Helvetica, Arial, sans-serif",
+    backgroundColor: '#f5f7fa'
+  },
+  sidebar: {
+    width: 200,
+    backgroundColor: '#0d6efd', // primary teal-like
+    color: '#fff',
+    padding: '20px',
+    boxSizing: 'border-box'
+  },
+  brand: {
+    margin: 0,
+    fontSize: '1.4rem',
+    marginBottom: '30px'
+  },
+  navItem: {
+    padding: '8px 0',
+    cursor: 'pointer',
+    fontSize: '0.95rem'
+  },
+  main: {
+    flexGrow: 1,
+    padding: '30px',
+    overflowY: 'auto'
+  },
+  header: {
+    marginBottom: '30px'
+  },
+  title: {
+    margin: 0,
+    fontSize: '2rem',
+    color: '#333'
+  },
+  statusBar: {
+    marginTop: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '15px',
+    fontSize: '0.95rem',
+    color: '#555'
+  },
+  timeDisplay: {
+    fontWeight: 'bold',
+    color: '#0d6efd'
+  },
+  offlineBadge: {
+    backgroundColor: '#dc3545',
+    color: '#fff',
+    borderRadius: '4px',
+    padding: '2px 6px',
+    fontSize: '0.8rem'
+  },
+  content: {
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: '20px',
+    maxWidth: '600px'
+  },
+  clockButton: {
+    padding: '20px',
+    fontSize: '1.5rem',
+    backgroundColor: '#0d6efd',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  },
+  locationButton: {
+    padding: '10px 15px',
+    fontSize: '0.95rem',
+    backgroundColor: '#6c757d',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer'
+  },
+  faceSection: {
+    marginTop: '20px',
+    padding: '15px',
+    border: '1px solid #dee2e6',
+    borderRadius: '6px',
+    backgroundColor: '#fff'
+  },
+  subTitle: {
+    margin: '0 0 10px 0',
+    fontSize: '1.2rem',
+    color: '#333'
+  },
+  cameraPlaceholder: {
+    width: '100%',
+    height: '180px',
+    backgroundColor: '#e9ecef',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#6c757d',
+    marginBottom: '10px',
+    borderRadius: '4px'
+  },
+  captureButton: {
+    padding: '8px 12px',
+    fontSize: '0.9rem',
+    backgroundColor: '#198754',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer'
+  },
+  historyBox: {
+    marginTop: '20px',
+    backgroundColor: '#fff',
+    padding: '15px',
+    borderRadius: '6px',
+    border: '1px solid #dee2e6'
+  },
+  historyTable: {
+    width: '100%',
+    borderCollapse: 'collapse'
+  },
+  th: {
+    textAlign: 'left',
+    borderBottom: '2px solid #dee2e6',
+    padding: '6px',
+    fontWeight: '600',
+    color: '#212529'
+  },
+  td: {
+    padding: '6px',
+    borderBottom: '1px solid #e9ecef',
+    color: '#495057'
+  },
+  toast: {
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    backgroundColor: '#0d6efd',
+    color: '#fff',
+    padding: '12px 20px',
+    borderRadius: '6px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+    cursor: 'pointer'
+  },
+  spinnerOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  },
+  spinner: {
+    width: '48px',
+    height: '48px',
+    border: '6px solid #dee2e6',
+    borderTopColor: '#0d6efd',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  }
+};
+
+// Add keyframes for spinner animation (inject into document head)
+(function addSpinnerKeyframes() {
+  const style = document.createElement('style');
+  style.innerHTML = `@keyframes spin { to { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
+})();

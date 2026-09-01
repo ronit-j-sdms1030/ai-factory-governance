@@ -1,8 +1,7 @@
-- Should the 'Offline/Sync' management screen be accessible to all users or only administrators? The BRD suggests it's a dedicated page but doesn't specify user permissions.
-- Is the conflict resolution interface for offline discrepancies accessible only to managers, or should HR also have access? The BRD mentions 'manager review flag' but HR may need oversight.
-- Should facial verification be a mandatory step for all clock-ins when enabled, or remain optional per employee preference? The BRD mentions 'optional facial verification' but doesn't specify enforcement.
-- Does the 'manual location override' for field workers require manager approval or simply employee acknowledgement? The BRD doesn't specify the workflow.
-- Should the attendance policy version selection for payroll exports default to 'latest active during period' or require explicit selection? The BRD mentions 'policy version used for calculations displayed' but not selection method.
-- Are shift assignments visible to employees in advance, or only on the day? The BRD mentions roster creation but not employee visibility timing.
-- Should the WebSocket real-time notifications include sound/audio alerts, or only visual? The BRD mentions 'real-time clock-in notifications' but not delivery method details.
-- Is there a requirement for managers to approve/reject leave requests within a specific timeframe before auto-approval? The BRD mentions approval workflow but not timing constraints.
+- What specific conflict resolution interface is needed for managers - should it be integrated into TeamManagement screen or separate?
+- Should facial verification be required or optional for all clock-ins when enabled? The BRD mentions 'optional facial verification' but doesn't specify user choice flow.
+- What constitutes 'timezone view' in attendance history - should it show converted times or just indicate which timezone was applied?
+- Are there any specific workflows for handling overnight shifts that cross midnight in the shift roster interface?
+- Should the payroll export CSV include employee names or only IDs as mentioned in BRD? The BRD says 'employee_id' but payroll might need names.
+- What is the expected behavior for 'location override button' - should field workers be able to set any location or choose from predefined options?
+- These screens could not be generated and need another pass: ShiftRoster, PolicyManagement, PayrollExport, FacialEnrollment, SyncManagement
