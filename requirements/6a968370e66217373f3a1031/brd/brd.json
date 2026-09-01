@@ -1,0 +1,310 @@
+{
+  "objective": "Build a mobile-first Damaged Stock Write-Off System enabling 40 warehouse staff across 3 retail sites to submit damage reports via reliable barcode scanning and photo capture even in poor warehouse conditions, with 8 supervisors approving 200 daily write-offs that synchronously deduct from SAP inventory and post to finance ledger. Rejected items remain in inventory with staff notifications for resubmission. System handles offline scenarios and maintains financial audit integrity.",
+  "architecture": "The system operates as a native Android application using Google ML Kit Barcode Scanning for reliable scanning under poor warehouse lighting and damaged barcodes, with a Progressive Web App fallback for iOS devices. Staff scan barcodes using the native Android camera with hardware-accelerated ML decoding. Photos are compressed and stored locally when offline, syncing to Azure Blob Storage via background service when connectivity returns. When submitting a write-off, the system immediately queries SAP's REST inventory API with 10-second caching to validate current stock, applying pessimistic locking by marking items as \"pending write-off\" in SAP to prevent phantom stock. Write-offs in PENDING status appear in supervisors' React dashboard via Azure App Service backend. Upon approval, the system executes a synchronous distributed transaction: first posting to SAP finance ledger, then immediately deducting from inventory via SAP's atomic transaction API. If SAP calls succeed, status changes to APPROVED; if either fails, status becomes APPROVED_SAP_FAILED with admin alerts via Azure Service Bus. Staff authenticate per-transaction using device biometrics (fingerprint/face) or QR badge scanning for shared devices, linked to Azure AD identities. Failed SAP integrations trigger immediate retry with dead-letter queueing. All data persistence uses Azure SQL Database with point-in-time recovery. Offline mode queues up to 50 write-offs locally with compressed photos.",
+  "architecture_diagram": "flowchart TD\n    StaffAndroid[\"Staff Android Device<br>Native App + ML Kit Barcode\"]\n    StaffiOS[\"Staff iOS Device<br>PWA Fallback\"]\n    \n    StaffAndroid -->|HTTPS POST| Backend[Azure App Service<br>.NET Core API]\n    StaffiOS -->|HTTPS POST| Backend\n    \n    Backend -->|Immediate Stock Check & Lock| SAP[SAP REST APIs<br>Inventory/Finance]\n    \n    StaffAndroid -->|Local Storage + Background Sync| Blob[Azure Blob Storage<br>Compressed Photos]\n    StaffiOS -->|Upload when online| Blob\n    \n    Backend -->|Store Metadata| SQL[Azure SQL Database<br>Transactional Store]\n    \n    Supervisor[\"Supervisor Browser<br>React Dashboard\"] -->|HTTPS GET/POST| Backend\n    \n    Backend -->|Synchronous Transaction| SAPFinance[SAP Finance API]\n    Backend -->|Synchronous Deduction| SAPInventory[SAP Inventory API]\n    \n    SQL -->|Change Feed| Monitor[Azure Monitor<br>Alerts/Logs]\n    \n    Backend -->|Failed Transaction Handling| ServiceBus[Azure Service Bus<br>Dead-Letter Queue]\n    \n    StaffAndroid -->|Biometric Auth| AzureAD[Azure AD B2C]\n    Supervisor -->|MFA| AzureAD",
+  "tech_stack": [
+    {
+      "layer": "Frontend - Mobile (Android)",
+      "choice": "Native Android App (Kotlin/Jetpack Compose)",
+      "rationale": "Native Android with Google ML Kit Barcode Scanning handles poor warehouse lighting, damaged barcodes, and angled scans via machine learning\u2014critical for primary use case. PWA was rejected due to unreliable HTML5 camera decoding in warehouse conditions. Limitation: Requires separate iOS PWA fallback and app store distribution management."
+    },
+    {
+      "layer": "Frontend - Mobile (iOS)",
+      "choice": "Progressive Web App (React)",
+      "rationale": "PWA serves as iOS fallback where native app distribution isn't prioritized, using HTML5 camera with manual entry fallback for damaged barcodes. Native iOS app rejected due to limited iOS device count in warehouses. Limitation: Barcode scanning reliability lower than Android native in poor conditions."
+    },
+    {
+      "layer": "Frontend - Dashboard",
+      "choice": "React 18 with Material UI",
+      "rationale": "React delivers the responsive supervisor dashboard needed for approval workflows with photo preview. Material UI provides accessible components out-of-the-box. Vue.js alternative rejected because existing Stark Digital patterns use React. Limitation: Supervisor training required for non-technical users."
+    },
+    {
+      "layer": "Backend/API",
+      "choice": ".NET Core 8 Web API",
+      "rationale": ".NET Core fits Stark Digital's enterprise environment with strong Azure integration, OAuth 2.0 support for SAP, and background service hosting. Java Spring Boot alternative rejected due to team expertise mismatch. Limitation: Cold start time on App Service consumption plan may delay initial API calls."
+    },
+    {
+      "layer": "Database",
+      "choice": "Azure SQL Database Standard S3",
+      "rationale": "Azure SQL provides point-in-time recovery essential for financial audit trails and integrates natively with Azure services. PostgreSQL was considered but rejected due to SAP integration patterns preferring SQL Server compatibility. Limitation: Cost scales with transaction volume beyond 200/day estimate."
+    },
+    {
+      "layer": "File Storage",
+      "choice": "Azure Blob Storage Cool Tier",
+      "rationale": "Cool Tier optimizes for photo storage where access frequency is low after approval. Storage accounts per site with geo-redundancy meet data sovereignty needs. AWS S3 alternative rejected due to Azure-first policy. Limitation: Photo retrieval latency (1-2 seconds) for approval review."
+    },
+    {
+      "layer": "Background Processing",
+      "choice": "Azure Functions Premium Plan",
+      "rationale": "Premium Plan provides VNET integration for SAP connectivity and handles offline photo sync and failed transaction retries. Azure WebJobs rejected due to scaling limitations. Limitation: Cold starts could delay background sync by up to ?, 30 seconds."
+    },
+    {
+      "layer": "Message Queue",
+      "choice": "Azure Service Bus Standard",
+      "rationale": "Service Bus provides dead-letter queuing for failed SAP posts essential for financial integrity and admin alerts for APPROVED_SAP_FAILED states. Storage Queues rejected due to lack of advanced retry patterns. Limitation: Additional cost for low-volume scenario (200 messages/day)."
+    },
+    {
+      "layer": "Hosting",
+      "choice": "Azure App Service Plan P1v3",
+      "rationale": "P1v3 provides dedicated compute for 48 users with auto-scaling headroom. Consumption plan rejected due to unpredictable performance for synchronous SAP transactions. Limitation: Fixed cost regardless of actual usage."
+    },
+    {
+      "layer": "Auth",
+      "choice": "Azure Active Directory B2C",
+      "rationale": "Azure AD B2C provides staff/supervisor role management with MFA capability for supervisors. Custom auth rejected due to security policy requirements. Limitation: Enhanced authentication flow needed for warehouse biometric/QR badge per-transaction auth."
+    },
+    {
+      "layer": "CI/CD",
+      "choice": "Azure DevOps Pipelines",
+      "rationale": "Azure DevOps integrates with Azure deployment targets and Stark Digital's existing pipelines. GitHub Actions alternative rejected due to enterprise policy. Limitation: Build agent capacity may need scaling for separate Android app build."
+    }
+  ],
+  "user_flow": [
+    "Staff launches native Android app on warehouse device",
+    "Staff authenticates per-transaction: fingerprint/face scan OR QR badge scan (shared devices without biometrics)",
+    "Staff navigates to 'New Write-Off' showing camera viewfinder with ML Kit barcode scanning active",
+    "Staff scans item barcode - ML Kit handles poor lighting, damaged barcodes, angled scans with high success rate",
+    "System immediately queries SAP inventory API (10-second cache) showing real-time stock, applies pessimistic lock marking item 'pending write-off' in SAP",
+    "Staff selects damage reason from dropdown: 'Water Damage', 'Crushed', 'Expired', 'Pest Damage', 'Other'",
+    "Staff selects severity tier: 'Tier 1 (0-10% value loss)', 'Tier 2 (11 30%)', 'Tier 3 (31-50%)', 'Tier 4 (51-100%)'",
+    "Staff captures 1-3 photos of damage - photos stored locally when offline, with adaptive compression (lower quality offline)",
+    "Staff submits write-off - system creates record with status PENDING, stores photos locally if offline",
+    "Offline scenario: Write-off queues locally (max 50), background service syncs when connectivity returns",
+    "Supervisor logs into React dashboard via desktop browser with MFA",
+    "Supervisor views 'Pending Approvals' grid showing site, staff, item, reason, severity, thumbnail",
+    "Supervisor clicks write-off to expand detail view showing full-size photos and real-time SAP item details",
+    "Supervisor approves or rejects with optional comment",
+    "If APPROVED: system executes synchronous distributed transaction - posts to SAP finance ledger then immediately deducts from inventory",
+    "If transaction succeeds: status changes to APPROVED with SAP document IDs",
+    "If transaction fails: status changes to APPROVED_SAP_FAILED, admin alerted via Service Bus",
+    "If REJECTED: system notifies original staff via in-app notification and email, releases SAP pessimistic lock, item remains in inventory",
+    "Staff can view their submission history with status indicators including APPROVED_SAP_FAILED for awareness"
+  ],
+  "data_model": [
+    {
+      "name": "WriteOff",
+      "fields": [
+        "Id",
+        "StaffId",
+        "SupervisorId",
+        "ItemGTIN",
+        "SiteCode",
+        "ReasonCode",
+        "SeverityTier",
+        "Status",
+        "SubmittedAt",
+        "ReviewedAt",
+        "ReviewComment",
+        "FinancePostingId",
+        "InventoryDeductionId",
+        "SAPLockId",
+        "OfflineQueueId"
+      ],
+      "description": "Core write-off transaction. Status values: PENDING, APPROVED, APPROVED_SAP_FAILED, REJECTED. SAPLockId tracks temporary pessimistic lock in SAP. OfflineQueueId tracks locally queued write-offs awaiting sync."
+    },
+    {
+      "name": "DamagePhoto",
+      "fields": [
+        "Id",
+        "WriteOffId",
+        "BlobUrl",
+        "FileName",
+        "FileSize",
+        "CapturedAt",
+        "ThumbnailUrl",
+        "LocalPath",
+        "SyncStatus",
+        "CompressionLevel"
+      ],
+      "description": "Photos with offline support. LocalPath stores device file path when offline. SyncStatus: UPLOADED, QUEUED_LOCAL, SYNC_FAILED. CompressionLevel: HIGH (online), MEDIUM (poor connectivity), LOW (offline)."
+    },
+    {
+      "name": "Staff",
+      "fields": [
+        "Id",
+        "Name",
+        "SiteCode",
+        "Role",
+        "Email",
+        "IsActive",
+        "LastLogin",
+        "BiometricId",
+        "BadgeQRHash"
+      ],
+      "description": "Warehouse staff users synced from Azure AD B2C. Role: STAFF or SUPERVISOR. BiometricId stores device biometric reference. BadgeQRHash stores hashed QR code for badge scanning auth."
+    },
+    {
+      "name": "ReasonCode",
+      "fields": [
+        "Code",
+        "Description",
+        "GLAccount",
+        "IsActive"
+      ],
+      "description": "Fixed damage reason codes with mapped SAP General Ledger accounts for finance posting."
+    },
+    {
+      "name": "AuditLog",
+      "fields": [
+        "Id",
+        "WriteOffId",
+        "Action",
+        "UserId",
+        "Timestamp",
+        "OldStatus",
+        "NewStatus",
+        "IPAddress",
+        "AuthMethod",
+        "DeviceId"
+      ],
+      "description": "Immutable audit trail for all status changes required for financial compliance. AuthMethod: BIOMETRIC, QR_BADGE, MFA. DeviceId tracks specific warehouse device."
+    },
+    {
+      "name": "OfflineQueue",
+      "fields": [
+        "Id",
+        "WriteOffId",
+        "StaffId",
+        "SiteCode",
+        "QueuedAt",
+        "LastSyncAttempt",
+        "SyncStatus",
+        "RetryCount"
+      ],
+      "description": "Manages offline write-offs awaiting sync to cloud. SyncStatus: QUEUED, SYNCING, SYNCED, FAILED. Maximum 50 queued per device enforced."
+    },
+    {
+      "name": "SAPTransactionLog",
+      "fields": [
+        "Id",
+        "WriteOffId",
+        "TransactionType",
+        "SAPRequest",
+        "SAPResponse",
+        "StatusCode",
+        "AttemptedAt",
+        "CompletedAt",
+        "ErrorDetail"
+      ],
+      "description": "Logs all SAP API calls for audit and reconciliation. TransactionType: INVENTORY_LOCK, FINANCE_POST, INVENTORY_DEDUCTION, LOCK_RELEASE."
+    }
+  ],
+  "db_schema_diagram": "erDiagram\n    WriteOff ||--o{ DamagePhoto : has\n    WriteOff ||--|| Staff : submitted_by\n    WriteOff ||--|| Staff : reviewed_by\n    WriteOff ||--|| ReasonCode : uses\n    WriteOff ||--o{ OfflineQueue : queued_in\n    WriteOff ||--o{ SAPTransactionLog : generates\n    WriteOff ||--o{ AuditLog : generates\n    Staff ||--o{ WriteOff : submits\n    Staff ||--o{ WriteOff : reviews\n    Staff ||--o{ OfflineQueue : creates\n    \n    WriteOff {\n        uuid Id PK\n        uuid StaffId FK\n        uuid SupervisorId FK\n        string ItemGTIN\n        string SiteCode\n        string ReasonCode\n        int SeverityTier\n        string Status\n        datetime SubmittedAt\n        datetime ReviewedAt\n        string ReviewComment\n        string FinancePostingId\n        string InventoryDeductionId\n        string SAPLockId\n        string OfflineQueueId\n    }\n    \n    DamagePhoto {\n        uuid Id PK\n        uuid WriteOffId FK\n        string BlobUrl\n        string FileName\n        int FileSize\n        datetime CapturedAt\n        string ThumbnailUrl\n        string LocalPath\n        string SyncStatus\n        string CompressionLevel\n    }\n    \n    Staff {\n        uuid Id PK\n        string Name\n        string SiteCode\n        string Role\n        string Email\n        boolean IsActive\n        datetime LastLogin\n        string BiometricId\n        string BadgeQRHash\n    }\n    \n    ReasonCode {\n        string Code PK\n        string Description\n        string GLAccount\n        boolean IsActive\n    }\n    \n    AuditLog {\n        uuid Id PK\n        uuid WriteOffId FK\n        string Action\n        uuid UserId\n        datetime Timestamp\n        string OldStatus\n        string NewStatus\n        string IPAddress\n        string AuthMethod\n        string DeviceId\n    }\n    \n    OfflineQueue {\n        uuid Id PK\n        uuid WriteOffId FK\n        uuid StaffId FK\n        string SiteCode\n        datetime QueuedAt\n        datetime LastSyncAttempt\n        string SyncStatus\n        int RetryCount\n    }\n    \n    SAPTransactionLog {\n        uuid Id PK\n        uuid WriteOffId FK\n        string TransactionType\n        string SAPRequest\n        string SAPResponse\n        int StatusCode\n        datetime AttemptedAt\n        datetime CompletedAt\n        string ErrorDetail\n    }",
+  "page_behavior": [
+    {
+      "page": "/android/writeoff/new",
+      "description": "Full-screen ML Kit barcode scanner optimized for warehouse conditions with real-time decoding feedback. Authentication overlay requiring fingerprint/face scan OR QR badge scanning before proceeding. Bottom toolbar: Scan Barcode (continuous ML scanning), Flash toggle, Manual Entry (damaged barcode fallback). On successful scan, transitions to item details showing real-time SAP stock with 'pending write-off' lock indicator. Reason dropdown with 5 options. Severity selector with 4 tiers. Photo capture with adaptive compression indicator (HIGH/MEDIUM/LOW based on connectivity). Submit button validates all fields - when offline shows 'Queued Locally' status with queue count (max 50)."
+    },
+    {
+      "page": "/android/history",
+      "description": "Tabular list sorted by SubmittedAt. Status badges: green APPROVED, orange APPROVED_SAP_FAILED, yellow PENDING, red REJECTED, blue QUEUED_OFFLINE. Tap row expands to show supervisor comment, SAP transaction status, and sync status for offline items. APPROVED_SAP_FAILED rows show retry button for admin use."
+    },
+    {
+      "page": "/dashboard/pending",
+      "description": "Supervisor dashboard with left filter: Site multi-select, Date range, Reason filter, Status filter (includes APPROVED_SAP_FAILED). Main grid columns: Site, Staff Name, Item, Reason, Severity, Status, Submitted Time, SAP Lock Status. Expand button shows photo carousel and real-time SAP item details. Approve/Reject buttons with comment - approval triggers synchronous SAP transaction with progress indicator."
+    },
+    {
+      "page": "/dashboard/approved",
+      "description": "Grid showing APPROVED and APPROVED_SAP_FAILED write-offs separately. Columns: Approval Time, Supervisor, Finance Document ID (hyperlink), Inventory Adjustment ID, SAP Transaction Status, Item, Value. Filter by SAP failure status. Export CSV includes transaction error details for failed items."
+    },
+    {
+      "page": "/dashboard/reports",
+      "description": "Chart.js visualizations: Daily write-offs by site and status (stacked bar), Write-offs by reason code (pie), Severity distribution, SAP failure rate over time (line chart). Date range selector with 'Include offline periods' checkbox. Export as PNG with transaction status annotations."
+    }
+  ],
+  "security_design": [
+    "Azure AD B2C authentication with role-based claims: staff@starkdigital.com gets 'Staff' role, supervisor@starkdigital.com gets 'Staff' and 'Supervisor' roles",
+    "Supervisor actions require MFA via Microsoft Authenticator app during login",
+    "Per-transaction authentication on Android devices: fingerprint/face biometrics tied to Azure AD identity via FIDO2, OR QR badge scanning linking physical badge to digital identity for shared devices without biometrics",
+    "Biometric data stored only in device Secure Enclave, never transmitted to backend",
+    "QR badges contain cryptographically signed tokens refreshed daily, scanned via app camera to authenticate staff without biometric capability",
+    "All API calls require Bearer token validation with issuer check against Azure AD B2C tenant",
+    "Photo uploads use time-limited SAS tokens (15 minute expiry) scoped to write-off-specific container",
+    "SAP integration uses OAuth 2.0 client credentials flow with certificate-based authentication (not secrets)",
+    "Database connection strings stored in Azure Key Vault with managed identity access",
+    "Audit logs record IP address, user agent, authentication method (BIOMETRIC/QR_BADGE/MFA), and device ID for all transactions",
+    "GDPR compliance: All photos automatically deleted after 7 years via Blob Storage lifecycle policy, local device photos wiped on sync completion",
+    "Network security: Azure App Service with VNET integration for SAP connectivity, no public SAP endpoints",
+    "Data encryption: Azure SQL Transparent Data Encryption at rest, TLS 1.2 for all transit, local device storage encrypted via Android Keystore"
+  ],
+  "deployment_and_operations": [
+    "Three environments: DEV (Azure West Europe), UAT (Azure West Europe), PROD (Azure UK South with geo-redundancy)",
+    "CI/CD: Azure DevOps pipeline with stages: Build (.NET Core + React + Android app), Test (unit + integration tests with SAP mock + offline scenario tests), Deploy to DEV, Manual approval gate, Deploy to UAT, 48-hour soak test, Deploy to PROD",
+    "Android app distribution: Google Play Store internal track for warehouse devices with mandatory update policy",
+    "Database migrations: Entity Framework migrations applied via pipeline with rollback script on failure",
+    "Monitoring: Azure Application Insights with custom telemetry for: Write-off submission rate, SAP API latency and failure rate, Offline queue size per device, Barcode scan success rate by lighting condition, Biometric vs QR badge authentication ratio",
+    "Alerting: PagerDuty integration for: SAP integration downtime >5 minutes, Offline queue >80% capacity on any device, APPROVED_SAP_FAILED count >10 in 1 hour, Barcode scan success rate <70%",
+    "Backup: Azure SQL automated backups (full daily + log every 5 minutes) with 35-day retention, Blob Storage soft delete enabled with 14-day retention",
+    "Disaster recovery: PROD environment replicated to Azure North Europe secondary region with 15-minute RPO via SQL geo-replication, SAP offline procedure documented for extended outages",
+    "Scaling: App Service auto-scales from 1 to 5 instances on CPU >70% sustained 5 minutes, scales down on <30% for 30 minutes",
+    "Maintenance window: Sundays 02:00-04:00 UTC announced via Teams channel 24h prior, SAP maintenance windows coordinated with warehouse shift schedules",
+    "Patch management: Azure Update Management for OS patches, Android app updates pushed via Play Store with 7-day staged rollout"
+  ],
+  "timeline": [
+    {
+      "phase": "Foundation & SAP Integration",
+      "duration": "3 weeks",
+      "description": "Setup Azure resources (SQL, App Service, Blob Storage, Service Bus). Implement SAP REST client with OAuth 2.0 certificate auth and synchronous transaction pattern (finance + inventory). Create database schema with offline queue and transaction log tables. Build .NET Core Web API with authentication middleware supporting biometric/QR badge claims."
+    },
+    {
+      "phase": "Native Android App Development",
+      "duration": "2.5 weeks",
+      "description": "Build Kotlin/Jetpack Compose Android app with Google ML Kit Barcode Scanning integration. Implement per-transaction biometric authentication via Android BiometricPrompt API. Develop QR badge scanning for shared devices. Create offline storage with local photo compression and queue management (max 50). Build background sync service for connectivity restoration."
+    },
+    {
+      "phase": "Supervisor Dashboard & iOS PWA Fallback",
+      "duration": "2 weeks",
+      "description": "Build React dashboard with Material UI supporting APPROVED_SAP_FAILED status handling. Implement photo carousel and synchronous approval progress indicator. Create iOS PWA fallback with HTML5 camera and manual entry. Develop reporting with SAP transaction failure analytics."
+    },
+    {
+      "phase": "Security & Offline Operations",
+      "duration": "1.5 weeks",
+      "description": "Implement Azure AD B2C integration with biometric/QR badge claim extensions. Configure Key Vault for secrets. Setup audit logging with authentication method tracking. Develop offline exception procedures and SAP outage handling documentation. Perform penetration testing focusing on offline data integrity."
+    },
+    {
+      "phase": "UAT & Warehouse Device Preparation",
+      "duration": "2 weeks",
+      "description": "Deploy to UAT environment. Prepare 10 pilot Android devices with biometric enrollment and QR badge issuance. Train 5 pilot users at Site 1 including offline scenarios. Gather feedback on barcode scanning success in actual warehouse conditions. Adjust ML Kit parameters based on lighting feedback. Prepare deployment runbooks and support documentation for all failure states."
+    },
+    {
+      "phase": "Rollout & SAP Coordination",
+      "duration": "1.5 weeks",
+      "description": "Gradual rollout to Sites 2 and 3 with device staging. Coordinate with SAP team on pessimistic locking implementation and synchronous transaction API. Conduct final finance audit trail validation. Establish ongoing monitoring and alert response procedures."
+    }
+  ],
+  "assumptions": [
+    "SAP provides REST APIs for: inventory lookup with pessimistic locking (POST /api/inventory/lock), finance posting (POST /api/finance/ledger), and synchronous inventory deduction (POST /api/inventory/deduct) with OAuth 2.0 support",
+    "SAP provides 99.5% uptime SLA with 4h advance notice for maintenance windows",
+    "Warehouse Android devices support fingerprint or facial recognition biometrics, or QR badges will be issued for shared devices",
+    "Google ML Kit Barcode Scanning handles typical warehouse conditions: low light (50 lux minimum), angled scans up to 45 degrees, partially damaged barcodes with up to 30% occlusion",
+    "Network connectivity in warehouses supports 3G minimum for metadata sync, but offline operation expected in freezer/loading dock areas",
+    "Finance GL accounts are pre-configured in SAP: 5100 for inventory loss, mapped by reason code",
+    "Maximum 200 write-offs per day distributed across 8 working hours (25/hour peak)",
+    "Photos are evidentiary only - no AI damage detection required",
+    "SAP supports temporary 'pending write-off' locks with 30-minute automatic release timeout",
+    "Azure UK South region meets data sovereignty requirements for all 3 UK sites",
+    "Warehouse staff will carry issued QR badges for authentication on shared devices without biometrics",
+    "Maximum 50 write-offs can be queued offline per device based on typical device storage capacity"
+  ],
+  "open_questions": [
+    "SAP synchronous transaction API: Need confirmation if SAP supports atomic finance+inventory posting or requires separate calls with compensation logic",
+    "SAP pessimistic locking mechanism: Need detailed specification of how items are marked 'pending write-off' and timeout behavior",
+    "Biometric enrollment process: How to enroll 40 warehouse staff fingerprints/faces on shared devices? Need clear hygiene and privacy policy",
+    "QR badge issuance and security: Who manufactures badges, replacement process for lost badges, cryptographic signing infrastructure",
+    "Offline queue limits: Is 50 write-offs sufficient for weekend SAP maintenance? May need adjustable limit based on device storage",
+    "SAP maintenance coordination: Procedure for notifying system of planned SAP downtime to switch to offline approval mode",
+    "Severity tier financial impact: Finance team must provide exact percentage-to-value mapping for each tier",
+    "Barcode scanning fallback: Manual GTIN entry UI flow for completely destroyed barcodes needs design",
+    "Supervisor coverage: What happens when all supervisors are offline? Need escalation path to site manager",
+    "Value threshold: Should write-offs above \u00a3500 require additional finance manager approval?",
+    "ML Kit performance tuning: Need warehouse lighting samples to configure ML Kit for optimal scan rates",
+    "Android device standardization: Minimum Android version and camera specification required for reliable ML Kit scanning",
+    "Unresolved design review finding (high, architecture): The synchronous distributed transaction approach will fail during SAP maintenance or network instability. The design calls for 'synchronous distributed transaction: first posting to SAP finance ledger, then immediately deducting from inventory via SAP's atomic transaction API.' In real warehouse operations, SAP maintenance windows (4h advance notice per assumptions) and network connectivity issues will cause transaction failures. When SAP finance posting succeeds but inventory deduction fails (or vice versa), you get APPROVED_SAP_FAILED states requiring manual reconciliation - this violates the requirement for 'accurate inventory management and finance reporting' as financial and inventory records will diverge. Suggested fix: Replace with compensation-based approach: post finance transaction asynchronously, then if deduction fails, reverse finance posting. Use Azure Service Bus for reliable messaging with retry policies, maintaining eventual consistency rather than synchronous atomicity.",
+    "Unresolved design review finding (high, tech_stack): The dual Android/iOS approach will fail in real warehouse operations due to inconsistent user experience and performance. Warehouse staff across 3 sites will have different scanning reliability: Android gets ML Kit with hardware acceleration, iOS gets HTML5 camera with 'lower reliability.' This creates unequal productivity, training burden, and potential data quality issues as iOS users may resort to manual entry for damaged barcodes. The requirement states 'warehouse staff can scan barcodes' - not specifying different success rates by device type. Suggested fix: Either standardize on Android devices (purchase hardware for all sites) or implement native iOS app with ML Kit equivalent (Apple's Vision framework). Do not accept degraded capability for a user class.",
+    "Unresolved design review finding (high, security_design): Per-transaction biometric authentication will fail in warehouse conditions. Warehouse staff wear gloves (safety requirement), have wet/dirty hands from handling stock, and work in freezer areas where fingerprint readers fail. The design assumes 'fingerprint/face biometrics' but real conditions render biometrics unreliable. QR badges become single point of failure - lost/stolen badges create security incidents with no immediate revocation mechanism (badges 'refreshed daily'). Suggested fix: Implement badge+PIN authentication for warehouse conditions. Use proximity badges with PIN entry on shared devices, with immediate revocation capability in Azure AD.",
+    "Unresolved design review finding (high, assumptions): The SAP API assumption is dangerously optimistic and will cause system failure at go-live. The design assumes SAP provides 'synchronous inventory deduction via SAP's atomic transaction API' and 'pessimistic locking by marking items as pending write-off.' In real SAP ECC/S4HANA deployments, inventory adjustments typically use BAPI/IDOC interfaces with asynchronous processing, not REST APIs with atomic transactions. The 'pending write-off' lock concept likely doesn't exist in SAP MM inventory management. Suggested fix: Validate actual SAP interfaces: Use BAPI_GOODSMVT_CREATE for inventory movements and BAPI_ACC_DOCUMENT_POST for finance postings, with compensation logic for failures. Design for asynchronous IDOC processing with confirmation handling.",
+    "Unresolved design review finding (medium, non_functional_requirements): The 200 write-offs/day scale estimate ignores real peak loads that will cause system failure. During warehouse stocktakes, end-of-day damage reporting, or after receiving shipments, write-off volumes can spike to 100+ per hour. The 25/hour peak assumption in architecture doesn't match real warehouse behavior where staff batch-process damaged items. Synchronous SAP calls at peak load will time out, creating APPROVED_SAP_FAILED backlog. Suggested fix: Design for 3x peak load (75/hour) with asynchronous processing and queue-based SAP integration. Implement rate limiting on SAP calls with exponential backoff.",
+    "Unresolved design review finding (medium, data_model): The data model cannot deliver promised offline capability for photo evidence. DamagePhoto table includes 'ThumbnailUrl' and 'BlobUrl' fields that require cloud storage. When offline, thumbnails cannot be generated for supervisor review (supervisors need dashboard access). The design states supervisors review 'thumbnail' in dashboard - this fails during SAP/maintenance outages when system is in offline mode but supervisors still need to approve. Suggested fix: Include thumbnail generation in mobile app for offline scenarios, storing base64-encoded thumbnails in OfflineQueue table for supervisor review during outages.",
+    "Unresolved design review finding (medium, user_flow): The 'immediate SAP inventory query with 10-second caching' will fail during warehouse receiving operations. When multiple staff scan same damaged item simultaneously (common during unpacking), the cache shows stale inventory. Pessimistic locking requires immediate SAP call, not cached data. In real warehouses, staff work in teams - two people might scan same crushed box, creating duplicate pending write-offs. Suggested fix: Remove caching for inventory validation. Implement real-time SAP lock with immediate failure if item already locked. Add client-side duplicate detection by item+timestamp."
+  ]
+}

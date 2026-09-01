@@ -1,0 +1,97 @@
+erDiagram
+    WriteOff ||--o{ DamagePhoto : has
+    WriteOff ||--|| Staff : submitted_by
+    WriteOff ||--|| Staff : reviewed_by
+    WriteOff ||--|| ReasonCode : uses
+    WriteOff ||--o{ OfflineQueue : queued_in
+    WriteOff ||--o{ SAPTransactionLog : generates
+    WriteOff ||--o{ AuditLog : generates
+    Staff ||--o{ WriteOff : submits
+    Staff ||--o{ WriteOff : reviews
+    Staff ||--o{ OfflineQueue : creates
+    
+    WriteOff {
+        uuid Id PK
+        uuid StaffId FK
+        uuid SupervisorId FK
+        string ItemGTIN
+        string SiteCode
+        string ReasonCode
+        int SeverityTier
+        string Status
+        datetime SubmittedAt
+        datetime ReviewedAt
+        string ReviewComment
+        string FinancePostingId
+        string InventoryDeductionId
+        string SAPLockId
+        string OfflineQueueId
+    }
+    
+    DamagePhoto {
+        uuid Id PK
+        uuid WriteOffId FK
+        string BlobUrl
+        string FileName
+        int FileSize
+        datetime CapturedAt
+        string ThumbnailUrl
+        string LocalPath
+        string SyncStatus
+        string CompressionLevel
+    }
+    
+    Staff {
+        uuid Id PK
+        string Name
+        string SiteCode
+        string Role
+        string Email
+        boolean IsActive
+        datetime LastLogin
+        string BiometricId
+        string BadgeQRHash
+    }
+    
+    ReasonCode {
+        string Code PK
+        string Description
+        string GLAccount
+        boolean IsActive
+    }
+    
+    AuditLog {
+        uuid Id PK
+        uuid WriteOffId FK
+        string Action
+        uuid UserId
+        datetime Timestamp
+        string OldStatus
+        string NewStatus
+        string IPAddress
+        string AuthMethod
+        string DeviceId
+    }
+    
+    OfflineQueue {
+        uuid Id PK
+        uuid WriteOffId FK
+        uuid StaffId FK
+        string SiteCode
+        datetime QueuedAt
+        datetime LastSyncAttempt
+        string SyncStatus
+        int RetryCount
+    }
+    
+    SAPTransactionLog {
+        uuid Id PK
+        uuid WriteOffId FK
+        string TransactionType
+        string SAPRequest
+        string SAPResponse
+        int StatusCode
+        datetime AttemptedAt
+        datetime CompletedAt
+        string ErrorDetail
+    }

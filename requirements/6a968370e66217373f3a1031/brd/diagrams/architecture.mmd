@@ -1,0 +1,25 @@
+flowchart TD
+    StaffAndroid["Staff Android Device<br>Native App + ML Kit Barcode"]
+    StaffiOS["Staff iOS Device<br>PWA Fallback"]
+    
+    StaffAndroid -->|HTTPS POST| Backend[Azure App Service<br>.NET Core API]
+    StaffiOS -->|HTTPS POST| Backend
+    
+    Backend -->|Immediate Stock Check & Lock| SAP[SAP REST APIs<br>Inventory/Finance]
+    
+    StaffAndroid -->|Local Storage + Background Sync| Blob[Azure Blob Storage<br>Compressed Photos]
+    StaffiOS -->|Upload when online| Blob
+    
+    Backend -->|Store Metadata| SQL[Azure SQL Database<br>Transactional Store]
+    
+    Supervisor["Supervisor Browser<br>React Dashboard"] -->|HTTPS GET/POST| Backend
+    
+    Backend -->|Synchronous Transaction| SAPFinance[SAP Finance API]
+    Backend -->|Synchronous Deduction| SAPInventory[SAP Inventory API]
+    
+    SQL -->|Change Feed| Monitor[Azure Monitor<br>Alerts/Logs]
+    
+    Backend -->|Failed Transaction Handling| ServiceBus[Azure Service Bus<br>Dead-Letter Queue]
+    
+    StaffAndroid -->|Biometric Auth| AzureAD[Azure AD B2C]
+    Supervisor -->|MFA| AzureAD
