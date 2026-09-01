@@ -1,5 +1,6 @@
-- Shift Roster page: should the drag‑drop interface allow assigning the same shift to multiple employees across multiple days in one action (bulk drag), or is it limited to one employee per drag? Clarify expected bulk assignment UX.
-- Payroll Export page: does the user select a specific AttendancePolicy version to apply, or should the system automatically apply the version that was effective for the selected month and only display it for reference?
-- Leave Approvals page: is there a requirement for bulk approve/reject actions, or are approvals always handled one‑by‑one with comment entry?
-- Dashboard offline indicator: should the sync queue count be displayed as a numeric badge globally, or within each role‑specific widget?
-- These screens could not be generated and need another pass: Dashboard, Clock In/Out, Attendance History, Leave Approvals, Shift Roster, Policy Management, Payroll Export, Audit Trail, Offline Sync Manager
+- Attendance History: Should the timezone view toggle switch the entire calendar to display dates in a selected timezone, or just annotate each day with the applied timezone?
+- Leave Approvals: For the conflict resolution interface, what specific data points (e.g., clock timestamps, GPS, device info) need to be displayed to aid manager decisions?
+- Shift Roster: Is the drag‑drop assignment limited to one employee per drag operation, or should bulk multi‑select drag be supported?
+- Policy Configuration: When creating a new policy version, is there a requirement for a “clone from previous version” option?
+- Facial Enrollment: Should the consent agreement be a separate modal per jurisdiction, or a dynamically loaded text block based on the employee's location?
+- These screens could not be generated and need another pass: Login, EmployeeDashboard, AttendanceHistory, LeaveRequestForm, LeaveApprovalsQueue, ShiftRosterManagement, PolicyConfiguration, PayrollExport, AuditTrailViewer, OfflineSyncManager

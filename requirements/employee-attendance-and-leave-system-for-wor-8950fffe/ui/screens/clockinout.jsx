@@ -1,407 +1,270 @@
-function ClockInOut() {
-  const [currentTime, setCurrentTime] = React.useState(new Date());
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showToast, setShowToast] = React.useState(false);
-  const [toastMessage, setToastMessage] = React.useState('');
-  const [showCamera, setShowCamera] = React.useState(false);
-  const [showGPSInput, setShowGPSInput] = React.useState(false);
-  const [manualGPS, setManualGPS] = React.useState({ lat: '', lng: '' });
-  const [syncStatus, setSyncStatus] = React.useState('synced'); // synced, pending, conflict
-  const [deviceInfo, setDeviceInfo] = React.useState({
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    language: navigator.language
-  });
+function ClockInOutScreen() {
+  // Mock employee data (would normally come from context/auth)
+  const employee = {
+    id: 42,
+    employee_id: "E-0042",
+    first_name: "Maya",
+    last_name: "Patel",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone, // use browser tz
+    facial_enrolled: true,
+  };
 
+  // State management
+  const [now, setNow] = React.useState(new Date());
+  const [isClockedIn, setIsClockedIn] = React.useState(false);
+  const [online, setOnline] = React.useState(navigator.onLine);
+  const [showSpinner, setShowSpinner] = React.useState(false);
+  const [toast, setToast] = React.useState(null); // {type: 'success'|'error', message}
+  const [faceStatus, setFaceStatus] = React.useState({verified: false, checking: false});
+  const [gps, setGps] = React.useState({lat: null, lng: null, fetched: false});
+  const [queue, setQueue] = React.useState(() => JSON.parse(localStorage.getItem('offlineQueue')||'[]'));
+
+  // Update clock every second
   React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
+  // Listen to online/offline events
+  React.useEffect(() => {
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
     return () => {
-      clearInterval(timer);
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
     };
   }, []);
 
-  const formatTime = (date) => {
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true 
-    });
+  // Helper: format time in employee timezone
+  const fmt = (date) => {
+    try {
+      return date.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: employee.timezone});
+    } catch {
+      return date.toLocaleTimeString();
+    }
   };
 
-  const formatDate = (date) => {
-    return date.toLocaleDateString([], { 
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  // Device info & IP (mocked)
+  const deviceInfo = navigator.userAgent;
+  const ipAddress = "203.0.113.42"; // static mock value
+
+  // GPS handling
+  const fetchGps = () => {
+    if (!navigator.geolocation) {
+      setToast({type: 'error', message: 'Geolocation not supported in this browser.'});
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGps({lat: pos.coords.latitude.toFixed(5), lng: pos.coords.longitude.toFixed(5), fetched: true});
+        setToast({type: 'success', message: 'Location captured.'});
+      },
+      (err) => {
+        setToast({type: 'error', message: 'Unable to get location: ' + err.message});
+      }
+    );
   };
 
-  const handleClockIn = async () => {
-    setIsSubmitting(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    setIsSubmitting(false);
-    setToastMessage(`Clocked in at ${formatTime(new Date())}`);
-    setShowToast(true);
-    
-    // Auto-hide toast after 3 seconds
-    setTimeout(() => setShowToast(false), 3000);
+  // Facial verification (simulated)
+  const videoRef = React.useRef(null);
+  const canvasRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (employee.facial_enrolled && videoRef.current) {
+      navigator.mediaDevices.getUserMedia({video: true})
+        .then(stream => { videoRef.current.srcObject = stream; })
+        .catch(() => setToast({type: 'error', message: 'Camera access denied'}));
+    }
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, []);
+
+  const captureFace = () => {
+    if (!videoRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    setFaceStatus({verified: false, checking: true});
+    // Simulate async liveness check (2s)
+    setTimeout(() => {
+      const success = Math.random() > 0.2; // 80% pass
+      setFaceStatus({verified: success, checking: false});
+      setToast({type: success ? 'success' : 'error', message: success ? 'Face verified' : 'Liveness check failed'});
+    }, 2000);
   };
 
-  const handleClockOut = async () => {
-    setIsSubmitting(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    setIsSubmitting(false);
-    setToastMessage(`Clocked out at ${formatTime(new Date())}`);
-    setShowToast(true);
-    
-    // Auto-hide toast after 3 seconds
-    setTimeout(() => setShowToast(false), 3000);
+  // Submit handler (clock in/out)
+  const handleClock = () => {
+    const operation = isClockedIn ? 'clock_out' : 'clock_in';
+    const payload = {
+      employee_id: employee.id,
+      operation,
+      timestamp: now.toISOString(),
+      device_info: deviceInfo,
+      ip_address: ipAddress,
+      gps_coordinates: gps.fetched ? `${gps.lat},${gps.lng}` : null,
+      facial_verified: faceStatus.verified,
+      timezone_applied: employee.timezone,
+    };
+
+    // Show spinner (max 3s)
+    setShowSpinner(true);
+    const finish = (success, message) => {
+      setShowSpinner(false);
+      setToast({type: success ? 'success' : 'error', message});
+    };
+
+    if (online) {
+      // Simulate network latency 1-2s
+      setTimeout(() => {
+        // Random success/failure simulation
+        const ok = Math.random() > 0.1; // 90% success
+        if (ok) {
+          setIsClockedIn(!isClockedIn);
+          finish(true, `Successfully ${operation.replace('_',' ')}ed at ${fmt(now)}`);
+        } else {
+          finish(false, 'Server error – try again');
+        }
+      }, 1500);
+    } else {
+      // Offline: store locally
+      const offlineOp = {
+        id: Date.now(),
+        employee_id: employee.id,
+        operation,
+        operation_data: payload,
+        local_timestamp: now.toISOString(),
+        device_info: deviceInfo,
+        sync_status: 'pending',
+      };
+      const newQueue = [...queue, offlineOp];
+      setQueue(newQueue);
+      localStorage.setItem('offlineQueue', JSON.stringify(newQueue));
+      setIsClockedIn(!isClockedIn);
+      finish(true, `Offline ${operation.replace('_',' ')} recorded – will sync when online.`);
+    }
   };
 
-  const toggleCamera = () => {
-    setShowCamera(!showCamera);
-  };
+  // UI components
+  const Badge = ({online}) => (
+    <span style={{
+      padding: '4px 8px',
+      borderRadius: '12px',
+      backgroundColor: online ? '#28a745' : '#dc3545',
+      color: 'white',
+      fontSize: '0.85rem',
+    }}>{online ? 'Online' : 'Offline'}</span>
+  );
 
-  const toggleGPSInput = () => {
-    setShowGPSInput(!showGPSInput);
-  };
+  const Spinner = () => (
+    <div style={{marginTop: 12}}>
+      <div className="spinner" style={{
+        width: 24,
+        height: 24,
+        border: '4px solid #f3f3f3',
+        borderTop: '4px solid #007bff',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+      }} />
+    </div>
+  );
 
-  const handleGPSChange = (e) => {
-    const { name, value } = e.target;
-    setManualGPS(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const Toast = ({msg}) => (
+    <div style={{
+      position: 'fixed',
+      bottom: 20,
+      right: 20,
+      backgroundColor: msg.type === 'success' ? '#28a745' : '#dc3545',
+      color: 'white',
+      padding: '12px 20px',
+      borderRadius: 4,
+      boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+    }}>{msg.message}</div>
+  );
 
-  const submitGPS = () => {
-    console.log('Manual GPS submitted:', manualGPS);
-    setShowGPSInput(false);
-  };
+  // Styles
+  const containerStyle = {fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', maxWidth: 600, margin: '40px auto', padding: 20, border: '1px solid #e0e0e0', borderRadius: 8, backgroundColor: '#fafafa'};
+  const headerStyle = {display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24};
+  const timeStyle = {fontSize: '2.5rem', fontWeight: 300, color: '#333'};
+  const btnStyle = {padding: '12px 24px', fontSize: '1rem', fontWeight: 'bold', borderRadius: 6, border: 'none', cursor: 'pointer', width: '100%'};
+  const primaryBtn = {...btnStyle, backgroundColor: '#007bff', color: 'white'};
+  const secondaryBtn = {...btnStyle, backgroundColor: '#6c757d', color: 'white'};
+  const sectionStyle = {marginTop: 24};
+  const videoStyle = {width: '100%', maxWidth: 300, borderRadius: 4, backgroundColor: '#000'};
 
   return (
-    <div style={styles.container}>
+    <div style={containerStyle}>
       {/* Header */}
-      <div style={styles.header}>
-        <h1 style={styles.title}>WorkPulse Attendance</h1>
-        <div style={styles.statusBar}>
-          <div style={{...styles.badge, backgroundColor: isOnline ? '#4CAF50' : '#F44336'}}>
-            {isOnline ? 'Online' : 'Offline'}
-          </div>
-          <div style={{...styles.badge, backgroundColor: 
-            syncStatus === 'synced' ? '#4CAF50' : 
-            syncStatus === 'pending' ? '#FF9800' : '#F44336'
-          }}>
-            {syncStatus === 'synced' ? 'Synced' : 
-             syncStatus === 'pending' ? 'Pending Sync' : 'Conflict'}
-          </div>
-        </div>
+      <div style={headerStyle}>
+        <h2 style={{margin:0}}>WorkPulse – Attendance</h2>
+        <Badge online={online} />
       </div>
 
-      {/* Main Content */}
-      <div style={styles.content}>
-        {/* Time Display */}
-        <div style={styles.timeSection}>
-          <div style={styles.dateDisplay}>{formatDate(currentTime)}</div>
-          <div style={styles.timeDisplay}>{formatTime(currentTime)}</div>
-          <div style={styles.timezone}>IST (UTC+5:30)</div>
-        </div>
-
-        {/* Clock Buttons */}
-        <div style={styles.buttonContainer}>
-          <button 
-            onClick={handleClockIn}
-            disabled={isSubmitting}
-            style={{
-              ...styles.clockButton,
-              backgroundColor: '#4CAF50',
-              marginRight: '20px'
-            }}
-          >
-            {isSubmitting ? (
-              <div style={styles.spinner}></div>
-            ) : (
-              'CLOCK IN'
-            )}
-          </button>
-          
-          <button 
-            onClick={handleClockOut}
-            disabled={isSubmitting}
-            style={{
-              ...styles.clockButton,
-              backgroundColor: '#F44336'
-            }}
-          >
-            {isSubmitting ? (
-              <div style={styles.spinner}></div>
-            ) : (
-              'CLOCK OUT'
-            )}
-          </button>
-        </div>
-
-        {/* Additional Options */}
-        <div style={styles.optionsSection}>
-          <button onClick={toggleCamera} style={styles.optionButton}>
-            📷 Facial Verification
-          </button>
-          <button onClick={toggleGPSInput} style={styles.optionButton}>
-            📍 Location Override
-          </button>
-        </div>
-
-        {/* Camera Feed (if enabled) */}
-        {showCamera && (
-          <div style={styles.cameraSection}>
-            <div style={styles.cameraPlaceholder}>
-              Camera Feed
-            </div>
-            <button style={styles.captureButton}>Capture Photo</button>
-          </div>
-        )}
-
-        {/* Manual GPS Input */}
-        {showGPSInput && (
-          <div style={styles.gpsSection}>
-            <h3>Manual Location Entry</h3>
-            <div style={styles.gpsInputRow}>
-              <input
-                type="text"
-                name="lat"
-                placeholder="Latitude"
-                value={manualGPS.lat}
-                onChange={handleGPSChange}
-                style={styles.gpsInput}
-              />
-              <input
-                type="text"
-                name="lng"
-                placeholder="Longitude"
-                value={manualGPS.lng}
-                onChange={handleGPSChange}
-                style={styles.gpsInput}
-              />
-            </div>
-            <button onClick={submitGPS} style={styles.submitGPSButton}>
-              Submit Location
-            </button>
-          </div>
-        )}
-
-        {/* Device Info */}
-        <div style={styles.deviceInfo}>
-          <strong>Device:</strong> {deviceInfo.platform} | 
-          <strong> Browser:</strong> {deviceInfo.userAgent.substring(0, 30)}...
-        </div>
+      {/* Current Time */}
+      <div style={{textAlign:'center', marginBottom:20}}>
+        <div style={{color:'#555'}}>Current time ({employee.timezone})</div>
+        <div style={timeStyle}>{fmt(now)}</div>
       </div>
 
-      {/* Toast Notification */}
-      {showToast && (
-        <div style={styles.toast}>
-          {toastMessage}
+      {/* Clock In/Out Button */}
+      <button style={primaryBtn} onClick={handleClock} disabled={showSpinner}>
+        {isClockedIn ? 'Clock Out' : 'Clock In'}
+      </button>
+      {showSpinner && <Spinner />}
+
+      {/* Offline queue status */}
+      {!online && queue.length > 0 && (
+        <div style={sectionStyle}>
+          <strong>Pending offline submissions:</strong> {queue.length}
         </div>
       )}
+
+      {/* Facial verification panel */}
+      {employee.facial_enrolled && (
+        <div style={sectionStyle}>
+          <h4>Facial Verification</h4>
+          <video ref={videoRef} autoPlay muted style={videoStyle} />
+          <canvas ref={canvasRef} width={300} height={225} style={{display:'none'}} />
+          <button style={secondaryBtn} onClick={captureFace} disabled={faceStatus.checking}>
+            {faceStatus.checking ? 'Verifying...' : 'Capture'}
+          </button>
+          <div style={{marginTop:8}}>
+            Status: {faceStatus.checking ? 'Checking...' : faceStatus.verified ? '✅ Verified' : '❌ Not verified'}
+          </div>
+        </div>
+      )}
+
+      {/* Manual GPS override */}
+      <div style={sectionStyle}>
+        <h4>Location</h4>
+        <button style={secondaryBtn} onClick={fetchGps}>Get GPS Coordinates</button>
+        {gps.fetched && (
+          <div style={{marginTop:8}}>
+            Latitude: {gps.lat}, Longitude: {gps.lng}
+          </div>
+        )}
+      </div>
+
+      {/* Toast */}
+      {toast && <Toast msg={toast} />}
+
+      {/* Hidden fields (displayed for demo purposes) */}
+      <div style={{display:'none'}}>
+        <input type="hidden" name="device_info" value={deviceInfo} />
+        <input type="hidden" name="ip_address" value={ipAddress} />
+        <input type="hidden" name="gps_coordinates" value={gps.fetched ? `${gps.lat},${gps.lng}` : ''} />
+        <input type="hidden" name="facial_verified" value={faceStatus.verified} />
+      </div>
     </div>
   );
 }
 
-// Styles
-const styles = {
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#f5f7fa',
-    fontFamily: '"Segoe UI", Roboto, sans-serif',
-    padding: '20px'
-  },
-  header: {
-    marginBottom: '30px'
-  },
-  title: {
-    color: '#2c3e50',
-    fontSize: '28px',
-    fontWeight: '600',
-    margin: '0 0 15px 0'
-  },
-  statusBar: {
-    display: 'flex',
-    gap: '10px'
-  },
-  badge: {
-    padding: '5px 12px',
-    borderRadius: '20px',
-    color: 'white',
-    fontSize: '12px',
-    fontWeight: '500'
-  },
-  content: {
-    maxWidth: '600px',
-    margin: '0 auto',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '30px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-  },
-  timeSection: {
-    textAlign: 'center',
-    marginBottom: '40px'
-  },
-  dateDisplay: {
-    fontSize: '18px',
-    color: '#7f8c8d',
-    marginBottom: '5px'
-  },
-  timeDisplay: {
-    fontSize: '48px',
-    fontWeight: '700',
-    color: '#2c3e50',
-    margin: '10px 0'
-  },
-  timezone: {
-    fontSize: '14px',
-    color: '#95a5a6'
-  },
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: '30px'
-  },
-  clockButton: {
-    width: '200px',
-    height: '70px',
-    fontSize: '20px',
-    fontWeight: '600',
-    color: 'white',
-    border: 'none',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  spinner: {
-    width: '24px',
-    height: '24px',
-    border: '3px solid rgba(255,255,255,0.3)',
-    borderTop: '3px solid white',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
-  },
-  optionsSection: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '15px',
-    marginBottom: '30px'
-  },
-  optionButton: {
-    backgroundColor: '#3498db',
-    color: 'white',
-    border: 'none',
-    padding: '12px 20px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500'
-  },
-  cameraSection: {
-    textAlign: 'center',
-    marginBottom: '30px'
-  },
-  cameraPlaceholder: {
-    height: '200px',
-    backgroundColor: '#ecf0f1',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#7f8c8d',
-    fontSize: '18px',
-    marginBottom: '15px'
-  },
-  captureButton: {
-    backgroundColor: '#9b59b6',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '16px'
-  },
-  gpsSection: {
-    backgroundColor: '#f8f9fa',
-    padding: '20px',
-    borderRadius: '8px',
-    marginBottom: '20px'
-  },
-  gpsInputRow: {
-    display: 'flex',
-    gap: '10px',
-    marginBottom: '15px'
-  },
-  gpsInput: {
-    flex: 1,
-    padding: '10px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    fontSize: '16px'
-  },
-  submitGPSButton: {
-    backgroundColor: '#27ae60',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '16px'
-  },
-  deviceInfo: {
-    fontSize: '12px',
-    color: '#7f8c8d',
-    textAlign: 'center',
-    paddingTop: '20px',
-    borderTop: '1px solid #eee'
-  },
-  toast: {
-    position: 'fixed',
-    bottom: '20px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    backgroundColor: '#27ae60',
-    color: 'white',
-    padding: '15px 30px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    zIndex: 1000
-  }
-};
-
-// Add keyframes for spinner animation
-const styleSheet = document.createElement("style");
-styleSheet.innerText = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-document.head.appendChild(styleSheet);
+// Simple keyframes for spinner (inject into page)
+const styleTag = document.createElement('style');
+styleTag.textContent = `@keyframes spin { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }`;
+document.head.appendChild(styleTag);
