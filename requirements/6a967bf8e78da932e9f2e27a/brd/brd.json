@@ -1,0 +1,268 @@
+{
+  "objective": "Build a secure, mobile-first damaged stock write-off system for Stark Digital's warehouse operations. Warehouse staff scan barcodes via mobile devices to log damaged items with photos, AI grades damage severity from uploaded images, supervisors review and approve write-offs via web dashboard, and all records are stored for compliance reporting. The system must handle 400 write-offs per month with zero integrations to external systems, supporting offline operation in patchy warehouse Wi-Fi conditions.",
+  "architecture": "Mobile warehouse staff scan item barcodes using device cameras on Android/iOS devices, capturing 12-digit UPC/EAN barcodes that resolve to pre-loaded item SKUs in the local SQLite database. When Wi-Fi is unavailable (common in warehouse dead zones), staff can continue working offline - draft write-offs with compressed photos are stored locally via WatermelonDB sync engine. Upon connectivity restoration, batches sync to the cloud: photos upload to Azure Blob Storage, Azure Computer Vision grades damage severity (0-100), and write-offs submit to PostgreSQL. Staff must capture three photo angles: barcode/label, overall damage, and close-up damage area, validated before submission. Supervisors receive Slack notifications via webhook and review pending write-offs on a web dashboard, seeing AI severity scores alongside all three photo angles. Approved write-offs update inventory status from 'active' to 'written_off' in PostgreSQL, reducing stock by the specified quantity (default 1, up to pallet-sized amounts), triggering email confirmations to staff. All records are available via CSV export for monthly compliance reporting, with no external system integrations.",
+  "architecture_diagram": "flowchart TD\n    A[Mobile Device Camera<br/>Warehouse Staff] --> B[React Native with WatermelonDB<br/>Offline-First iOS/Android]\n    B --> C{Scan Barcode}\n    C --> D[Validate UPC/EAN<br/>Local SQLite Cache]\n    D --> E[Capture 3 Required Photos<br/>Barcode/Label, Overall, Close-up]\n    E --> F[Local Storage & Compression<br/>WatermelonDB Offline Queue]\n    F --> G{Wi-Fi Available?}\n    G -- No --> H[Store Draft Locally<br/>Continue Working Offline]\n    G -- Yes --> I[Batch Sync to Cloud]\n    I --> J[Upload Photos to<br/>Azure Blob Storage]\n    J --> K[Azure Computer Vision<br/>Damage Grading API]\n    K --> L[Submit Write-off<br/>with Quantity & AI Score]\n    L --> M[PostgreSQL<br/>write_offs Table]\n    M --> N[Slack Webhook<br/>Supervisor Notification]\n    N --> O[React Web Dashboard<br/>Supervisor Review]\n    O --> P{Approve/Reject}\n    P --> Q[Update Inventory Status<br/>active \u2192 written_off]\n    Q --> R[Reduce Stock by Quantity<br/>Update current_stock]\n    R --> S[Email Confirmation<br/>SMTP via SendGrid]\n    M --> T[Reporting Engine<br/>CSV Export]\n    T --> U[Monthly Compliance<br/>Excel/Sheets]\n    H -- On Connectivity Restore --> I\n    D -- Scan Failed --> V[Search by Description/Category<br/>or Photo for Later ID]\n    E -- Validation --> W[3-Photo Requirement<br/>Enforced Before Submit]",
+  "tech_stack": [
+    {
+      "layer": "Frontend Mobile",
+      "choice": "React Native with WatermelonDB",
+      "rationale": "WatermelonDB provides robust offline-first synchronization for warehouse environments with patchy Wi-Fi, storing draft write-offs and compressed photos locally until connectivity restores. React Native offers cross-platform barcode scanning via react-native-vision-camera with torch support for low-light areas. Expo was considered but rejected due to its online-first assumption and lack of built-in offline sync. Limitation is WatermelonDB's SQLite-based architecture requiring careful schema migrations."
+    },
+    {
+      "layer": "Frontend Web",
+      "choice": "Next.js 14 with TypeScript",
+      "rationale": "Next.js App Router provides server-side rendering for supervisor dashboards with fast load times on warehouse office computers, plus built-in API routes for reporting exports. Vue.js was rejected due to team familiarity trade-offs. Next.js limitation is overkill for simple CRUD but provides future-proofing for complex review interfaces showing multiple photo angles."
+    },
+    {
+      "layer": "Backend/API",
+      "choice": "Node.js with Express",
+      "rationale": "Node.js handles asynchronous batch sync operations from mobile offline queues efficiently, processing photo uploads and AI calls in controlled batches during connectivity windows. Python FastAPI was considered but rejected due to Node.js consistency with existing Stark Digital microservices. Limitation is single-threaded nature for bulk CSV exports but fits 400/month volume."
+    },
+    {
+      "layer": "Database",
+      "choice": "Azure PostgreSQL Flexible Server",
+      "rationale": "Fully managed PostgreSQL meets ACID requirements for write-off approvals with quantity tracking, ensuring stock reductions match approved quantities transactionally. Mobile offline sync uses local SQLite via WatermelonDB that mirrors PostgreSQL schema. MongoDB was considered but rejected due to transactional nature of approval workflows with quantity calculations. Limitation is cost versus Azure SQL but provides PostgreSQL's JSON support for damage metadata."
+    },
+    {
+      "layer": "Mobile Offline Database",
+      "choice": "SQLite with WatermelonDB Sync",
+      "rationale": "SQLite provides reliable local storage on mobile devices for offline operation, with WatermelonDB's sync engine handling conflict resolution when batches sync to PostgreSQL. Realm was considered but rejected due to WatermelonDB's better React Native integration and explicit sync control. Limitation is sync complexity requiring careful handling of photo upload retries."
+    },
+    {
+      "layer": "AI Vision",
+      "choice": "Azure Computer Vision Image Analysis",
+      "rationale": "Azure's pretrained model analyzes damage patterns in product photos without requiring custom model training, using confidence scores (0-100) that map directly to severity grading across three photo angles. OpenAI GPT-4 Vision was considered but rejected due to higher cost per image and lack of damage-specific pretraining. Limitation is generic object detection rather than warehouse-specific damage patterns."
+    },
+    {
+      "layer": "Hosting",
+      "choice": "Azure App Service with Static Web Apps",
+      "rationale": "Azure App Service handles batch sync operations from mobile queues during connectivity windows, with auto-scaling for photo processing peaks. AWS Elastic Beanstalk was considered but rejected due to Stark Digital's existing Azure enterprise agreement. Limitation is cold start times on consumption plan but fits controlled batch processing."
+    },
+    {
+      "layer": "Auth",
+      "choice": "Azure Active Directory B2C",
+      "rationale": "Azure AD B2C provides employee directory sync for warehouse staff and supervisors using existing corporate credentials, with role-based access (staff vs supervisor). Firebase Auth was considered but rejected due to enterprise security requirements. Limitation is complexity for simple role system but provides SSO that works with offline mobile authentication caching."
+    },
+    {
+      "layer": "CI/CD",
+      "choice": "GitHub Actions with Azure Deployment",
+      "rationale": "GitHub Actions pipelines deploy React Native apps via fastlane for iOS and Gradle for Android, plus web/app services to Azure with environment separation. Azure DevOps was considered but rejected due to GitHub repository hosting. Limitation is managing separate build processes for mobile but provides offline-first capability."
+    }
+  ],
+  "user_flow": [
+    "Warehouse staff logs into mobile app with Azure AD credentials (cached for offline), role: 'warehouse_staff'",
+    "Staff taps 'Log Damage' button on home screen, camera opens for barcode scanning",
+    "Staff scans 12-digit UPC/EAN barcode from damaged product packaging",
+    "If scan fails (damaged/missing barcode): staff can search by item description/category via typeahead, or proceed with 'Unknown Item' flag for supervisor later identification",
+    "App validates barcode format and checks local SQLite cache for SKU existence",
+    "If valid, app displays product details: SKU, description, current stock count, unit cost",
+    "Staff selects damage reason from dropdown: 'Water Damage', 'Crushed', 'Expired', 'Broken', 'Other'",
+    "Staff enters quantity affected (default 1, up to 1000 for pallet damage) with numeric stepper",
+    "Staff captures 3 required photo angles: (1) barcode/label shot, (2) overall damage shot, (3) close-up damage area",
+    "App validates all 3 angles captured before allowing proceed, shows guidance overlay with example photos",
+    "Photos compressed locally (JPEG, ~1MB each) and stored in WatermelonDB offline queue",
+    "Staff adds optional notes text field (max 500 chars)",
+    "If Wi-Fi available: photos upload to Azure Computer Vision API, returns severity score 0-100 within 2 seconds",
+    "If offline: draft saved locally with 'pending sync' status, AI grading deferred until connectivity restore",
+    "Staff submits write-off draft, receives confirmation showing sync status (immediate or pending)",
+    "When connectivity restores: batch sync uploads photos, gets AI scores, submits to cloud",
+    "Supervisor receives Slack notification with deep link to web dashboard",
+    "Supervisor logs into web dashboard with Azure AD, role: 'supervisor'",
+    "Supervisor views pending write-offs queue sorted by submission time",
+    "Supervisor clicks write-off to review: all 3 photo angles, AI severity score, reason, quantity, notes",
+    "Supervisor selects: 'Approve', 'Reject with Comment', or 'Request More Info'",
+    "If approved, system updates inventory record status to 'written_off', reduces stock count by specified quantity",
+    "Email confirmation sent to submitting staff member's corporate email with quantity and total value",
+    "Approved write-off moves to history tab, available for CSV export with quantity column"
+  ],
+  "data_model": [
+    {
+      "name": "item",
+      "fields": [
+        "sku",
+        "upc_ean",
+        "description",
+        "category",
+        "unit_cost",
+        "current_stock",
+        "status",
+        "last_updated"
+      ],
+      "description": "Master inventory items loaded via CSV import, referenced by barcode scans. status: active, written_off, discontinued."
+    },
+    {
+      "name": "write_off",
+      "fields": [
+        "write_off_id",
+        "sku",
+        "submitted_by",
+        "submitted_at",
+        "reason",
+        "quantity",
+        "ai_severity_score",
+        "supervisor_approved_by",
+        "approved_at",
+        "status",
+        "notes",
+        "total_value",
+        "is_unknown_item",
+        "sync_status"
+      ],
+      "description": "Core write-off record with quantity tracking. status: pending, approved, rejected, more_info_requested, pending_sync. total_value = unit_cost * quantity. is_unknown_item flags items without barcode/SKU for later reconciliation. sync_status: synced, pending, error."
+    },
+    {
+      "name": "write_off_photo",
+      "fields": [
+        "photo_id",
+        "write_off_id",
+        "photo_type",
+        "azure_blob_url",
+        "local_path",
+        "uploaded_at",
+        "file_size",
+        "ai_analysis_json",
+        "sync_status"
+      ],
+      "description": "Damage photos with type: barcode_label, overall_damage, closeup. Stored in Azure Blob Storage when synced, local_path for offline. sync_status tracks upload state."
+    },
+    {
+      "name": "user",
+      "fields": [
+        "employee_id",
+        "azure_ad_id",
+        "full_name",
+        "email",
+        "role",
+        "warehouse_location",
+        "is_active"
+      ],
+      "description": "Synced from Azure AD B2C. role: warehouse_staff, supervisor, admin. warehouse_location: A, B, C for multi-site."
+    },
+    {
+      "name": "audit_log",
+      "fields": [
+        "log_id",
+        "write_off_id",
+        "user_id",
+        "action",
+        "timestamp",
+        "ip_address",
+        "user_agent",
+        "quantity_affected"
+      ],
+      "description": "Immutable audit trail for compliance. action: submitted, approved, rejected, exported, synced. quantity_affected records stock change amount."
+    }
+  ],
+  "db_schema_diagram": "erDiagram\n    item ||--o{ write_off : \"has\"\n    write_off ||--o{ write_off_photo : \"includes\"\n    user ||--o{ write_off : \"submits\"\n    user ||--o{ write_off : \"approves\"\n    write_off ||--o{ audit_log : \"generates\"\n    \n    item {\n        string sku PK\n        string upc_ean UK\n        string description\n        string category\n        decimal unit_cost\n        integer current_stock\n        string status\n        timestamp last_updated\n    }\n    \n    write_off {\n        uuid write_off_id PK\n        string sku FK\n        uuid submitted_by FK\n        timestamp submitted_at\n        string reason\n        integer quantity\n        integer ai_severity_score\n        uuid supervisor_approved_by FK\n        timestamp approved_at\n        string status\n        text notes\n        decimal total_value\n        boolean is_unknown_item\n        string sync_status\n    }\n    \n    write_off_photo {\n        uuid photo_id PK\n        uuid write_off_id FK\n        string photo_type\n        string azure_blob_url\n        string local_path\n        timestamp uploaded_at\n        integer file_size\n        json ai_analysis_json\n        string sync_status\n    }\n    \n    user {\n        uuid employee_id PK\n        string azure_ad_id UK\n        string full_name\n        string email\n        string role\n        string warehouse_location\n        boolean is_active\n    }\n    \n    audit_log {\n        uuid log_id PK\n        uuid write_off_id FK\n        uuid user_id FK\n        string action\n        timestamp timestamp\n        string ip_address\n        string user_agent\n        integer quantity_affected\n    }",
+  "page_behavior": [
+    {
+      "page": "/mobile/home",
+      "description": "Warehouse staff landing tab with 'Log Damage' primary button (60% screen), 'My Submissions' list showing sync status icons (cloud with check=synced, cloud with arrow=pending), 'Offline Queue' count badge, and 'Scan Test' button. Header shows employee name, warehouse location, and connectivity indicator (Wi-Fi icon with signal strength). Pull-to-refresh attempts sync if connectivity available."
+    },
+    {
+      "page": "/mobile/scan",
+      "description": "Full-screen camera view with barcode scanning rectangle overlay, torch toggle button, and 'Search Instead' button for when barcodes are damaged/missing. Scanning success plays haptic feedback and shows product preview card. Search opens typeahead for description/category with 'Unknown Item' option that flags for supervisor reconciliation."
+    },
+    {
+      "page": "/mobile/damage-form",
+      "description": "Multi-step form: 1) Reason dropdown with icons, 2) Quantity selector with stepper (1-1000) and batch damage warning for >10 units, 3) Photo capture interface enforcing 3 angles: shows progress '1/3 - Barcode/Label', '2/3 - Overall Damage', '3/3 - Close-up' with example thumbnails for guidance, 4) Notes text area with 500 char counter, 5) Review screen showing calculated value loss (unit_cost \u00d7 quantity) and sync status. Submit button enabled only after 3 photos captured."
+    },
+    {
+      "page": "/mobile/offline-queue",
+      "description": "List of pending sync write-offs with: timestamp, SKU/description, quantity, photo thumbnails, and sync retry button. Shows connectivity status and estimated sync time based on photo sizes. Option to delete drafts before sync if mistaken entry."
+    },
+    {
+      "page": "/web/dashboard",
+      "description": "Supervisor dashboard with four tabs: 'Pending' (default queue), 'Pending Sync' (offline submissions awaiting AI grading), 'Approved Today' (count, quantity total, value summary), 'History'. Pending table shows: staff name, SKU, quantity, reason, AI score badge, submitted time, 'Review' button. Unknown items flagged with 'NEEDS ID' badge."
+    },
+    {
+      "page": "/web/review/:id",
+      "description": "Detailed review modal/overlay showing: 1) Three-photo gallery with tabs for each angle type, full-screen zoom, 2) Product details card with unit cost, quantity, and stock impact calculation, 3) AI severity breakdown panel, 4) Action buttons with quantity confirmation: 'Approve' shows 'Reduce stock by X units' confirmation, 'Reject' with comment, 'Request More Info'. Unknown items show 'Identify SKU' button for supervisor to assign correct item."
+    },
+    {
+      "page": "/web/reports",
+      "description": "CSV export interface with date range picker, filters by warehouse location, reason, and quantity range. Preview table shows first 20 rows with quantity column. Export generates server-side CSV with columns: write_off_id, sku, quantity, reason, ai_severity_score, total_value, staff_name, approved_by, approved_date."
+    },
+    {
+      "page": "/mobile/submissions",
+      "description": "Staff's personal submission history showing sync status badges: pending_sync (gray cloud), pending_review (blue), approved (green), rejected (red), more_info_requested (yellow). Tap shows read-only review with all 3 photos, supervisor comments if rejected. Offline submissions show 'Awaiting sync' until connectivity."
+    }
+  ],
+  "security_design": [
+    "Authentication: Azure AD B2C with corporate credentials, cached offline tokens allow mobile app operation without Wi-Fi for up to\u0431\u0438 24 hours. Session timeout: 24 hours for mobile (warehouse shift + offline), 2 hours for web.",
+    "Role-based access: warehouse_staff role can submit write-offs (offline), view own history. supervisor role can approve/reject, view all submissions, export reports, identify unknown items. admin role (not in scope) placeholder.",
+    "Data encryption: Azure PostgreSQL at-rest encryption with Azure Key Vault. Photos in Azure Blob Storage with SSE. Local SQLite encrypted via React Native Keychain for device theft protection.",
+    "Offline security: Draft write-offs stored locally with employee ID binding, cannot be accessed by other users on shared devices. Sync requires re-authentication if token expired.",
+    "Audit trail: All write-off state changes logged to audit_log with quantity_affected. Offline submissions logged upon sync with original submission timestamp preserved.",
+    "Network security: Mobile app uses HTTPS with certificate pinning when online. Offline operation requires no network calls. Batch sync uses incremental backoff retry.",
+    "Photo privacy: Azure Computer Vision processes in same Azure region. Local photo compression reduces data transfer. Unknown item photos flagged for supervisor review only.",
+    "Quantity validation: Server-side validation ensures quantity \u2264 current_stock before approval. Offline drafts validate against cached stock counts with reconciliation on sync.",
+    "Compliance: No PII beyond employee names/IDs. Data retention: Write-off records with quantity kept 7 years for tax compliance, photos 2 years with auto-deletion cron job.",
+    "Failure safety: Offline queue protected against device restart via SQLite transactions. If sync fails mid-batch, partial submissions marked for retry without data loss."
+  ],
+  "deployment_and_operations": [
+    "Environments: Development, Staging, Production with separate Azure PostgreSQL instances. WatermelonDB sync configurations differ per environment.",
+    "CI/CD: GitHub Actions workflow: 1) Lint/test on PR, 2) Build React Native iOS via fastlane, Android via Gradle, 3) Deploy web to Azure Static Web Apps, 4) Deploy API to Azure App Service, 5) Run PostgreSQL and SQLite schema migrations in sync.",
+    "Monitoring: Azure Application Insights for sync batch performance (upload times, conflict rates). Custom dashboard tracks: offline submissions count, sync success rate, average quantity per write-off, unknown item rate.",
+    "Offline sync monitoring: Alert when >50 pending sync items for >4 hours indicating Wi-Fi outage. Alert when sync failure rate >10% in an hour.",
+    "Backup: Azure PostgreSQL automated daily backups with 35-day retention. Blob Storage geo-redundant. Local SQLite backups not required as source of truth is cloud.",
+    "Rollback: Database migrations versioned for both PostgreSQL and SQLite schemas. App Service deployment slots for API. Mobile app rollback via app store version management.",
+    "Scale: Azure App Service scales based on sync batch size and photo processing. PostgreSQL compute tier adjusted based on sync connection peaks during shift changes.",
+    "Alerts: Email/SMS alerts for: >20 pending sync items older than 8 hours, >10 unknown items awaiting identification, quantity mismatch alerts when approved quantity > available stock.",
+    "Maintenance: Weekly health check validates barcode scanner, offline sync, conflict resolution. Monthly CSV archive with quantity summaries. Photo cleanup cron job deletes >2 year old photos."
+  ],
+  "timeline": [
+    {
+      "phase": "Foundation & Database",
+      "duration": "2 weeks",
+      "description": "Set up Azure PostgreSQL with updated write_off schema (quantity field). Implement WatermelonDB SQLite schema with sync configuration. Create Azure AD B2C integration with offline token caching. Build CI/CD with mobile build pipelines (fastlane/Gradle)."
+    },
+    {
+      "phase": "Mobile Offline Core",
+      "duration": "3 weeks",
+      "description": "Build React Native app with WatermelonDB offline sync, barcode scanning (react-native-vision-camera), three-photo capture workflow with validation. Implement quantity selector, unknown item workflow, and local draft management. Test offline operation and sync recovery on physical devices."
+    },
+    {
+      "phase": "AI Integration & Sync Engine",
+      "duration": "2 weeks",
+      "description": "Build batch sync engine for photo uploads and write-off submission. Integrate Azure Computer Vision API with offline queue processing. Create supervisor dashboard with pending sync queue and unknown item handling. Implement Slack notifications for synced submissions."
+    },
+    {
+      "phase": "Reporting & Polish",
+      "duration": "1.5 weeks",
+      "description": "Build CSV export with quantity filtering and summaries. Implement email confirmations with quantity details. Add audit logging for sync events and quantity changes. Conduct user acceptance testing focusing on offline scenarios and three-photo workflow."
+    },
+    {
+      "phase": "Deployment & Training",
+      "duration": "0.5 weeks",
+      "description": "Production deployment with data migration. Create user guides for offline operation and three-photo requirements. Train supervisors on unknown item identification workflow. Monitor first week sync patterns and quantity reporting accuracy."
+    }
+  ],
+  "assumptions": [
+    "Warehouse items may have damaged or missing barcodes requiring search/unknown item workflow - not all are scannable.",
+    "Warehouse Wi-Fi is patchy with daily dead zones requiring offline-first operation for continuous workflow.",
+    "Staff corporate emails accessible for confirmation notifications with quantity details.",
+    "Item master data available via CSV import initially, with ability to add items via web interface for unknown items.",
+    "Azure AD B2C has employee directory with warehouse staff and supervisors.",
+    "Warehouse lighting allows barcode scanning with torch feature, but some areas may require manual search fallback.",
+    "400 write-offs per month may include batch damage affecting multiple units (quantity >1).",
+    "No regulatory requirements beyond internal financial controls with quantity accuracy.",
+    "Supervisors have desktop/laptop computers for web dashboard with bandwidth for viewing three photo angles.",
+    "Mobile devices have sufficient storage for offline photo queue (approx 50 drafts with compressed photos)."
+  ],
+  "open_questions": [
+    "What compression ratio for offline photos? Currently assumes ~1MB each from 5MB originals - should implement adaptive compression based on available device storage?",
+    "Should offline drafts expire if not synced within certain timeframe? Currently persists indefinitely - should auto-delete after 7 days to prevent stale data?",
+    "Conflict resolution strategy: if stock count changes between offline draft and sync (item sold/damaged elsewhere), how to handle? Currently recalculates on sync but may reject if insufficient stock.",
+    "Should quantity have unit type (each, case, pallet) rather than just count? Currently assumes 'units' matching item master - but some items tracked in cases.",
+    "Unknown item reconciliation process: Should supervisors be able to create new SKUs directly from review interface, or only assign existing SKUs?",
+    "Photo guidance examples: Should the app show warehouse-specific example photos for each angle type, or generic examples?",
+    "Offline authentication duration: 24-hour token cache may be too long for security - should require re-auth after 8 hours (shift length)?",
+    "Batch sync timing: Should sync occur immediately on connectivity restore, or wait for staff-initiated sync to control bandwidth usage?",
+    "Unresolved design review finding (high, tech_stack): Azure Computer Vision is a general-purpose image analysis service that will fail to produce reliable damage severity scores (0-100) for warehouse-specific damage patterns. The service is trained on common objects and scenes, not on identifying crushed boxes, water damage on packaging, or broken components in industrial contexts. Under real operating conditions with varied lighting and angles, the scores will be inconsistent and unreliable for supervisor decision-making. Suggested fix: Replace with a custom-trained vision model using a warehouse-specific dataset of damage photos, or remove AI grading entirely and rely on supervisor judgment with the three-photo requirement.",
+    "Unresolved design review finding (high, user_flow): The three-photo requirement (barcode/label, overall, close-up) assumes warehouse staff can reliably capture all three angles. In real warehouse conditions: damaged items may be inaccessible for certain angles (stacked on pallets, in racks), barcodes may be completely destroyed, and lighting may prevent quality photos. The enforced validation will block write-off submissions when one angle is physically impossible to capture, creating workflow bottlenecks. Suggested fix: Make photo requirements configurable per damage type (e.g., water damage may not need barcode shot if label is destroyed) or allow staff to note why specific angles are missing.",
+    "Unresolved design review finding (medium, data_model): The item table's current_stock field cannot be reliably synchronized with offline mobile copies. When warehouse staff work offline and scan items, their cached stock counts will become stale as other staff continue working (receiving new stock, processing other write-offs). This leads to quantity validation failures on sync and requires complex conflict resolution that isn't defined in the design. Suggested fix: Remove current_stock from mobile cache or implement a distributed inventory lock/reservation system for offline scenarios.",
+    "Unresolved design review finding (medium, security_design): 24-hour offline authentication tokens create a security gap for shared mobile devices in warehouse environments. Devices may be left unattended, passed between shifts, or stolen. With 24-hour cached access, unauthorized users could submit fraudulent write-offs. Real operating conditions include shift changes every 8-12 hours where device handoff is common. Suggested fix: Reduce offline token duration to 4-8 hours (typical shift length) or implement device PIN/biometric re-authentication for sensitive actions.",
+    "Unresolved design review finding (medium, assumptions): Assumes warehouse lighting allows barcode scanning with torch feature, but many warehouse damage areas are deep in racks, under low ceilings, or in shadow zones where torch illumination won't reach. The 'search instead' fallback becomes primary workflow in these conditions, undermining the barcode scanning promise. Suggested fix: Design for search-first workflow as equal priority to scanning, with faster typeahead and recent item history."
+  ]
+}

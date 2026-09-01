@@ -1,0 +1,24 @@
+flowchart TD
+    A[Mobile Device Camera<br/>Warehouse Staff] --> B[React Native with WatermelonDB<br/>Offline-First iOS/Android]
+    B --> C{Scan Barcode}
+    C --> D[Validate UPC/EAN<br/>Local SQLite Cache]
+    D --> E[Capture 3 Required Photos<br/>Barcode/Label, Overall, Close-up]
+    E --> F[Local Storage & Compression<br/>WatermelonDB Offline Queue]
+    F --> G{Wi-Fi Available?}
+    G -- No --> H[Store Draft Locally<br/>Continue Working Offline]
+    G -- Yes --> I[Batch Sync to Cloud]
+    I --> J[Upload Photos to<br/>Azure Blob Storage]
+    J --> K[Azure Computer Vision<br/>Damage Grading API]
+    K --> L[Submit Write-off<br/>with Quantity & AI Score]
+    L --> M[PostgreSQL<br/>write_offs Table]
+    M --> N[Slack Webhook<br/>Supervisor Notification]
+    N --> O[React Web Dashboard<br/>Supervisor Review]
+    O --> P{Approve/Reject}
+    P --> Q[Update Inventory Status<br/>active → written_off]
+    Q --> R[Reduce Stock by Quantity<br/>Update current_stock]
+    R --> S[Email Confirmation<br/>SMTP via SendGrid]
+    M --> T[Reporting Engine<br/>CSV Export]
+    T --> U[Monthly Compliance<br/>Excel/Sheets]
+    H -- On Connectivity Restore --> I
+    D -- Scan Failed --> V[Search by Description/Category<br/>or Photo for Later ID]
+    E -- Validation --> W[3-Photo Requirement<br/>Enforced Before Submit]
