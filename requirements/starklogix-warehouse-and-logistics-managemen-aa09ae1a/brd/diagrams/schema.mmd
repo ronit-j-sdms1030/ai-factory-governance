@@ -1,0 +1,186 @@
+erDiagram
+    User ||--o{ Warehouse : manages
+    User ||--o{ StockMovement : performs
+    User ||--o{ DeliveryRoute : drives
+    User ||--o{ AuditLog : creates
+    User ||--o{ Allocation : processes
+    
+    Warehouse ||--o{ Inventory : contains
+    Warehouse ||--o{ PurchaseOrder : receives
+    Warehouse ||--o{ CustomerOrder : fulfills
+    Warehouse ||--o{ Vehicle : hosts
+    Warehouse ||--o{ DeliveryRoute : originates
+    
+    Product ||--o{ Inventory : stored_as
+    Product ||--o{ Allocation : allocated_for
+    
+    Inventory ||--o{ StockMovement : tracks
+    Inventory ||--o{ Allocation : allocated_from
+    
+    PurchaseOrder ||--o{ StockMovement : generates
+    PurchaseOrder }|--|| Product : includes
+    
+    CustomerOrder ||--o{ Allocation : has
+    CustomerOrder ||--o{ StockMovement : triggers
+    CustomerOrder ||--o{ DeliveryProof : has
+    CustomerOrder }|--|| Product : contains
+    
+    Vehicle ||--o{ DeliveryRoute : assigned_to
+    
+    DeliveryRoute ||--o{ DeliveryProof : produces
+    
+    User {
+        uuid userId PK
+        string auth0Id
+        string email
+        string firstName
+        string lastName
+        string phone
+        enum role
+        uuid warehouseId FK
+        boolean isActive
+        timestamp createdAt
+        timestamp lastLogin
+    }
+    
+    Warehouse {
+        uuid warehouseId PK
+        string name
+        jsonb address
+        float latitude
+        float longitude
+        integer totalCapacity
+        integer usedCapacity
+        uuid zoneId
+        boolean isActive
+        uuid managerUserId FK
+    }
+    
+    Product {
+        uuid productId PK
+        string sku UK
+        string name
+        text description
+        uuid categoryId
+        uuid supplierId
+        jsonb dimensions
+        float weight
+        decimal unitPrice
+        integer reorderLevel
+        boolean isActive
+    }
+    
+    Inventory {
+        uuid inventoryId PK
+        uuid productId FK
+        uuid warehouseId FK
+        string binLocation
+        integer quantity
+        integer version
+        enum status
+        uuid lastMovementId FK
+        timestamp lastCounted
+    }
+    
+    Allocation {
+        uuid allocationId PK
+        uuid customerOrderId FK
+        uuid inventoryId FK
+        integer quantity
+        enum status
+        uuid allocatedBy FK
+        timestamp allocatedAt
+        uuid pickedBy FK
+        timestamp pickedAt
+        uuid packedBy FK
+        timestamp packedAt
+    }
+    
+    StockMovement {
+        uuid movementId PK
+        uuid inventoryId FK
+        enum type
+        integer quantity
+        uuid referenceId
+        uuid userId FK
+        timestamp timestamp
+        string sourceBin
+        string destinationBin
+        text notes
+        string eventId
+    }
+    
+    PurchaseOrder {
+        uuid purchaseOrderId PK
+        uuid supplierId
+        uuid warehouseId FK
+        date expectedDate
+        enum status
+        integer totalItems
+        integer receivedItems
+        uuid createdBy FK
+        timestamp createdAt
+    }
+    
+    CustomerOrder {
+        uuid customerOrderId PK
+        string externalOrderId
+        string customerName
+        jsonb deliveryAddress
+        string contactPhone
+        string contactEmail
+        jsonb items
+        enum status
+        uuid warehouseId FK
+        integer priority
+        timestamp createdAt
+        date promisedDate
+    }
+    
+    Vehicle {
+        uuid vehicleId PK
+        string registration UK
+        enum type
+        float capacity
+        uuid currentWarehouseId FK
+        enum status
+        date lastMaintenance
+    }
+    
+    DeliveryRoute {
+        uuid routeId PK
+        uuid vehicleId FK
+        uuid driverUserId FK
+        uuid warehouseId FK
+        jsonb plannedSequence
+        integer estimatedDuration
+        timestamp startTime
+        timestamp endTime
+        enum status
+        uuid createdBy FK
+    }
+    
+    DeliveryProof {
+        uuid proofId PK
+        uuid customerOrderId FK
+        timestamp deliveryTimestamp
+        string signatureUrl
+        string photoUrl
+        string recipientName
+        float gpsLatitude
+        float gpsLongitude
+        uuid driverUserId FK
+        enum status
+    }
+    
+    AuditLog {
+        uuid logId PK
+        uuid userId FK
+        string action
+        string entityType
+        uuid entityId
+        jsonb oldValues
+        jsonb newValues
+        string ipAddress
+        timestamp timestamp
+    }

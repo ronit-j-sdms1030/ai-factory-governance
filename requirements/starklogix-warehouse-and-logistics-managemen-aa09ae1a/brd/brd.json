@@ -1,0 +1,409 @@
+{
+  "objective": "Build StarkLogix: A production-ready warehouse and logistics management platform that enables efficient tracking of goods from receipt through delivery across 100 warehouses, supporting 5,000 concurrent users with real-time inventory visibility, transport coordination, and role-based workflows for administrators, warehouse managers, inventory operators, transport coordinators, and delivery drivers.",
+  "architecture": "The system implements event sourcing for inventory operations to meet real-time requirements. HTTP requests enter through an AWS Application Load Balancer distributing traffic across 4-8 Node.js/Express instances in ECS Fargate clusters. Authentication is handled by Auth0 with role-based policies cached in Redis. Warehouse data operations follow event-first pattern: inventory movements and delivery status updates are written as events to Redis Streams immediately for sub-second WebSocket distribution, then asynchronously processed to PostgreSQL for audit trail and consistency. Frontend WebSocket connections authenticate via JWT and subscribe to warehouse-specific event streams from a dedicated WebSocket server cluster. Barcode scanning uses industrial hardware scanners via Bluetooth/USB HID mode appearing as keyboard input. Delivery evidence is uploaded directly to S3 via presigned URLs. Application-level tenancy middleware injects warehouse_id filters into all queries. All sensitive PII and delivery location data is encrypted at rest using AWS KMS envelope encryption. System health is monitored via CloudWatch metrics with predictive scaling based on warehouse schedules.",
+  "architectureDiagram": "graph TD\n    User[User Browser] --> ALB[AWS ALB]\n    ALB --> Express1[Express API Node 1]\n    ALB --> Express2[Express API Node 2]\n    ALB --> ExpressN[Express API Node N]\n    \n    User --> WSClient[WebSocket Client]\n    WSClient --> WSLB[WebSocket Load Balancer]\n    WSLB --> WSNode1[WebSocket Server 1]\n    WSLB --> WSNode2[WebSocket Server 2]\n    \n    Express1 --> Auth0[Auth0 Tenant]\n    Express2 --> Auth0\n    ExpressN --> Auth0\n    \n    Express1 --> Redis[(Redis Cluster)]\n    Express2 --> Redis\n    ExpressN --> Redis\n    WSNode1 --> Redis\n    WSNode2 --> Redis\n    \n    Express1 --> Postgres[(PostgreSQL RDS)]\n    Express2 --> Postgres\n    ExpressN --> Postgres\n    \n    Express1 --> RedisStreams[Redis Streams]\n    Express2 --> RedisStreams\n    ExpressN --> RedisStreams\n    \n    WSNode1 --> RedisStreams\n    WSNode2 --> RedisStreams\n    \n    Express1 --> S3[AWS S3 Buckets]\n    Express2 --> S3\n    ExpressN --> S3\n    \n    Postgres --> KMS[AWS KMS]\n    S3 --> KMS\n    \n    Express1 --> CloudWatch[CloudWatch Metrics]\n    Express2 --> CloudWatch\n    ExpressN --> CloudWatch\n    WSNode1 --> CloudWatch\n    WSNode2 --> CloudWatch\n    \n    Redis --> CloudWatch\n    Postgres --> CloudWatch\n    RedisStreams --> CloudWatch\n    \n    EventProcessor[Event Processor Service] --> RedisStreams\n    EventProcessor --> Postgres",
+  "techStack": [
+    {
+      "layer": "Frontend",
+      "choice": "React 18 with TypeScript 5",
+      "rationale": "React's component model fits the dashboard-heavy warehouse UI with many reusable inventory/transport widgets; TypeScript ensures type safety across complex stock movement and route data structures. Considered Vue 3 but rejected due to Stark Digital's existing React expertise and larger ecosystem for warehouse visualization libraries. Limitation: React's client-side routing requires careful handling for driver mobile sessions with intermittent connectivity."
+    },
+    {
+      "layer": "Backend/API",
+      "choice": "Node.js 20 with Express 4",
+      "rationale": "Node's non-blocking I/O handles the 5,000 concurrent users efficiently with many simultaneous stock movement writes; Express middleware chain cleanly separates authentication, validation, and event publishing. Considered Go but rejected due to higher development time for complex business logic across 5 user roles. Limitation: Single-threaded nature requires careful monitoring of CPU-heavy operations like route optimization calculations."
+    },
+    {
+      "layer": "Database",
+      "choice": "PostgreSQL 16 with TimescaleDB",
+      "rationale": "PostgreSQL's ACID compliance is mandatory for inventory accuracy; TimescaleDB extension provides time-series capabilities for the 5 million monthly stock movements and delivery tracking metrics. Considered MongoDB but rejected because warehouse operations require strict transactional integrity for stock counts. Limitation: TimescaleDB hypertable partitioning adds complexity to historical data queries."
+    },
+    {
+      "layer": "Cache & Event Stream",
+      "choice": "Redis 7 with Redis Cluster and Redis Streams",
+      "rationale": "Redis Streams provides fast write-ahead logging for inventory events with consumer groups for WebSocket distribution; Redis Cluster handles role permissions caching and session management across 10,000 drivers. Considered Kafka but rejected because Redis provides both caching and streaming in one operational footprint familiar to the team. Limitation: Redis Streams requires careful monitoring of stream growth during peak warehouse activity periods."
+    },
+    {
+      "layer": "Real-time Transport",
+      "choice": "Socket.IO with Engine.IO",
+      "rationale": "Socket.IO's fallback mechanisms (WebSocket \u2192 HTTP long-polling) ensure delivery updates reach drivers in areas with unstable connectivity; room-based architecture matches warehouse/vehicle groupings. Considered raw WebSockets but rejected due to lack of automatic reconnection and broadcast facilities. Limitation: Socket.IO protocol overhead increases bandwidth usage for high-frequency stock updates."
+    },
+    {
+      "layer": "Hosting",
+      "choice": "AWS ECS Fargate",
+      "rationale": "Fargate's serverless container model eliminates node management overhead while providing scaling to 5,000 concurrent users; integrates natively with ALB, RDS, and S3. Considered EC2 instances but rejected due to higher operational cost for variable warehouse activity patterns. Limitation: Fargate has slower cold starts (~30s) requiring minimum instance count for warehouse opening hours."
+    },
+    {
+      "layer": "Object Storage",
+      "choice": "AWS S3 with Intelligent-Tiering",
+      "rationale": "S3's durability guarantees (99.999999999%) protect delivery evidence (signatures/photos) from loss; Intelligent-Tiering automatically moves older POD documents to cheaper storage. Considered Azure Blob Storage but rejected due to Stark Digital's existing AWS operational expertise. Limitation: S3 eventual consistency requires application logic to handle temporary delivery evidence lookup failures."
+    },
+    {
+      "layer": "Authentication",
+      "choice": "Auth0 with Role-Based Access Control",
+      "rationale": "Auth0 provides out-of-the-box MFA, device sessions, and audit logging required for warehouse security; RBAC policies map directly to the 5 user roles. Considered AWS Cognito but rejected due to more complex role management and less mature admin UI. Limitation: Auth0's per-active-user pricing escalates quickly with 10,000 driver accounts."
+    },
+    {
+      "layer": "Encryption",
+      "choice": "AWS KMS with Envelope Encryption",
+      "rationale": "KMS's FIPS 140-2 Level 2 validated HSMs encrypt sensitive delivery location data at rest; envelope encryption pattern allows key rotation without re-encrypting entire database. Considered application-level encryption but rejected because KMS provides centralized key management and audit trails. Limitation: KMS API calls add latency (~5ms) to every sensitive data read/write operation."
+    },
+    {
+      "layer": "CI/CD",
+      "choice": "GitHub Actions with AWS Deploy",
+      "rationale": "GitHub Actions integrates with Stark Digital's existing development workflows; AWS deployment actions provision ECS services, RDS migrations, and S3 buckets. Considered GitLab CI but rejected due to team familiarity and Actions' broader marketplace of warehouse-testing actions. Limitation: GitHub Actions concurrent job limits may slow parallel deployment to multiple warehouse regional environments."
+    }
+  ],
+  "userFlow": [
+    "1. Administrator logs in via Auth0 MFA and navigates to User Management to create warehouse manager accounts with specific warehouse assignments",
+    "2. Warehouse manager receives goods: operator scans purchase order barcode using hardware scanner (appears as keyboard input), system validates against expected items, accepts variance within tolerance",
+    "3. Inventory operator assigns storage: system suggests optimal bin location based on product dimensions and pick frequency, operator confirms or overrides",
+    "4. Customer order enters via REST API webhook: system creates allocation records with 'allocated' status for nearest warehouse to delivery address",
+    "5. Inventory operator views Picking queue: scans item barcode at source bin, system updates allocation status to 'picking' then 'picked' on confirmation",
+    "6. Transport coordinator creates route: inputs delivery addresses, system optimizes sequence using Google Maps API, assigns vehicle and driver based on capacity and shift",
+    "7. Driver logs in via mobile: views assigned route with stop sequence, scans package barcode at vehicle loading to confirm dispatch",
+    "8. Driver arrives at delivery: captures recipient signature via touch screen or photo evidence, system records timestamp and GPS coordinates",
+    "9. Failed delivery: driver selects reason from predefined list, transport coordinator manually reschedules based on recipient contact information",
+    "10. Warehouse manager runs daily reconciliation: system compares physical count samples with system records, flags discrepancies >2% for investigation"
+  ],
+  "dataModel": [
+    {
+      "name": "User",
+      "fields": [
+        "userId",
+        "auth0Id",
+        "email",
+        "firstName",
+        "lastName",
+        "phone",
+        "role",
+        "warehouseId",
+        "isActive",
+        "createdAt",
+        "lastLogin"
+      ],
+      "description": "System user with Auth0 integration. Role must be one of: admin, warehouse_manager, inventory_operator, transport_coordinator, driver. Warehouse managers and operators have warehouseId foreign key."
+    },
+    {
+      "name": "Warehouse",
+      "fields": [
+        "warehouseId",
+        "name",
+        "address",
+        "latitude",
+        "longitude",
+        "totalCapacity",
+        "usedCapacity",
+        "zoneId",
+        "isActive",
+        "managerUserId"
+      ],
+      "description": "Physical warehouse location with capacity tracking. Zone links to transport planning regions. Manager references User table."
+    },
+    {
+      "name": "Product",
+      "fields": [
+        "productId",
+        "sku",
+        "name",
+        "description",
+        "categoryId",
+        "supplierId",
+        "dimensions",
+        "weight",
+        "unitPrice",
+        "reorderLevel",
+        "isActive"
+      ],
+      "description": "Stock keeping unit with physical attributes for storage planning and pricing."
+    },
+    {
+      "name": "Inventory",
+      "fields": [
+        "inventoryId",
+        "productId",
+        "warehouseId",
+        "binLocation",
+        "quantity",
+        "version",
+        "status",
+        "lastMovementId",
+        "lastCounted"
+      ],
+      "description": "Current stock levels per product per warehouse. Version provides optimistic concurrency control. Status: available, quarantined, expired."
+    },
+    {
+      "name": "Allocation",
+      "fields": [
+        "allocationId",
+        "customerOrderId",
+        "inventoryId",
+        "quantity",
+        "status",
+        "allocatedBy",
+        "allocatedAt",
+        "pickedBy",
+        "pickedAt",
+        "packedBy",
+        "packedAt"
+      ],
+      "description": "Dedicated allocation tracking with lifecycle: allocated, picking, picked, packed, cancelled. Replaces reservedQuantity field."
+    },
+    {
+      "name": "StockMovementEvent",
+      "fields": [
+        "eventId",
+        "streamId",
+        "type",
+        "payload",
+        "metadata",
+        "timestamp",
+        "processed"
+      ],
+      "description": "Event log in Redis Streams for real-time updates. Type: inventory_receipt, inventory_pick, delivery_update. Processed flag for PostgreSQL synchronization."
+    },
+    {
+      "name": "StockMovement",
+      "fields": [
+        "movementId",
+        "inventoryId",
+        "type",
+        "quantity",
+        "referenceId",
+        "userId",
+        "timestamp",
+        "sourceBin",
+        "destinationBin",
+        "notes",
+        "eventId"
+      ],
+      "description": "Audit trail of all inventory changes in PostgreSQL. Type: receipt, adjustment, pick, pack, transfer, count. ReferenceId links to PurchaseOrder or CustomerOrder. EventId links to original Redis event."
+    },
+    {
+      "name": "PurchaseOrder",
+      "fields": [
+        "purchaseOrderId",
+        "supplierId",
+        "warehouseId",
+        "expectedDate",
+        "status",
+        "totalItems",
+        "receivedItems",
+        "createdBy",
+        "createdAt"
+      ],
+      "description": "Inbound shipment expectation. Status: pending, partially_received, complete, cancelled."
+    },
+    {
+      "name": "CustomerOrder",
+      "fields": [
+        "customerOrderId",
+        "externalOrderId",
+        "customerName",
+        "deliveryAddress",
+        "contactPhone",
+        "contactEmail",
+        "items",
+        "status",
+        "warehouseId",
+        "priority",
+        "createdAt",
+        "promisedDate"
+      ],
+      "description": "Outbound customer demand with contact information for rescheduling. Items JSON array of productId and quantity. Status: new, allocated, picking, packed, dispatched, delivered, cancelled."
+    },
+    {
+      "name": "Vehicle",
+      "fields": [
+        "vehicleId",
+        "registration",
+        "type",
+        "capacity",
+        "currentWarehouseId",
+        "status",
+        "lastMaintenance"
+      ],
+      "description": "Transport asset with capacity in cubic meters. Type: van, truck, bike. Status: available, assigned, maintenance, offline."
+    },
+    {
+      "name": "DeliveryRoute",
+      "fields": [
+        "routeId",
+        "vehicleId",
+        "driverUserId",
+        "warehouseId",
+        "plannedSequence",
+        "estimatedDuration",
+        "startTime",
+        "endTime",
+        "status",
+        "createdBy"
+      ],
+      "description": "Scheduled delivery run with optimized stop sequence. PlannedSequence JSON array of CustomerOrderIds in delivery order. Status: planned, in_progress, completed, cancelled."
+    },
+    {
+      "name": "DeliveryProof",
+      "fields": [
+        "proofId",
+        "customerOrderId",
+        "deliveryTimestamp",
+        "signatureUrl",
+        "photoUrl",
+        "recipientName",
+        "gpsLatitude",
+        "gpsLongitude",
+        "driverUserId",
+        "status"
+      ],
+      "description": "Evidence of delivery completion. SignatureUrl and PhotoUrl point to S3 objects. Status: delivered, attempted, refused, damaged."
+    },
+    {
+      "name": "AuditLog",
+      "fields": [
+        "logId",
+        "userId",
+        "action",
+        "entityType",
+        "entityId",
+        "oldValues",
+        "newValues",
+        "ipAddress",
+        "timestamp"
+      ],
+      "description": "Security audit trail for all data modifications. OldValues and NewValues store JSON diffs for investigation."
+    }
+  ],
+  "dbSchemaDiagram": "erDiagram\n    User ||--o{ Warehouse : manages\n    User ||--o{ StockMovement : performs\n    User ||--o{ DeliveryRoute : drives\n    User ||--o{ AuditLog : creates\n    User ||--o{ Allocation : processes\n    \n    Warehouse ||--o{ Inventory : contains\n    Warehouse ||--o{ PurchaseOrder : receives\n    Warehouse ||--o{ CustomerOrder : fulfills\n    Warehouse ||--o{ Vehicle : hosts\n    Warehouse ||--o{ DeliveryRoute : originates\n    \n    Product ||--o{ Inventory : stored_as\n    Product ||--o{ Allocation : allocated_for\n    \n    Inventory ||--o{ StockMovement : tracks\n    Inventory ||--o{ Allocation : allocated_from\n    \n    PurchaseOrder ||--o{ StockMovement : generates\n    PurchaseOrder }|--|| Product : includes\n    \n    CustomerOrder ||--o{ Allocation : has\n    CustomerOrder ||--o{ StockMovement : triggers\n    CustomerOrder ||--o{ DeliveryProof : has\n    CustomerOrder }|--|| Product : contains\n    \n    Vehicle ||--o{ DeliveryRoute : assigned_to\n    \n    DeliveryRoute ||--o{ DeliveryProof : produces\n    \n    User {\n        uuid userId PK\n        string auth0Id\n        string email\n        string firstName\n        string lastName\n        string phone\n        enum role\n        uuid warehouseId FK\n        boolean isActive\n        timestamp createdAt\n        timestamp lastLogin\n    }\n    \n    Warehouse {\n        uuid warehouseId PK\n        string name\n        jsonb address\n        float latitude\n        float longitude\n        integer totalCapacity\n        integer usedCapacity\n        uuid zoneId\n        boolean isActive\n        uuid managerUserId FK\n    }\n    \n    Product {\n        uuid productId PK\n        string sku UK\n        string name\n        text description\n        uuid categoryId\n        uuid supplierId\n        jsonb dimensions\n        float weight\n        decimal unitPrice\n        integer reorderLevel\n        boolean isActive\n    }\n    \n    Inventory {\n        uuid inventoryId PK\n        uuid productId FK\n        uuid warehouseId FK\n        string binLocation\n        integer quantity\n        integer version\n        enum status\n        uuid lastMovementId FK\n        timestamp lastCounted\n    }\n    \n    Allocation {\n        uuid allocationId PK\n        uuid customerOrderId FK\n        uuid inventoryId FK\n        integer quantity\n        enum status\n        uuid allocatedBy FK\n        timestamp allocatedAt\n        uuid pickedBy FK\n        timestamp pickedAt\n        uuid packedBy FK\n        timestamp packedAt\n    }\n    \n    StockMovement {\n        uuid movementId PK\n        uuid inventoryId FK\n        enum type\n        integer quantity\n        uuid referenceId\n        uuid userId FK\n        timestamp timestamp\n        string sourceBin\n        string destinationBin\n        text notes\n        string eventId\n    }\n    \n    PurchaseOrder {\n        uuid purchaseOrderId PK\n        uuid supplierId\n        uuid warehouseId FK\n        date expectedDate\n        enum status\n        integer totalItems\n        integer receivedItems\n        uuid createdBy FK\n        timestamp createdAt\n    }\n    \n    CustomerOrder {\n        uuid customerOrderId PK\n        string externalOrderId\n        string customerName\n        jsonb deliveryAddress\n        string contactPhone\n        string contactEmail\n        jsonb items\n        enum status\n        uuid warehouseId FK\n        integer priority\n        timestamp createdAt\n        date promisedDate\n    }\n    \n    Vehicle {\n        uuid vehicleId PK\n        string registration UK\n        enum type\n        float capacity\n        uuid currentWarehouseId FK\n        enum status\n        date lastMaintenance\n    }\n    \n    DeliveryRoute {\n        uuid routeId PK\n        uuid vehicleId FK\n        uuid driverUserId FK\n        uuid warehouseId FK\n        jsonb plannedSequence\n        integer estimatedDuration\n        timestamp startTime\n        timestamp endTime\n        enum status\n        uuid createdBy FK\n    }\n    \n    DeliveryProof {\n        uuid proofId PK\n        uuid customerOrderId FK\n        timestamp deliveryTimestamp\n        string signatureUrl\n        string photoUrl\n        string recipientName\n        float gpsLatitude\n        float gpsLongitude\n        uuid driverUserId FK\n        enum status\n    }\n    \n    AuditLog {\n        uuid logId PK\n        uuid userId FK\n        string action\n        string entityType\n        uuid entityId\n        jsonb oldValues\n        jsonb newValues\n        string ipAddress\n        timestamp timestamp\n    }",
+  "pageBehavior": [
+    {
+      "page": "/dashboard/warehouse-manager",
+      "description": "Real-time warehouse overview showing: capacity utilization gauge (red/yellow/green), pending receipts count with aging, picking queue size by hour, outbound shipments ready for dispatch. Clicking any metric drills to detailed list. WebSocket updates capacity every 30 seconds and queue counts every 60 seconds via Redis Streams subscription."
+    },
+    {
+      "page": "/inventory/receiving",
+      "description": "Goods receipt interface with hardware scanner integration via keyboard input. Displays expected purchase order items. Each scan validates SKU against PO, shows variance percentage, requires quantity input. Batch acceptance button submits all receipts atomically, publishing events to Redis Streams immediately for real-time updates."
+    },
+    {
+      "page": "/inventory/picking",
+      "description": "Wave picking interface showing prioritized customer orders by promised date. Each pick task displays product image, bin location, quantity, and destination packing station. Scan confirms pick completion, updating allocation status through event-first pattern. System enforces pick sequence optimization."
+    },
+    {
+      "page": "/transport/route-planner",
+      "description": "Map-based route creation with Google Maps integration. Drag-and-drop stop ordering. Vehicle assignment shows capacity utilization percentage. Schedule validation checks driver hours compliance. Save generates route sheet PDF and pushes to driver mobile app via WebSocket."
+    },
+    {
+      "page": "/driver/mobile-delivery",
+      "description": "Mobile-optimized delivery progression with large touch targets. Shows current stop with address, customer name, and package count. Signature capture uses touch drawing or photo upload via hardware scanner for package validation. GPS automatically records arrival coordinates. Next/Previous navigation follows planned sequence."
+    },
+    {
+      "page": "/admin/user-management",
+      "description": "Role assignment grid with warehouse filtering. Bulk import from CSV with validation. Permission matrix shows warehouse access, function access (receiving, picking, etc.). Deactivation preserves audit trail but removes from active lists."
+    },
+    {
+      "page": "/reports/daily-reconciliation",
+      "description": "Side-by-side comparison of system counts vs physical counts with variance highlighting. Export to Excel for investigation. Variance trends over time graph. Requires warehouse manager approval to adjust system records after investigation."
+    },
+    {
+      "page": "/settings/warehouse-config",
+      "description": "Warehouse layout editor with bin location grid. Capacity thresholds configuration. Reorder level rules per product category. Integration webhook endpoints for ERP systems. All changes require admin approval before activation."
+    }
+  ],
+  "securityDesign": [
+    "1. Auth0 RBAC with JWT tokens: Each role has defined policy ID; warehouse managers and operators get warehouse-specific resource tags preventing cross-warehouse data access",
+    "2. Application-level tenancy middleware: All API endpoints inject warehouse_id filter into queries based on user's assigned warehouse; middleware runs before database access with no per-session PostgreSQL roles",
+    "3. Delivery data encryption: GPS coordinates, recipient names, and addresses encrypted using AWS KMS with data key per delivery route; encryption context includes route_id for audit trail",
+    "4. WebSocket authentication: Socket.IO connection requires valid JWT with role claims; each driver only subscribes to their vehicle_id room for status updates via Redis Streams consumer groups",
+    "5. Barcode validation: All scanned SKUs validated against allowed product list for that warehouse; attempted scans of non-warehouse products log security event",
+    "6. Audit log immutability: AuditLog table has INSERT ONLY permissions; PostgreSQL trigger prevents updates/deletes; logs streamed to S3 for forensic retention",
+    "7. S3 presigned URL expiration: Delivery evidence upload URLs expire in 5 minutes; download URLs require authentication and expire in 24 hours",
+    "8. Rate limiting: Express rate-limiter per user ID: 100 requests/minute for operators,273 for managers, 50 for drivers to prevent brute force",
+    "9. Session management: Auth0 device sessions tracked; concurrent sessions limited to 2 for drivers, 1 for operators; forced re-authentication after 8 hours",
+    "10. IP whitelisting: Warehouse manager access restricted to warehouse IP ranges when configured; admin overrides require MFA confirmation"
+  ],
+  "deploymentAndOperations": [
+    "1. Three environments: Development (single warehouse simulation), Staging (3 warehouses with synthetic data), Production (100 warehouses regionally deployed)",
+    "2. Blue-green deployment: New ECS task definitions deployed alongside old; ALB shifts 10% traffic, health checks pass, then 100% shift; rollback reverts ALB to previous target group",
+    "3. Database migrations: Liquibase run from CI/CD pipeline with verification stage; each migration has rollback script tested in staging; production migrations during maintenance window 2AM-4AM local",
+    "4. Monitoring: CloudWatch alarms on API p95 latency >500ms for warehouse operations, WebSocket connection failure rate >2%, Redis Streams lag >1000 events, PostgreSQL connection pool utilization >70%",
+    "5. Backup: PostgreSQL continuous archiving with WAL shipping to S3 enabling point-in-time recovery to any minute in past10 days; daily snapshots with 35-day retention for longer recovery",
+    "6. Predictive scaling: ECS Fargate auto-scaling based on warehouse schedules (scale up before morning receiving, end-of-day shipping) plus reactive scaling on CPU >65% or request count >800/minute",
+    "7. Log aggregation: All container logs to CloudWatch Logs with 30-day retention; business-critical logs (receipts, deliveries, adjustments) additionally streamed to S3 for 7-year compliance",
+    "8. Health checks: ALB health check on /health endpoint returns service status and dependencies; WebSocket server health on /ws-health returns connected clients and Redis Streams consumer lag",
+    "9. Incident response: PagerDuty integration for CloudWatch alarms; runbooks for inventory discrepancy >5%, delivery proof system outage, warehouse capacity calculation failure",
+    "10. Maintenance: Weekly RDS maintenance window applies patches; monthly Redis failover test; quarterly security review of Auth0 policies and KMS key rotation"
+  ],
+  "timeline": [
+    {
+      "phase": "Foundation & Core Models",
+      "duration": "3 weeks",
+      "description": "Setup AWS infrastructure (VPC, RDS, ECS, S3, KMS), Auth0 tenant configuration, PostgreSQL schema with Liquibase, Redis Streams setup, base Express API with authentication middleware, React app skeleton with role-based routing"
+    },
+    {
+      "phase": "Warehouse Management Module",
+      "duration": "2 weeks",
+      "description": "Warehouse CRUD, capacity tracking, bin location management, purchase order receipt workflow with event sourcing pattern, hardware scanner integration testing, variance approval flows"
+    },
+    {
+      "phase": "Inventory Operations Module",
+      "duration": "3 weeks",
+      "description": "Allocation table implementation with status lifecycle, picking queue algorithm, wave picking interface with optimistic concurrency, Redis Streams event publishing, WebSocket subscription for real-time updates"
+    },
+    {
+      "phase": "Transport & Delivery Module",
+      "duration": "3 weeks",
+      "description": "Route optimization with Google Maps API, vehicle and driver assignment, mobile delivery interface with signature capture, delivery proof upload to S3, failed delivery handling with manual rescheduling, driver WebSocket notifications"
+    },
+    {
+      "phase": "Dashboards & Reporting",
+      "duration": "2 weeks",
+      "description": "Warehouse manager dashboard with real-time metrics via Redis Streams, transport coordinator dashboard with map visualization, daily reconciliation reports, performance analytics, export to Excel/PDF functionality"
+    },
+    {
+      "phase": "Security & Integration",
+      "duration": "2 weeks",
+      "description": "Application-level tenancy middleware implementation, data encryption for sensitive fields, REST API documentation, webhook endpoints for ERP integration, audit log system, rate limiting and IP whitelisting"
+    },
+    {
+      "phase": "Testing & Deployment",
+      "duration": "2 weeks",
+      "description": "Load testing to 5,000 concurrent users with event sourcing verification, warehouse scenario testing with synthetic data, hardware scanner compatibility testing, predictive scaling configuration, production deployment and cutover"
+    }
+  ],
+  "assumptions": [
+    "1. All warehouses have stable internet connectivity for operator workstations, though driver mobile connectivity may be intermittent in delivery areas",
+    "2. Products have scannable barcodes either as existing UPC/EAN or warehouse-applied internal labels, and warehouses use industrial hardware scanners compatible with HID mode",
+    "3. Warehouse physical layout follows grid-based bin numbering system (Aisle-Bay-Level) compatible with storage assignment algorithm",
+    "4. Delivery vehicles have drivers with smartphones capable of running mobile web app with camera access and hardware scanners for package validation",
+    "5. Purchase orders arrive via electronic means (EDI, email, portal) before physical goods, providing expected receipt data",
+    "6. Customer orders originate from integrated systems (ERP, e-commerce) via API, not manual entry in StarkLogix",
+    "7. Warehouse staff have basic computer literacy for scanning and system interaction without extensive training",
+    "8. Transport coordination occurs during business hours with drivers working scheduled shifts, not 24/7 on-demand",
+    "9. Physical security of warehouse premises prevents unauthorized access to operator workstations",
+    "10. Company has AWS Business Support plan for production infrastructure technical support"
+  ],
+  "openQuestions": [
+    "1. Should the route optimization algorithm consider real-time traffic data (Google Maps Live Traffic API) at additional cost, or rely on historical travel times only?",
+    "2. What variance tolerance percentage should trigger mandatory manager approval for receipt discrepancies - fixed 5% or configurable per product category?",
+    "3. How should the system handle products without barcodes - manual entry with verification, or require warehouse to apply temporary labels?",
+    "4. Should delivery proof require both signature AND photo evidence, or allow either based on customer preference/driver capability?",
+    "5. What retention period for delivery GPS coordinates - 30 days for dispute resolution, 90 days for analytics, or 1 year for compliance?",
+    "6. Should the picking algorithm optimize for travel distance (fastest pick) or batch similarity (fewest container changes) when both conflict?",
+    "7. How to handle warehouse capacity calculation for irregular-shaped items - use dimensional weight or simple volume approximation?",
+    "8. Should failed delivery rescheduling consider driver's remaining route sequence or always return to warehouse for next attempt?",
+    "9. What escalation path when CloudWatch detects inventory discrepancy >10% - immediate system lock, alert only, or automated recount trigger?",
+    "10. Should admin user management support hierarchical roles (regional manager over multiple warehouses) or flat role assignment only?",
+    "11. What Redis Streams retention policy - keep all events for 7 days for replay capability, or compact after PostgreSQL processing?",
+    "12. How to handle Redis Streams consumer group rebalancing during WebSocket server scaling events without missing events?",
+    "13. Should the event processor service be part of main API containers or separate dedicated service for reliability?",
+    "14. What hardware scanner models should be officially supported/tested - Zebra DS2208, Honeywell 1900, or generic HID compatibility?",
+    "Unresolved design review finding (high, techStack): The design uses Node.js/Express for handling 5 million monthly stock movements and 5,000 concurrent users, but Node's single-threaded event loop will choke under the high CPU load from real-time inventory calculations, route optimizations, and concurrent WebSocket connections. In warehouse operations, many operations like picking wave optimization, route calculations, and capacity planning are CPU-intensive batch operations that will block the event loop, causing delays during peak warehouse activity periods. Suggested fix: Use a hybrid approach: Node.js for I/O-heavy operations (API endpoints, WebSocket handling) combined with Go or Java microservices for CPU-intensive operations (route optimization, picking algorithms, capacity calculations). Or adopt a worker pool pattern with Node.js clusters, but given the scale (100 warehouses, 5M movements/month), a multi-threaded language is more appropriate.",
+    "Unresolved design review finding (high, architecture): Event sourcing with Redis Streams for inventory operations creates eventual consistency problems in warehouse management where immediate consistency is required. When an operator scans a pick and the event is published to Redis Streams, the PostgreSQL inventory table isn't immediately updated. This means two operators in the same warehouse could see different stock levels - one sees WebSocket update via Redis, another queries PostgreSQL which hasn't been processed yet. This violates ACID requirements for inventory accuracy stated in the requirements. Suggested fix: Use transactional outbox pattern instead: write to PostgreSQL within transaction, then publish to Redis Streams via CDC (Debezium) or transactional outbox table. This ensures PostgreSQL is the source of truth with immediate consistency, while Redis Streams provides real-time notifications.",
+    "Unresolved design review finding (high, security_design): Auth0 pricing model with 10,000 drivers will be prohibitively expensive (per-active-user pricing). Drivers may only log in briefly daily but count as active users. At scale, this creates unsustainable operational costs. Additionally, warehouse environments often have poor connectivity - Auth0's external dependency creates single point of failure when internet is down but warehouse operations must continue. Suggested fix: Use hybrid authentication: Auth0 for admin/manager roles where cost is manageable, but implement self-hosted authentication for drivers/operators using JWT with Redis session store. Or switch to AWS Cognito with per-MAU pricing which is more cost-effective for large numbers of occasional users.",
+    "Unresolved design review finding (high, data_model): The Inventory table uses optimistic concurrency control with a version field, but with 5 million monthly movements and 5,000 concurrent users, this will cause excessive contention and failed transactions. Warehouse operators scanning items simultaneously will frequently get version conflicts, requiring retries and slowing operations. The 'lastMovementId' foreign key creates circular dependency (StockMovement references Inventory, Inventory references lastMovementId). Suggested fix: Remove optimistic concurrency from Inventory table for warehouse operations. Instead use database-level locking for critical operations or implement a queuing system for inventory updates. Fix the circular dependency by removing lastMovementId from Inventory or using a different tracking mechanism.",
+    "Unresolved design review finding (medium, assumptions): Assumes all warehouses have stable internet connectivity, but real-world warehouse operations frequently experience network outages, especially in industrial areas. The architecture depends heavily on Redis Streams and WebSocket connections for real-time updates. During network partitions, warehouse operations would halt completely since scanning validation, inventory updates, and allocation all require Redis/PostgreSQL access. Suggested fix: Design for offline operation: local caching of product catalogs, barcode validation rules, and pending transaction queues. Implement synchronization when connectivity restores. Use SQLite or IndexedDB for local storage on operator workstations with conflict resolution protocols.",
+    "Unresolved design review finding (medium, techStack): Socket.IO for delivery driver updates assumes drivers have stable connectivity, but delivery areas often have poor coverage. Socket.IO's fallback mechanisms increase bandwidth usage, which is problematic on mobile data plans. The overhead of maintaining WebSocket connections for 10,000 drivers simultaneously creates scaling challenges in Redis and WebSocket servers. Suggested fix: For driver mobile app, use MQTT over WebSocket instead of Socket.IO. MQTT is designed for unreliable networks with QoS levels, retains messages for offline clients, and has much lower overhead. Or implement push notifications with local storage for offline operation.",
+    "Unresolved design review finding (medium, architecture): Barcode scanning via HID mode (keyboard emulation) creates security vulnerabilities - any keyboard input could be interpreted as a barcode scan. Malicious users or malware could inject fake scan data. Industrial environments often have shared workstations where this vulnerability is significant. Suggested fix: Use dedicated scanning API or USB serial communication with scanner-specific protocols. Implement scanner authentication or use secure scanning middleware that validates the input source. Many industrial scanners support dedicated COM port or network socket communication.",
+    "Unresolved design review finding (medium, nonFunctionalRequirements): The design promises 2-second API response times but doesn't account for KMS encryption latency (~5ms per operation). With delivery proof data requiring encryption/decryption for every read/write, and with 10,000 drivers uploading evidence, the cumulative latency will exceed 2 seconds during peak periods. Suggested fix: Implement caching layer for encrypted data keys or use application-level encryption with periodically rotated keys stored in KMS. Or accept that encryption-sensitive operations will have higher latency and adjust SLAs accordingly.",
+    "Unresolved design review finding (medium, deployment_and_operations): Blue-green deployment with ECS Fargate has 30-second cold starts mentioned. For warehouse operations that run 24/7 in some regions, this means either maintaining always-on minimum instances (costly) or accepting service disruption during scaling events. Warehouse operations cannot tolerate 30-second delays during shift changes or peak periods. Suggested fix: Use EC2 instead of Fargate for predictable performance and near-zero cold starts, or implement pre-warming of Fargate tasks before scheduled scaling events. Alternatively, design the system to tolerate brief outages for non-critical functions while keeping core inventory operations on stable instances."
+  ]
+}

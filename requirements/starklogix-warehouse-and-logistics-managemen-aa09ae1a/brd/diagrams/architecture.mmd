@@ -1,0 +1,51 @@
+graph TD
+    User[User Browser] --> ALB[AWS ALB]
+    ALB --> Express1[Express API Node 1]
+    ALB --> Express2[Express API Node 2]
+    ALB --> ExpressN[Express API Node N]
+    
+    User --> WSClient[WebSocket Client]
+    WSClient --> WSLB[WebSocket Load Balancer]
+    WSLB --> WSNode1[WebSocket Server 1]
+    WSLB --> WSNode2[WebSocket Server 2]
+    
+    Express1 --> Auth0[Auth0 Tenant]
+    Express2 --> Auth0
+    ExpressN --> Auth0
+    
+    Express1 --> Redis[(Redis Cluster)]
+    Express2 --> Redis
+    ExpressN --> Redis
+    WSNode1 --> Redis
+    WSNode2 --> Redis
+    
+    Express1 --> Postgres[(PostgreSQL RDS)]
+    Express2 --> Postgres
+    ExpressN --> Postgres
+    
+    Express1 --> RedisStreams[Redis Streams]
+    Express2 --> RedisStreams
+    ExpressN --> RedisStreams
+    
+    WSNode1 --> RedisStreams
+    WSNode2 --> RedisStreams
+    
+    Express1 --> S3[AWS S3 Buckets]
+    Express2 --> S3
+    ExpressN --> S3
+    
+    Postgres --> KMS[AWS KMS]
+    S3 --> KMS
+    
+    Express1 --> CloudWatch[CloudWatch Metrics]
+    Express2 --> CloudWatch
+    ExpressN --> CloudWatch
+    WSNode1 --> CloudWatch
+    WSNode2 --> CloudWatch
+    
+    Redis --> CloudWatch
+    Postgres --> CloudWatch
+    RedisStreams --> CloudWatch
+    
+    EventProcessor[Event Processor Service] --> RedisStreams
+    EventProcessor --> Postgres
