@@ -1,7 +1,5 @@
-- What specific conflict resolution interface is needed for managers - should it be integrated into TeamManagement screen or separate?
-- Should facial verification be required or optional for all clock-ins when enabled? The BRD mentions 'optional facial verification' but doesn't specify user choice flow.
-- What constitutes 'timezone view' in attendance history - should it show converted times or just indicate which timezone was applied?
-- Are there any specific workflows for handling overnight shifts that cross midnight in the shift roster interface?
-- Should the payroll export CSV include employee names or only IDs as mentioned in BRD? The BRD says 'employee_id' but payroll might need names.
-- What is the expected behavior for 'location override button' - should field workers be able to set any location or choose from predefined options?
-- These screens could not be generated and need another pass: ShiftRoster, PolicyManagement, PayrollExport, FacialEnrollment, SyncManagement
+- Shift Roster page: should the drag‑drop interface allow assigning the same shift to multiple employees across multiple days in one action (bulk drag), or is it limited to one employee per drag? Clarify expected bulk assignment UX.
+- Payroll Export page: does the user select a specific AttendancePolicy version to apply, or should the system automatically apply the version that was effective for the selected month and only display it for reference?
+- Leave Approvals page: is there a requirement for bulk approve/reject actions, or are approvals always handled one‑by‑one with comment entry?
+- Dashboard offline indicator: should the sync queue count be displayed as a numeric badge globally, or within each role‑specific widget?
+- These screens could not be generated and need another pass: Dashboard, Clock In/Out, Attendance History, Leave Approvals, Shift Roster, Policy Management, Payroll Export, Audit Trail, Offline Sync Manager
