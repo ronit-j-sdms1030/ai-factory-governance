@@ -1,276 +1,265 @@
 function PayrollExport() {
   // Mock data
-  const [selectedMonth, setSelectedMonth] = React.useState('2023-10');
-  const [isLocked, setIsLocked] = React.useState(false);
-  const [csvGenerated, setCsvGenerated] = React.useState(false);
-  const [policyVersion, setPolicyVersion] = React.useState('v2.1.4');
-  
-  // Mock audit log data
-  const auditLogs = [
-    { id: 1, actor: 'HR Manager (ID: 1001)', timestamp: '2023-10-05 14:30:22', action: 'Generated payroll export' },
-    { id: 2, actor: 'System', timestamp: '2023-10-01 00:05:10', action: 'Locked period' },
-    { id: 3, actor: 'Finance Lead (ID: 2005)', timestamp: '2023-09-30 18:45:00', action: 'Generated payroll export' }
+  const months = [
+    { id: '2024-01', name: 'January 2024', locked: true },
+    { id: '2024-02', name: 'February 2024', locked: true },
+    { id: '2024-03', name: 'March 2024', locked: false },
+    { id: '2024-04', name: 'April 2024', locked: false },
   ];
   
-  // Mock API keys
-  const [apiKeys, setApiKeys] = React.useState([
-    { id: 'key_1', name: 'QuickBooks Integration', lastUsed: '2023-10-04 09:15:33', status: 'Active' },
-    { id: 'key_2', name: 'Zoho Payroll Sync', lastUsed: '2023-09-28 16:42:11', status: 'Active' }
-  ]);
-  
-  // Handlers
-  const handleLockPeriod = () => {
-    setIsLocked(true);
-    alert(`Payroll for ${selectedMonth} has been locked.`);
+  const exportHistory = [
+    { id: 1, period: 'March 2024', exportedBy: 'HR Manager', exportedAt: '2024-04-01 15:30', fileName: 'payroll_march_2024.csv' },
+    { id: 2, period: 'February 2024', exportedBy: 'System', exportedAt: '2024-03-01 03:00', fileName: 'payroll_february_2024.csv' },
+    { id: 3, period: 'January 2024', exportedBy: 'HR Manager', exportedAt: '2024-02-01 16:45', fileName: 'payroll_january_2024.csv' },
+  ];
+
+  const validationSummary = {
+    totalEmployees: 1247,
+    validRecords: 1238,
+    discrepancies: 9,
+    discrepancyList: [
+      { employeeId: 'EMP00124', name: 'Robert Chen', issue: 'Missing clock-out' },
+      { employeeId: 'EMP00356', name: 'Sarah Johnson', issue: 'Unverified overtime' },
+      { employeeId: 'EMP00789', name: 'Michael Torres', issue: 'Late arrival discrepancy' },
+    ]
   };
-  
+
+  const policyVersion = 'POL-V3-2024';
+
+  const [selectedMonth, setSelectedMonth] = React.useState('2024-03');
+  const [apiKey, setApiKey] = React.useState('wkpf_api_key_7d9b1c3f_a4e6');
+  const [showApiKey, setShowApiKey] = React.useState(false);
+
+  const handleLockToggle = (monthId) => {
+    console.log(`Toggling lock for ${monthId}`);
+    // In a real app, this would make an API call
+  };
+
   const handleGenerateCSV = () => {
-    setCsvGenerated(true);
-    alert('Payroll CSV generated successfully!');
+    console.log(`Generating CSV for ${selectedMonth}`);
+    // In a real app, this would trigger CSV generation
   };
-  
+
   const handleDownload = () => {
-    alert('Downloading payroll_export_2023-10.csv');
+    console.log('Downloading payroll file');
+    // In a real app, this would trigger file download
   };
-  
-  const handleRevokeKey = (id) => {
-    setApiKeys(apiKeys.map(key => 
-      key.id === id ? {...key, status: 'Revoked'} : key
-    ));
+
+  const handleRegenerateKey = () => {
+    console.log('Regenerating API key');
+    setApiKey('wkpf_api_key_' + Math.random().toString(36).substr(2, 8));
   };
-  
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f5f7fa' }}>
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div style={{ width: '240px', backgroundColor: '#2c3e50', color: 'white', padding: '20px 0' }}>
-        <h2 style={{ padding: '0 20px 20px', borderBottom: '1px solid #34495e' }}>WorkPulse</h2>
+      <div className="w-64 bg-indigo-800 text-white p-4">
+        <div className="mb-8">
+          <h1 className="text-xl font-bold">WorkPulse</h1>
+          <p className="text-indigo-200 text-sm">Payroll Management</p>
+        </div>
         <nav>
-          {['Dashboard', 'Clock In/Out', 'Attendance', 'Leave Request', 'Leave Approvals', 'My Leave', 'Shift Roster', 'Payroll Export', 'My Profile', 'Offline Sync', 'Policies', 'Audit Trail'].map((item, index) => {
-            const paths = ['/', '/clock', '/attendance', '/leave/new', '/leave/pending', '/leave/calendar', '/shifts', '/payroll', '/profile', '/sync', '/admin/policies', '/admin/audit'];
-            return (
-              <a 
-                key={index} 
-                href={paths[index]} 
-                style={{
-                  display: 'block',
-                  padding: '12px 20px',
-                  color: paths[index] === '/payroll' ? '#3498db' : 'rgba(255,255,255,0.7)',
-                  textDecoration: 'none',
-                  fontWeight: paths[index] === '/payroll' ? '600' : '400',
-                  borderLeft: paths[index] === '/payroll' ? '4px solid #3498db' : 'none',
-                  backgroundColor: paths[index] === '/payroll' ? 'rgba(52, 152, 219, 0.1)' : 'transparent'
-                }}
-              >
-                {item}
-              </a>
-            );
-          })}
+          <ul className="space-y-2">
+            {['Dashboard', 'Clock Interface', 'Attendance', 'Leave Requests', 'Team View', 'Shift Rosters', 'Policies', 'Payroll Export', 'Facial Enrollment', 'Profile', 'Admin Audit'].map((item) => (
+              <li key={item}>
+                <a 
+                  href="#" 
+                  className={`block py-2 px-4 rounded ${item === 'Payroll Export' ? 'bg-indigo-700 text-white' : 'hover:bg-indigo-700'}`}
+                >
+                  {item}
+                </a>
+              </li>
+            ))}
+          </ul>
         </nav>
       </div>
-      
+
       {/* Main Content */}
-      <div style={{ flex: 1, padding: '30px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          <h1 style={{ color: '#2c3e50', margin: 0 }}>Payroll Export</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>Policy Version:</span>
-              <span style={{ fontWeight: '600', color: '#3498db' }}>{policyVersion}</span>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-sm p-4">
+          <h2 className="text-2xl font-semibold text-gray-800">Payroll Export</h2>
+          <p className="text-gray-600">Secure export interface with period locking</p>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Month Picker & Locking Controls */}
+            <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Period Selection & Locking</h3>
+              
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                {months.map((month) => (
+                  <div 
+                    key={month.id}
+                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                      selectedMonth === month.id 
+                        ? 'border-indigo-500 bg-indigo-50' 
+                        : 'border-gray-200 hover:border-indigo-300'
+                    }`}
+                    onClick={() => setSelectedMonth(month.id)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-medium text-gray-900">{month.name}</h4>
+                      <span 
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          month.locked 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {month.locked ? 'Locked' : 'Open'}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLockToggle(month.id);
+                        }}
+                        className={`text-xs px-3 py-1 rounded ${
+                          month.locked
+                            ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                        }`}
+                      >
+                        {month.locked ? 'Unlock Period' : 'Lock Period'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleGenerateCSV}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Generate CSV
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Download File
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-        
-        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', padding: '25px', marginBottom: '30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#2c3e50' }}>Select Payroll Month</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <input 
-                  type="month" 
-                  value={selectedMonth} 
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '50%',
-                    backgroundColor: isLocked ? '#e74c3c' : '#2ecc71'
-                  }}></div>
-                  <span>{isLocked ? 'Locked' : 'Unlocked'}</span>
+
+            {/* Data Validation Summary */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Validation Summary</h3>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b">
+                  <span className="text-gray-600">Total Employees</span>
+                  <span className="font-medium">{validationSummary.totalEmployees}</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b">
+                  <span className="text-gray-600">Valid Records</span>
+                  <span className="font-medium text-green-600">{validationSummary.validRecords}</span>
+                </div>
+                
+                <div className="flex justify-between items-center pb-2 border-b">
+                  <span className="text-gray-600">Discrepancies</span>
+                  <span className="font-medium text-red-600">{validationSummary.discrepancies}</span>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">Top Issues</h4>
+                  <ul className="space-y-2">
+                    {validationSummary.discrepancyList.map((issue, index) => (
+                      <li key={index} className="flex justify-between text-sm">
+                        <span className="text-gray-600 truncate max-w-[120px]">{issue.name}</span>
+                        <span className="text-red-600">{issue.issue}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>
-            
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button 
-                onClick={handleLockPeriod}
-                disabled={isLocked}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: isLocked ? '#bdc3c7' : '#e74c3c',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isLocked ? 'not-allowed' : 'pointer',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4H3.5a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5H11z"/>
-                </svg>
-                Lock Period
-              </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* API Key Management */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">API Key Management</h3>
               
-              <button 
-                onClick={handleGenerateCSV}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                </svg>
-                Generate CSV
-              </button>
-              
-              <button 
-                onClick={handleDownload}
-                disabled={!csvGenerated}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: csvGenerated ? '#2ecc71' : '#bdc3c7',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: csvGenerated ? 'pointer' : 'not-allowed',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                </svg>
-                Download
-              </button>
-            </div>
-          </div>
-          
-          <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '6px', border: '1px solid #e9ecef' }}>
-            <h3 style={{ marginTop: 0, color: '#2c3e50' }}>Generated CSV will include:</h3>
-            <ul style={{ color: '#34495e', paddingLeft: '20px' }}>
-              <li>employee_id</li>
-              <li>days_present</li>
-              <li>late_count</li>
-              <li>overtime_hours</li>
-              <li>leave_days</li>
-            </ul>
-          </div>
-        </div>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
-          {/* API Keys Section */}
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', padding: '25px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, color: '#2c3e50', fontSize: '20px' }}>API Key Management</h2>
-              <button style={{
-                padding: '8px 16px',
-                backgroundColor: '#2c3e50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}>
-                + New Key
-              </button>
-            </div>
-            
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa', textAlign: 'left' }}>
-                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Name</th>
-                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Last Used</th>
-                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Status</th>
-                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {apiKeys.map(key => (
-                    <tr key={key.id}>
-                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>{key.name}</td>
-                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>{key.lastUsed}</td>
-                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          backgroundColor: key.status === 'Active' ? '#d4edda' : '#f8d7da',
-                          color: key.status === 'Active' ? '#155724' : '#721c24',
-                          fontSize: '12px',
-                          fontWeight: '500'
-                        }}>
-                          {key.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>
-                        <button 
-                          onClick={() => handleRevokeKey(key.id)}
-                          disabled={key.status === 'Revoked'}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: key.status === 'Revoked' ? '#bdc3c7' : '#e74c3c',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: key.status === 'Revoked' ? 'not-allowed' : 'pointer',
-                            fontSize: '14px'
-                          }}
-                        >
-                          {key.status === 'Revoked' ? 'Revoked' : 'Revoke'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          {/* Audit Log */}
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', padding: '25px' }}>
-            <h2 style={{ margin: '0 0 20px 0', color: '#2c3e50', fontSize: '20px' }}>Audit Log</h2>
-            
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {auditLogs.map(log => (
-                <div key={log.id} style={{ padding: '15px 0', borderBottom: '1px solid #eee' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span style={{ fontWeight: '500', color: '#2c3e50' }}>{log.actor}</span>
-                    <span style={{ color: '#7f8c8d', fontSize: '14px' }}>{log.timestamp}</span>
-                  </div>
-                  <div style={{ color: '#34495e' }}>{log.action}</div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Current API Key</label>
+                <div className="flex">
+                  <input
+                    type={showApiKey ? "text" : "password"}
+                    value={apiKey}
+                    readOnly
+                    className="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-r-0 border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <button
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm"
+                  >
+                    {showApiKey ? 'Hide' : 'Show'}
+                  </button>
                 </div>
-              ))}
+              </div>
+              
+              <button
+                onClick={handleRegenerateKey}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Regenerate Key
+              </button>
+              
+              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-700">
+                  <strong>Note:</strong> This key provides access to payroll export endpoints. Store securely and regenerate if compromised.
+                </p>
+              </div>
+            </div>
+
+            {/* Policy Version & Export History */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Policy Information</h3>
+              
+              <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">Active Policy Version</span>
+                  <span className="font-mono bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                    {policyVersion}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-gray-600">
+                  Applied to all calculations for current export period
+                </p>
+              </div>
+              
+              <h4 className="text-md font-medium text-gray-900 mb-3">Recent Exports</h4>
+              <div className="overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {exportHistory.map((record) => (
+                      <tr key={record.id}>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{record.period}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{record.exportedAt.split(' ')[0]}</td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-indigo-600 hover:text-indigo-900">
+                          <a href="#">{record.fileName}</a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

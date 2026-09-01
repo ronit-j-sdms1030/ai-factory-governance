@@ -1,10 +1,8 @@
-- Should the ShiftRoster screen be accessible to managers for their teams only, or HR only? BRD says 'HR shift management' but managers might need to view team schedules.
-- For facial verification: Should consent be required every clock-in or only during enrollment? BRD mentions 'consent workflows' but not frequency.
-- What's the conflict resolution workflow for offline attendance discrepancies? BRD mentions 'manager review flag for discrepancies' but not the actual UI flow.
-- Should there be a separate 'Team Dashboard' for managers vs. the main dashboard? BRD mentions managers seeing team grid but not if it's same screen.
-- For payroll export: Who can lock periods? BRD says 'Once locked by HR' but not which HR roles specifically.
-- Should employees be able to view their shift assignments beyond today on their dashboard? BRD only mentions today's shift.
-- What happens when an employee's timezone differs from shift timezone? BRD mentions timezone-aware calculations but not conflict resolution.
-- For leave approvals: Should managers see leave balance impact before approval? BRD shows it in approval queue but not calculation method.
-- What notification preferences should employees control? BRD mentions notifications but not preference settings.
-- Should there be a 'Quick Clock' feature on dashboard vs. full ClockInterface? BRD has both but not differentiation.
+- Should the 'Offline/Sync' management screen be accessible to all users or only administrators? The BRD suggests it's a dedicated page but doesn't specify user permissions.
+- Is the conflict resolution interface for offline discrepancies accessible only to managers, or should HR also have access? The BRD mentions 'manager review flag' but HR may need oversight.
+- Should facial verification be a mandatory step for all clock-ins when enabled, or remain optional per employee preference? The BRD mentions 'optional facial verification' but doesn't specify enforcement.
+- Does the 'manual location override' for field workers require manager approval or simply employee acknowledgement? The BRD doesn't specify the workflow.
+- Should the attendance policy version selection for payroll exports default to 'latest active during period' or require explicit selection? The BRD mentions 'policy version used for calculations displayed' but not selection method.
+- Are shift assignments visible to employees in advance, or only on the day? The BRD mentions roster creation but not employee visibility timing.
+- Should the WebSocket real-time notifications include sound/audio alerts, or only visual? The BRD mentions 'real-time clock-in notifications' but not delivery method details.
+- Is there a requirement for managers to approve/reject leave requests within a specific timeframe before auto-approval? The BRD mentions approval workflow but not timing constraints.

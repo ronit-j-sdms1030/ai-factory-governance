@@ -1,349 +1,650 @@
 function Dashboard() {
-  // Mock user data
-  const user = {
-    id: 1,
-    employee_id: 'EMP00123',
-    first_name: 'Alex',
-    last_name: 'Morgan',
-    role: 'manager', // employee/manager/hr
-    department: 'Engineering',
-    location: 'New York'
-  };
-
-  // Mock shift data
-  const shift = {
-    name: 'Day Shift',
-    start_time: '09:00',
-    end_time: '17:00',
-    timezone: 'America/New_York',
-    grace_period: 15
-  };
-
-  // Mock attendance data
-  const attendanceSummary = [
-    { date: '2023-06-01', status: 'present' },
-    { date: '2023-06-02', status: 'late', minutes: 25 },
-    { date: '2023-06-05', status: 'present' },
-    { date: '2023-06-06', status: 'absent' },
-    { date: '2023-06-07', status: 'present' }
-  ];
-
-  // Mock team data
-  const teamMembers = [
-    { id: 1, name: 'Jordan Smith', status: 'present', clockIn: '08:55' },
-    { id: 2, name: 'Taylor Kim', status: 'late', clockIn: '09:22' },
-    { id: 3, name: 'Morgan Lee', status: 'absent', clockIn: null },
-    { id: 4, name: 'Casey Brown', status: 'on_leave', clockIn: null }
-  ];
-
-  // Mock leave requests
-  const leaveRequests = [
-    { id: 1, employee: 'Jamie Chen', type: 'PTO', dates: 'Jun 10-12', status: 'pending' },
-    { id: 2, employee: 'Riley Jones', type: 'Sick', dates: 'Jun 11', status: 'pending' }
-  ];
-
-  // Mock org metrics
-  const orgMetrics = {
-    attendanceRate: 92.4,
-    lateArrivals: 8,
-    leaveUtilization: 12.3
-  };
-
-  // State
-  const [timeRemaining, setTimeRemaining] = React.useState('05:32:18');
-  const [clockStatus, setClockStatus] = React.useState('Clock Out');
-  const [notifications, setNotifications] = React.useState([
-    { id: 1, message: 'Taylor Kim clocked in at 09:22 (Late)', time: '2 mins ago' }
-  ]);
+  // Mock user role - in reality would come from auth context
+  const userRole = 'employee'; // 'employee', 'manager', or 'hr'
   
-  // Simulate countdown timer
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      // In a real app, this would calculate actual time remaining
-      setTimeRemaining(prev => {
-        const parts = prev.split(':').map(Number);
-        let [hours, minutes, seconds] = parts;
-        
-        seconds--;
-        if (seconds < 0) {
-          seconds = 59;
-          minutes--;
-          if (minutes < 0) {
-            minutes = 59;
-            hours--;
-            if (hours < 0) {
-              hours = 23;
-            }
-          }
-        }
-        
-        return [hours, minutes, seconds]
-          .map(t => String(t).padStart(2, '0'))
-          .join(':');
-      });
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-
-  // Handlers
-  const handleClockAction = () => {
-    // In a real app, this would trigger clock in/out
-    setClockStatus(clockStatus === 'Clock In' ? 'Clock Out' : 'Clock In');
-    
-    // Add notification
-    if (clockStatus === 'Clock Out') {
-      setNotifications([
-        { id: Date.now(), message: 'You have clocked out successfully', time: 'Just now' },
-        ...notifications
-      ]);
+  // Mock data based on role
+  const userData = {
+    employee: {
+      name: "Amit Sharma",
+      employeeId: "EMP00789",
+      shift: {
+        name: "Day Shift",
+        startTime: "09:00 AM",
+        endTime: "06:00 PM",
+        gracePeriod: 15,
+        isLate: false
+      },
+      nextAction: {
+        type: "Clock In",
+        time: "in 15 minutes"
+      },
+      recentAttendance: [
+        { date: "2023-06-15", status: "present" },
+        { date: "2023-06-14", status: "late", lateMinutes: 22 },
+        { date: "2023-06-13", status: "present" },
+        { date: "2023-06-12", status: "absent" },
+        { date: "2023-06-11", status: "present" }
+      ]
+    },
+    manager: {
+      teamAttendance: [
+        { id: 1, name: "Raj Patel", status: "present" },
+        { id: 2, name: "Priya Nair", status: "late" },
+        { id: 3, name: "Vikram Singh", status: "absent" },
+        { id: 4, name: "Anjali Mehta", status: "present" },
+        { id: 5, name: "Karan Kapoor", status: "present" }
+      ],
+      pendingLeaves: [
+        { id: 101, employee: "Sneha Reddy", type: "Sick Leave", days: 2, submitted: "2023-06-15" },
+        { id: 102, employee: "Manoj Kumar", type: "Casual Leave", days: 1, submitted: "2023-06-14" }
+      ]
+    },
+    hr: {
+      orgMetrics: {
+        attendanceRate: 94.2,
+        lateArrivals: 3.8,
+        leaveRequests: 12,
+        pendingApprovals: 5
+      }
     }
   };
 
-  const handleApproveLeave = (id) => {
-    // In a real app, this would update leave request status
-    console.log(`Approved leave request ${id}`);
-  };
-
-  const handleRejectLeave = (id) => {
-    // In a real app, this would update leave request status
-    console.log(`Rejected leave request ${id}`);
-  };
-
+  const currentData = userData[userRole];
+  
   // Status badge component
   const StatusBadge = ({ status }) => {
-    const statusColors = {
-      present: 'bg-green-100 text-green-800',
-      late: 'bg-yellow-100 text-yellow-800',
-      absent: 'bg-red-100 text-red-800',
-      'on_leave': 'bg-blue-100 text-blue-800',
-      pending: 'bg-purple-100 text-purple-800'
+    const statusStyles = {
+      present: { backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #4caf50' },
+      late: { backgroundColor: '#fff3e0', color: '#ef6c00', border: '1px solid #ff9800' },
+      absent: { backgroundColor: '#ffebee', color: '#c62828', border: '1px solid #f44336' }
     };
     
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-        {status.replace('_', ' ')}
+      <span style={{
+        padding: '4px 12px',
+        borderRadius: '20px',
+        fontSize: '0.8rem',
+        fontWeight: '500',
+        ...statusStyles[status]
+      }}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
-
+  
+  // Quick action button component
+  const QuickActionButton = ({ icon, label, onClick }) => (
+    <button 
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        border: 'none',
+        borderRadius: '8px',
+        backgroundColor: '#f5f7fa',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        width: '100%',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+      }}
+      onMouseOver={(e) => e.target.style.backgroundColor = '#e3f2fd'}
+      onMouseOut={(e) => e.target.style.backgroundColor = '#f5f7fa'}
+    >
+      <div style={{ fontSize: '24px', marginBottom: '8px' }}>{icon}</div>
+      <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{label}</span>
+    </button>
+  );
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ 
+      padding: '24px', 
+      backgroundColor: '#fafbfc', 
+      minHeight: '100vh',
+      fontFamily: 'Segoe UI, Roboto, sans-serif'
+    }}>
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">WorkPulse Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center text-sm text-gray-500">
-              <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
-              Connected
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '32px' 
+      }}>
+        <div>
+          <h1 style={{ 
+            margin: 0, 
+            fontSize: '28px', 
+            fontWeight: '600', 
+            color: '#1a237e' 
+          }}>
+            Good morning, {currentData.name || 'HR Team'}
+          </h1>
+          <p style={{ 
+            margin: '4px 0 0 0', 
+            color: '#666', 
+            fontSize: '16px' 
+          }}>
+            Here's what's happening with your attendance today
+          </p>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            padding: '8px 16px', 
+            backgroundColor: '#e3f2fd', 
+            borderRadius: '20px',
+            border: '1px solid #bbdefb'
+          }}>
+            <div style={{ 
+              width: '10px', 
+              height: '10px', 
+              borderRadius: '50%', 
+              backgroundColor: '#4caf50',
+              marginRight: '8px'
+            }}></div>
+            <span style={{ fontSize: '14px', fontWeight: '500' }}>Online</span>
+          </div>
+          
+          <div style={{ position: 'relative' }}>
+            <div style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '50%', 
+              backgroundColor: '#3f51b5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '18px'
+            }}>
+              {currentData.name ? currentData.name.charAt(0) : 'H'}
             </div>
-            <div className="relative">
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-              <button className="p-1 text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex items-center">
-              <div className="mr-3 text-right">
-                <p className="text-sm font-medium text-gray-900">{user.first_name} {user.last_name}</p>
-                <p className="text-xs text-gray-500">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
-                {user.first_name.charAt(0)}{user.last_name.charAt(0)}
-              </div>
-            </div>
+            <div style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '0',
+              width: '12px',
+              height: '12px',
+              backgroundColor: '#4caf50',
+              border: '2px solid white',
+              borderRadius: '50%'
+            }}></div>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      </div>
+      
+      {/* Main Content Grid */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+        gap: '24px' 
+      }}>
         {/* Today's Shift Card */}
-        <div className="bg-white shadow rounded-lg mb-6">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        {userRole === 'employee' && (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            gridColumn: '1 / -1'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 16px 0', 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#333' 
+            }}>
+              Today's Shift
+            </h2>
+            
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
               <div>
-                <h2 className="text-lg font-medium text-gray-900">Today's Shift</h2>
-                <p className="mt-1 text-sm text-gray-500">{shift.name} • {shift.start_time} - {shift.end_time}</p>
+                <h3 style={{ 
+                  margin: '0 0 8px 0', 
+                  fontSize: '24px', 
+                  fontWeight: '600',
+                  color: '#1a237e'
+                }}>
+                  {currentData.shift.name}
+                </h3>
+                <p style={{ 
+                  margin: 0, 
+                  color: '#666', 
+                  fontSize: '16px' 
+                }}>
+                  {currentData.shift.startTime} - {currentData.shift.endTime}
+                </p>
               </div>
-              <div className="mt-4 md:mt-0">
-                <button
-                  onClick={handleClockAction}
-                  className={`px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${clockStatus === 'Clock In' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
-                >
-                  {clockStatus}
-                </button>
+              
+              <div style={{
+                padding: '8px 16px',
+                backgroundColor: currentData.shift.isLate ? '#fff3e0' : '#e8f5e9',
+                borderRadius: '20px',
+                border: `1px solid ${currentData.shift.isLate ? '#ff9800' : '#4caf50'}`
+              }}>
+                <span style={{ 
+                  fontWeight: '500',
+                  color: currentData.shift.isLate ? '#ef6c00' : '#2e7d32'
+                }}>
+                  {currentData.shift.isLate ? 'Late Arrival' : 'On Time'}
+                </span>
               </div>
             </div>
             
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-blue-800">Time Remaining</p>
-                <p className="mt-1 text-2xl font-bold text-blue-900">{timeRemaining}</p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingTop: '16px',
+              borderTop: '1px solid #eee'
+            }}>
+              <div>
+                <p style={{ 
+                  margin: '0 0 4px 0', 
+                  color: '#666', 
+                  fontSize: '14px' 
+                }}>
+                  Next Action
+                </p>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '18px', 
+                  fontWeight: '600',
+                  color: '#333'
+                }}>
+                  {currentData.nextAction.type} {currentData.nextAction.time}
+                </p>
               </div>
-              <div className="bg-indigo-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-indigo-800">Grace Period</p>
-                <p className="mt-1 text-2xl font-bold text-indigo-900">{shift.grace_period} min</p>
+              
+              <button style={{
+                padding: '12px 24px',
+                backgroundColor: '#3f51b5',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#303f9f'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#3f51b5'}>
+                Clock In Now
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* Recent Attendance */}
+        {userRole === 'employee' && (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 16px 0', 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#333' 
+            }}>
+              Recent Attendance
+            </h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {currentData.recentAttendance.map((record, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '12px 0',
+                  borderBottom: index !== currentData.recentAttendance.length - 1 ? '1px solid #f0f0f0' : 'none'
+                }}>
+                  <span style={{ fontSize: '16px', color: '#333' }}>
+                    {new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </span>
+                  <StatusBadge status={record.status} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Team Attendance Grid */}
+        {userRole === 'manager' && (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            gridColumn: '1 / -1'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 16px 0', 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#333' 
+            }}>
+              Team Attendance Today
+            </h2>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+              gap: '16px' 
+            }}>
+              {currentData.teamAttendance.map(member => (
+                <div key={member.id} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px',
+                  backgroundColor: '#f9f9f9',
+                  borderRadius: '8px',
+                  border: '1px solid #eee'
+                }}>
+                  <span style={{ fontWeight: '500', color: '#333' }}>{member.name}</span>
+                  <StatusBadge status={member.status} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Pending Leaves */}
+        {userRole === 'manager' && (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 16px 0', 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#333' 
+            }}>
+              Pending Leave Approvals
+            </h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {currentData.pendingLeaves.map(leave => (
+                <div key={leave.id} style={{
+                  padding: '16px',
+                  backgroundColor: '#fff8e1',
+                  borderRadius: '8px',
+                  border: '1px solid #ffecb3'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    marginBottom: '8px' 
+                  }}>
+                    <span style={{ fontWeight: '500', color: '#333' }}>{leave.employee}</span>
+                    <span style={{ 
+                      padding: '2px 8px', 
+                      backgroundColor: '#ffecb3', 
+                      borderRadius: '12px', 
+                      fontSize: '0.8rem',
+                      fontWeight: '500'
+                    }}>
+                      {leave.days} {leave.days === 1 ? 'day' : 'days'}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 8px 0', color: '#666', fontSize: '14px' }}>
+                    {leave.type}
+                  </p>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center' 
+                  }}>
+                    <span style={{ fontSize: '12px', color: '#999' }}>
+                      Submitted: {leave.submitted}
+                    </span>
+                    <button style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#3f51b5',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}>
+                      Review
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Organization Metrics */}
+        {userRole === 'hr' && (
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+            gridColumn: '1 / -1'
+          }}>
+            <h2 style={{ 
+              margin: '0 0 16px 0', 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#333' 
+            }}>
+              Organization Metrics
+            </h2>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '24px' 
+            }}>
+              <div>
+                <p style={{ 
+                  margin: '0 0 8px 0', 
+                  color: '#666', 
+                  fontSize: '14px' 
+                }}>
+                  Overall Attendance Rate
+                </p>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '32px', 
+                  fontWeight: '600',
+                  color: '#1a237e'
+                }}>
+                  {currentData.orgMetrics.attendanceRate}%
+                </p>
               </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <p className="text-sm font-medium text-purple-800">Location</p>
-                <p className="mt-1 text-2xl font-bold text-purple-900">{user.location}</p>
+              
+              <div>
+                <p style={{ 
+                  margin: '0 0 8px 0', 
+                  color: '#666', 
+                  fontSize: '14px' 
+                }}>
+                  Late Arrivals
+                </p>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '32px', 
+                  fontWeight: '600',
+                  color: '#ef6c00'
+                }}>
+                  {currentData.orgMetrics.lateArrivals}%
+                </p>
+              </div>
+              
+              <div>
+                <p style={{ 
+                  margin: '0 0 8px 0', 
+                  color: '#666', 
+                  fontSize: '14px' 
+                }}>
+                  Leave Requests Today
+                </p>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '32px', 
+                  fontWeight: '600',
+                  color: '#333'
+                }}>
+                  {currentData.orgMetrics.leaveRequests}
+                </p>
+              </div>
+              
+              <div>
+                <p style={{ 
+                  margin: '0 0 8px 0', 
+                  color: '#666', 
+                  fontSize: '14px' 
+                }}>
+                  Pending Approvals
+                </p>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '32px', 
+                  fontWeight: '600',
+                  color: '#c62828'
+                }}>
+                  {currentData.orgMetrics.pendingApprovals}
+                </p>
               </div>
             </div>
+          </div>
+        )}
+        
+        {/* Quick Actions */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+        }}>
+          <h2 style={{ 
+            margin: '0 0 16px 0', 
+            fontSize: '20px', 
+            fontWeight: '600', 
+            color: '#333' 
+          }}>
+            Quick Actions
+          </h2>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '16px' 
+          }}>
+            <QuickActionButton 
+              icon="⏱️" 
+              label="Clock In/Out" 
+              onClick={() => console.log('Navigate to clock interface')} 
+            />
+            <QuickActionButton 
+              icon="📅" 
+              label="View Calendar" 
+              onClick={() => console.log('Navigate to calendar')} 
+            />
+            <QuickActionButton 
+              icon="📝" 
+              label="Request Leave" 
+              onClick={() => console.log('Navigate to leave request')} 
+            />
+            <QuickActionButton 
+              icon="👤" 
+              label="My Profile" 
+              onClick={() => console.log('Navigate to profile')} 
+            />
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Recent Attendance Summary */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:px-6">
-                <h2 className="text-lg font-medium text-gray-900">Recent Attendance</h2>
-              </div>
-              <div className="border-t border-gray-200">
-                <ul className="divide-y divide-gray-200">
-                  {attendanceSummary.map((record, index) => (
-                    <li key={index} className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-900">{new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-                        <div className="flex items-center">
-                          <StatusBadge status={record.status} />
-                          {record.status === 'late' && (
-                            <span className="ml-2 text-sm text-gray-500">+{record.minutes} min</span>
-                          )}
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+        
+        {/* Offline Sync Status */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+        }}>
+          <h2 style={{ 
+            margin: '0 0 16px 0', 
+            fontSize: '20px', 
+            fontWeight: '600', 
+            color: '#333' 
+          }}>
+            Sync Status
+          </h2>
+          
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            padding: '16px',
+            backgroundColor: '#e8f5e9',
+            borderRadius: '8px',
+            border: '1px solid #4caf50'
+          }}>
+            <div style={{ 
+              width: '12px', 
+              height: '12px', 
+              borderRadius: '50%', 
+              backgroundColor: '#4caf50',
+              marginRight: '12px'
+            }}></div>
+            <div>
+              <p style={{ 
+                margin: '0 0 4px 0', 
+                fontWeight: '500',
+                color: '#2e7d32'
+              }}>
+                Online & Synced
+              </p>
+              <p style={{ 
+                margin: 0, 
+                fontSize: '14px', 
+                color: '#666' 
+              }}>
+                0 queued operations
+              </p>
             </div>
-
-            {/* Team Attendance (Manager View) */}
-            {user.role === 'manager' && (
-              <div className="bg-white shadow rounded-lg">
-                <div className="px-4 py-5 sm:px-6">
-                  <h2 className="text-lg font-medium text-gray-900">Team Attendance</h2>
-                </div>
-                <div className="border-t border-gray-200">
-                  <ul className="divide-y divide-gray-200">
-                    {teamMembers.map((member) => (
-                      <li key={member.id} className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                          <div className="flex items-center">
-                            <StatusBadge status={member.status} />
-                            {member.clockIn && (
-                              <span className="ml-2 text-sm text-gray-500">{member.clockIn}</span>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {/* Org Metrics (HR View) */}
-            {user.role === 'hr' && (
-              <div className="bg-white shadow rounded-lg">
-                <div className="px-4 py-5 sm:px-6">
-                  <h2 className="text-lg font-medium text-gray-900">Organization Metrics</h2>
-                </div>
-                <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-                  <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                    <div className="px-4 py-5 bg-white shadow rounded-lg overflow-hidden sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">Attendance Rate</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{orgMetrics.attendanceRate}%</dd>
-                    </div>
-                    <div className="px-4 py-5 bg-white shadow rounded-lg overflow-hidden sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">Late Arrivals</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{orgMetrics.lateArrivals}</dd>
-                    </div>
-                    <div className="px-4 py-5 bg-white shadow rounded-lg overflow-hidden sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">Leave Utilization</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{orgMetrics.leaveUtilization}%</dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            )}
           </div>
-
-          {/* Right Column */}
-          <div className="space-y-6">
-            {/* Pending Leave Approvals (Manager View) */}
-            {user.role === 'manager' && (
-              <div className="bg-white shadow rounded-lg">
-                <div className="px-4 py-5 sm:px-6">
-                  <h2 className="text-lg font-medium text-gray-900">Pending Approvals</h2>
-                </div>
-                <div className="border-t border-gray-200">
-                  <ul className="divide-y divide-gray-200">
-                    {leaveRequests.map((request) => (
-                      <li key={request.id} className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{request.employee}</p>
-                            <p className="text-sm text-gray-500">{request.type} • {request.dates}</p>
-                          </div>
-                          <StatusBadge status={request.status} />
-                        </div>
-                        <div className="mt-3 flex space-x-3">
-                          <button
-                            onClick={() => handleApproveLeave(request.id)}
-                            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectLeave(request.id)}
-                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-
-            {/* Real-time Notifications */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:px-6">
-                <h2 className="text-lg font-medium text-gray-900">Recent Activity</h2>
-              </div>
-              <div className="border-t border-gray-200">
-                <ul className="divide-y divide-gray-200">
-                  {notifications.map((notification) => (
-                    <li key={notification.id} className="px-4 py-4 sm:px-6">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 pt-0.5">
-                          <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="ml-3 flex-1">
-                          <p className="text-sm font-medium text-gray-900">{notification.message}</p>
-                          <p className="mt-1 text-xs text-gray-500">{notification.time}</p>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+          
+          <div style={{ marginTop: '20px' }}>
+            <p style={{ 
+              margin: '0 0 8px 0', 
+              color: '#666', 
+              fontSize: '14px' 
+            }}>
+              Last sync: Just now
+            </p>
+            <button style={{
+              padding: '8px 16px',
+              backgroundColor: '#f5f7fa',
+              color: '#333',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}>
+              Force Sync
+            </button>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

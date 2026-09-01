@@ -1,269 +1,292 @@
 function AdminAudit() {
-  // Mock data
+  // Mock data for audit logs
   const mockAuditLogs = [
     {
       id: 1,
       entity_type: 'attendance',
       entity_id: 101,
-      action: 'manual_correction',
+      action: 'update',
       old_value: { clock_in_time: '09:15:00', status: 'late' },
       new_value: { clock_in_time: '09:00:00', status: 'present' },
       actor_id: 501,
       actor_name: 'HR Manager',
-      actor_role: 'HR',
-      reason: 'Employee forgot to clock in',
+      actor_role: 'admin',
+      reason: 'Manual correction for system error',
       ip_address: '192.168.1.105',
-      created_at: '2023-06-15T09:30:00Z'
+      created_at: '2023-06-15T14:30:00Z'
     },
     {
       id: 2,
       entity_type: 'leave',
       entity_id: 205,
-      action: 'status_change',
+      action: 'approve',
       old_value: { status: 'pending' },
-      new_value: { status: 'approved' },
+      new_value: { status: 'approved', current_approver_id: 501 },
       actor_id: 502,
       actor_name: 'Department Head',
-      actor_role: 'Manager',
-      reason: 'Annual leave approved',
-      ip_address: '203.0.113.42',
-      created_at: '2023-06-15T14:22:00Z'
+      actor_role: 'manager',
+      reason: 'Annual leave request approved',
+      ip_address: '203.0.113.5',
+      created_at: '2023-06-14T11:45:00Z'
     },
     {
       id: 3,
-      entity_type: 'shift',
+      entity_type: 'shift_assignment',
       entity_id: 301,
-      action: 'assignment_change',
-      old_value: { shift_id: 1 },
-      new_value: { shift_id: 2 },
-      actor_id: 503,
-      actor_name: 'Shift Coordinator',
-      actor_role: 'Admin',
-      reason: 'Night shift rotation',
-      ip_address: '198.51.100.78',
-      created_at: '2023-06-16T11:05:00Z'
-    }
-  ];
-
-  const mockOfflineLogs = [
-    {
-      id: 101,
-      employee_id: 112,
-      employee_name: 'Robert Chen',
-      operation_type: 'clock_in',
-      local_timestamp: '2023-06-14T08:45:00Z',
-      device_info: { userAgent: 'Mobile Safari', platform: 'iOS' },
-      sync_status: 'synced',
-      conflict_resolution: null,
-      synced_at: '2023-06-14T12:30:00Z'
+      action: 'create',
+      old_value: {},
+      new_value: { employee_id: 120, shift_id: 15, effective_from: '2023-07-01' },
+      actor_id: 501,
+      actor_name: 'HR Manager',
+      actor_role: 'admin',
+      reason: 'New shift assignment for July rotation',
+      ip_address: '192.168.1.105',
+      created_at: '2023-06-10T09:20:00Z'
     },
     {
-      id: 102,
-      employee_id: 134,
-      employee_name: 'Priya Sharma',
-      operation_type: 'clock_out',
-      local_timestamp: '2023-06-14T18:30:00Z',
-      device_info: { userAgent: 'Chrome', platform: 'Android' },
-      sync_status: 'conflict',
-      conflict_resolution: 'manager_override',
-      synced_at: '2023-06-15T09:15:00Z'
+      id: 4,
+      entity_type: 'attendance',
+      entity_id: 115,
+      action: 'create',
+      old_value: {},
+      new_value: { employee_id: 115, date: '2023-06-15', clock_in_time: '08:55:00', status: 'present' },
+      actor_id: 503,
+      actor_name: 'Payroll Specialist',
+      actor_role: 'admin',
+      reason: 'Backfill missing record',
+      ip_address: '198.51.100.22',
+      created_at: '2023-06-15T16:10:00Z'
     }
   ];
 
-  // State
-  const [filters, setFilters] = React.useState({
-    dateRange: { start: '2023-06-01', end: '2023-06-30' },
-    entityType: 'all',
-    actor: ''
-  });
-  
+  const [auditLogs, setAuditLogs] = React.useState(mockAuditLogs);
+  const [filteredLogs, setFilteredLogs] = React.useState(mockAuditLogs);
+  const [dateFrom, setDateFrom] = React.useState('2023-06-01');
+  const [dateTo, setDateTo] = React.useState('2023-06-30');
+  const [entityType, setEntityType] = React.useState('all');
+  const [actorFilter, setActorFilter] = React.useState('');
   const [selectedLog, setSelectedLog] = React.useState(null);
-  const [showDiff, setShowDiff] = React.useState(false);
-  
-  // Handlers
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const [exportFormat, setExportFormat] = React.useState('csv');
+
+  // Filter audit logs based on criteria
+  React.useEffect(() => {
+    let result = auditLogs;
+    
+    // Date range filter
+    result = result.filter(log => {
+      const logDate = new Date(log.created_at);
+      return logDate >= new Date(dateFrom) && logDate <= new Date(dateTo);
+    });
+    
+    // Entity type filter
+    if (entityType !== 'all') {
+      result = result.filter(log => log.entity_type === entityType);
+    }
+    
+    // Actor filter
+    if (actorFilter) {
+      const filterLower = actorFilter.toLowerCase();
+      result = result.filter(log => 
+        log.actor_name.toLowerCase().includes(filterLower) ||
+        log.actor_role.toLowerCase().includes(filterLower)
+      );
+    }
+    
+    setFilteredLogs(result);
+  }, [dateFrom, dateTo, entityType, actorFilter, auditLogs]);
+
+  // Handle export
+  const handleExport = () => {
+    alert(`Exporting ${filteredLogs.length} audit logs as ${exportFormat.toUpperCase()}`);
+    // In a real app, this would generate and download a file
   };
-  
-  const handleViewDiff = (log) => {
+
+  // Handle bulk export
+  const handleBulkExport = () => {
+    alert(`Bulk exporting all ${auditLogs.length} audit logs`);
+    // In a real app, this would export all logs regardless of filters
+  };
+
+  // Show diff view
+  const showDiff = (log) => {
     setSelectedLog(log);
-    setShowDiff(true);
   };
-  
-  const handleCloseDiff = () => {
-    setShowDiff(false);
+
+  // Close diff view
+  const closeDiff = () => {
     setSelectedLog(null);
   };
-  
-  const handleExportLogs = () => {
-    alert('Audit logs exported successfully!');
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC'
+    });
   };
-  
-  const handleGenerateReport = () => {
-    alert('Compliance report generation started. You will receive it via email shortly.');
-  };
-  
-  // Filter audit logs
-  const filteredLogs = mockAuditLogs.filter(log => {
-    const matchesEntityType = filters.entityType === 'all' || log.entity_type === filters.entityType;
-    const matchesActor = !filters.actor || log.actor_name.toLowerCase().includes(filters.actor.toLowerCase());
-    const logDate = new Date(log.created_at);
-    const startDate = new Date(filters.dateRange.start);
-    const endDate = new Date(filters.dateRange.end);
-    const matchesDate = logDate >= startDate && logDate <= endDate;
+
+  // Render diff view
+  const renderDiffView = () => {
+    if (!selectedLog) return null;
     
-    return matchesEntityType && matchesActor && matchesDate;
-  });
-  
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      {/* Sidebar */}
-      <div style={{ width: 240, backgroundColor: '#1e293b', color: 'white', padding: '24px 16px' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: 24 }}>WorkPulse</h1>
-        <nav>
-          <a href="/" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Dashboard</a>
-          <a href="/clock" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Clock Interface</a>
-          <a href="/attendance" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Attendance</a>
-          <a href="/leave/new" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>New Leave</a>
-          <a href="/leave/pending" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Leave Approvals</a>
-          <a href="/leave/calendar" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>My Leave</a>
-          <a href="/shifts" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Shift Roster</a>
-          <a href="/payroll" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Payroll Export</a>
-          <a href="/profile" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>My Profile</a>
-          <a href="/sync" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Offline Sync</a>
-          <a href="/admin/policies" style={{ display: 'block', padding: '10px 12px', color: '#94a3b8', textDecoration: 'none', borderRadius: 4, marginBottom: 4 }}>Policies</a>
-          <a href="/admin/audit" style={{ display: 'block', padding: '10px 12px', color: 'white', backgroundColor: '#334155', borderRadius: 4, marginBottom: 4 }}>Audit Trail</a>
-        </nav>
-      </div>
-      
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: '24px 32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#0f172a' }}>Audit Trail & Compliance</h1>
-          <div>
-            <button 
-              onClick={handleExportLogs}
-              style={{
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: 4,
-                padding: '8px 16px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                marginRight: 12
-              }}
-            >
-              Export Logs
-            </button>
-            <button 
-              onClick={handleGenerateReport}
-              style={{
-                backgroundColor: '#10b981',
-                color: 'white',
-                border: 'none',
-                borderRadius: 4,
-                padding: '8px 16px',
-                fontWeight: 500,
-                cursor: 'pointer'
-              }}
-            >
-              Generate Report
-            </button>
+    return (
+      <div className="diff-overlay">
+        <div className="diff-modal">
+          <div className="diff-header">
+            <h3>Audit Log Details</h3>
+            <button className="close-btn" onClick={closeDiff}>×</button>
           </div>
-        </div>
-        
-        {/* Filters */}
-        <div style={{ backgroundColor: 'white', borderRadius: 8, padding: 20, marginBottom: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#334155', marginBottom: 6 }}>Date Range</label>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <input 
-                  type="date" 
-                  value={filters.dateRange.start}
-                  onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, start: e.target.value })}
-                  style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 4 }}
-                />
-                <span style={{ alignSelf: 'center' }}>to</span>
-                <input 
-                  type="date" 
-                  value={filters.dateRange.end}
-                  onChange={(e) => handleFilterChange('dateRange', { ...filters.dateRange, end: e.target.value })}
-                  style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 4 }}
-                />
+          <div className="diff-content">
+            <div className="diff-section">
+              <h4>Entity Information</h4>
+              <p><strong>Type:</strong> {selectedLog.entity_type}</p>
+              <p><strong>ID:</strong> {selectedLog.entity_id}</p>
+              <p><strong>Action:</strong> {selectedLog.action}</p>
+            </div>
+            
+            <div className="diff-section">
+              <h4>Changes</h4>
+              <div className="diff-grid">
+                <div>
+                  <h5>Before</h5>
+                  <pre>{JSON.stringify(selectedLog.old_value, null, 2)}</pre>
+                </div>
+                <div>
+                  <h5>After</h5>
+                  <pre>{JSON.stringify(selectedLog.new_value, null, 2)}</pre>
+                </div>
               </div>
             </div>
             
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#334155', marginBottom: 6 }}>Entity Type</label>
-              <select 
-                value={filters.entityType}
-                onChange={(e) => handleFilterChange('entityType', e.target.value)}
-                style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 4, minWidth: 150 }}
-              >
-                <option value="all">All Entities</option>
-                <option value="attendance">Attendance</option>
-                <option value="leave">Leave</option>
-                <option value="shift">Shift</option>
-              </select>
-            </div>
-            
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#334155', marginBottom: 6 }}>Actor</label>
-              <input 
-                type="text" 
-                placeholder="Search by actor name"
-                value={filters.actor}
-                onChange={(e) => handleFilterChange('actor', e.target.value)}
-                style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: 4, minWidth: 200 }}
-              />
+            <div className="diff-section">
+              <h4>Metadata</h4>
+              <p><strong>Actor:</strong> {selectedLog.actor_name} ({selectedLog.actor_role})</p>
+              <p><strong>Reason:</strong> {selectedLog.reason}</p>
+              <p><strong>IP Address:</strong> {selectedLog.ip_address}</p>
+              <p><strong>Timestamp:</strong> {formatDate(selectedLog.created_at)}</p>
             </div>
           </div>
         </div>
-        
-        {/* Audit Log Table */}
-        <div style={{ backgroundColor: 'white', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden', marginBottom: 32 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a' }}>Audit Logs</h2>
+      </div>
+    );
+  };
+
+  return (
+    <div className="admin-audit-screen">
+      <header className="app-header">
+        <h1>WorkPulse Admin</h1>
+        <nav>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/clock">Clock</a>
+          <a href="/attendance">Attendance</a>
+          <a href="/leave/request">Leave</a>
+          <a href="/team">Team</a>
+          <a href="/shifts">Shifts</a>
+          <a href="/policies">Policies</a>
+          <a href="/payroll">Payroll</a>
+          <a href="/facial-enrollment">Facial Enrollment</a>
+          <a href="/profile">Profile</a>
+          <a href="/admin/audit" className="active">Audit</a>
+        </nav>
+      </header>
+      
+      <main className="audit-content">
+        <div className="audit-header">
+          <h2>Audit Trail</h2>
+          <div className="export-controls">
+            <select 
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value)}
+              className="format-selector"
+            >
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+              <option value="xlsx">Excel</option>
+            </select>
+            <button className="export-btn" onClick={handleExport}>
+              Export Filtered
+            </button>
+            <button className="bulk-export-btn" onClick={handleBulkExport}>
+              Bulk Export All
+            </button>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        </div>
+        
+        <div className="audit-filters">
+          <div className="filter-group">
+            <label>Date Range:</label>
+            <input 
+              type="date" 
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+            <span>to</span>
+            <input 
+              type="date" 
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </div>
+          
+          <div className="filter-group">
+            <label>Entity Type:</label>
+            <select 
+              value={entityType}
+              onChange={(e) => setEntityType(e.target.value)}
+            >
+              <option value="all">All Entities</option>
+              <option value="attendance">Attendance</option>
+              <option value="leave">Leave</option>
+              <option value="shift_assignment">Shift Assignment</option>
+            </select>
+          </div>
+          
+          <div className="filter-group">
+            <label>Actor:</label>
+            <input 
+              type="text" 
+              placeholder="Search by name or role"
+              value={actorFilter}
+              onChange={(e) => setActorFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div className="audit-results">
+          <div className="results-header">
+            <span>{filteredLogs.length} audit records found</span>
+          </div>
+          
+          <div className="audit-table-container">
+            <table className="audit-table">
               <thead>
-                <tr style={{ backgroundColor: '#f1f5f9' }}>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Timestamp</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Entity</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Action</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Actor</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>IP Address</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Actions</th>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Entity</th>
+                  <th>Action</th>
+                  <th>Actor</th>
+                  <th>Reason</th>
+                  <th>IP Address</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredLogs.map(log => (
-                  <tr key={log.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>{new Date(log.created_at).toLocaleString()}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>
-                      <span style={{ textTransform: 'capitalize' }}>{log.entity_type}</span> #{log.entity_id}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>{log.action.replace('_', ' ')}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>
-                      <div>{log.actor_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{log.actor_role}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>{log.ip_address}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem' }}>
+                  <tr key={log.id}>
+                    <td>{formatDate(log.created_at)}</td>
+                    <td>{log.entity_type} #{log.entity_id}</td>
+                    <td>{log.action}</td>
+                    <td>{log.actor_name} ({log.actor_role})</td>
+                    <td>{log.reason}</td>
+                    <td>{log.ip_address}</td>
+                    <td>
                       <button 
-                        onClick={() => handleViewDiff(log)}
-                        style={{
-                          backgroundColor: '#f1f5f9',
-                          color: '#0f172a',
-                          border: 'none',
-                          borderRadius: 4,
-                          padding: '6px 12px',
-                          fontSize: '0.875rem',
-                          cursor: 'pointer'
-                        }}
+                        className="view-details-btn"
+                        onClick={() => showDiff(log)}
                       >
                         View Changes
                       </button>
@@ -274,162 +297,321 @@ function AdminAudit() {
             </table>
           </div>
         </div>
-        
-        {/* Offline Sync Audit */}
-        <div style={{ backgroundColor: 'white', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a' }}>Offline Sync Audit</h2>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f1f5f9' }}>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Employee</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Operation</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Timestamp</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Device</th>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: '0.875rem', fontWeight: 600, color: '#64748b' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockOfflineLogs.map(log => (
-                  <tr key={log.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>{log.employee_name}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>{log.operation_type.replace('_', ' ')}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>{new Date(log.local_timestamp).toLocaleString()}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem', color: '#334155' }}>
-                      <div>{log.device_info.userAgent}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{log.device_info.platform}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.875rem' }}>
-                      <span 
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: 4,
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                          backgroundColor: log.sync_status === 'synced' ? '#dcfce7' : '#fee2e2',
-                          color: log.sync_status === 'synced' ? '#166534' : '#991b1b'
-                        }}
-                      >
-                        {log.sync_status}
-                      </span>
-                      {log.conflict_resolution && (
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: 4 }}>
-                          Resolved: {log.conflict_resolution.replace('_', ' ')}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      </main>
       
-      {/* Diff Viewer Modal */}
-      {showDiff && selectedLog && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: 8,
-            width: '80%',
-            maxWidth: 800,
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <div style={{
-              padding: '20px 24px',
-              borderBottom: '1px solid #e2e8f0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#0f172a' }}>
-                Changes for {selectedLog.entity_type} #{selectedLog.entity_id}
-              </h2>
-              <button 
-                onClick={handleCloseDiff}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  cursor: 'pointer',
-                  color: '#94a3b8'
-                }}
-              >
-                &times;
-              </button>
-            </div>
-            <div style={{ padding: 24 }}>
-              <div style={{ marginBottom: 20 }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#0f172a', marginBottom: 8 }}>Reason</h3>
-                <p style={{ color: '#334155' }}>{selectedLog.reason}</p>
-              </div>
-              
-              <div style={{ display: 'flex', gap: 20 }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>Before</h3>
-                  <pre style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 4,
-                    padding: 16,
-                    fontSize: '0.875rem',
-                    color: '#334155',
-                    overflow: 'auto'
-                  }}>
-                    {JSON.stringify(selectedLog.old_value, null, 2)}
-                  </pre>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>After</h3>
-                  <pre style={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 4,
-                    padding: 16,
-                    fontSize: '0.875rem',
-                    color: '#334155',
-                    overflow: 'auto'
-                  }}>
-                    {JSON.stringify(selectedLog.new_value, null, 2)}
-                  </pre>
-                </div>
-              </div>
-              
-              <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>Actor</div>
-                    <div style={{ fontWeight: 500, color: '#0f172a' }}>{selectedLog.actor_name} ({selectedLog.actor_role})</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>IP Address</div>
-                    <div style={{ fontWeight: 500, color: '#0f172a' }}>{selectedLog.ip_address}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>Timestamp</div>
-                    <div style={{ fontWeight: 500, color: '#0f172a' }}>{new Date(selectedLog.created_at).toLocaleString()}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {renderDiffView()}
+      
+      <style jsx>{`
+        .admin-audit-screen {
+          min-height: 100vh;
+          background-color: #f5f7fa;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .app-header {
+          background: linear-gradient(135deg, #2c3e50, #1a2530);
+          color: white;
+          padding: 1rem 2rem;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .app-header h1 {
+          margin: 0 0 0.5rem 0;
+          font-weight: 600;
+          font-size: 1.8rem;
+        }
+        
+        .app-header nav {
+          display: flex;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        }
+        
+        .app-header nav a {
+          color: rgba(255,255,255,0.85);
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 0.95rem;
+          padding: 0.4rem 0;
+          transition: color 0.2s;
+        }
+        
+        .app-header nav a:hover,
+        .app-header nav a.active {
+          color: white;
+          border-bottom: 2px solid #4da6ff;
+        }
+        
+        .audit-content {
+          padding: 2rem;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+        
+        .audit-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        
+        .audit-header h2 {
+          margin: 0;
+          color: #2d3748;
+          font-weight: 600;
+        }
+        
+        .export-controls {
+          display: flex;
+          gap: 1rem;
+          align-items: center;
+        }
+        
+        .format-selector {
+          padding: 0.5rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 4px;
+          background: white;
+        }
+        
+        .export-btn, .bulk-export-btn {
+          padding: 0.6rem 1.2rem;
+          border: none;
+          border-radius: 4px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        
+        .export-btn {
+          background: #4299e1;
+          color: white;
+        }
+        
+        .export-btn:hover {
+          background: #3182ce;
+        }
+        
+        .bulk-export-btn {
+          background: #48bb78;
+          color: white;
+        }
+        
+        .bulk-export-btn:hover {
+          background: #38a169;
+        }
+        
+        .audit-filters {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          margin-bottom: 2rem;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1.5rem;
+        }
+        
+        .filter-group {
+          display: flex;
+          align-items: center;
+          gap: 0.8rem;
+        }
+        
+        .filter-group label {
+          font-weight: 500;
+          color: #4a5568;
+          min-width: 100px;
+        }
+        
+        .filter-group input, .filter-group select {
+          padding: 0.5rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 4px;
+          font-size: 0.95rem;
+        }
+        
+        .audit-results {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          overflow: hidden;
+        }
+        
+        .results-header {
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid #e2e8f0;
+          background: #f7fafc;
+          font-weight: 500;
+          color: #4a5568;
+        }
+        
+        .audit-table-container {
+          overflow-x: auto;
+        }
+        
+        .audit-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        
+        .audit-table th {
+          background: #edf2f7;
+          padding: 1rem 1.5rem;
+          text-align: left;
+          font-weight: 600;
+          color: #4a5568;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        
+        .audit-table td {
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid #e2e8f0;
+          color: #4a5568;
+        }
+        
+        .audit-table tbody tr:hover {
+          background: #f7fafc;
+        }
+        
+        .view-details-btn {
+          background: #4299e1;
+          color: white;
+          border: none;
+          padding: 0.4rem 0.8rem;
+          border-radius: 4px;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        
+        .view-details-btn:hover {
+          background: #3182ce;
+        }
+        
+        .diff-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.7);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+        
+        .diff-modal {
+          background: white;
+          border-radius: 8px;
+          width: 90%;
+          max-width: 900px;
+          max-height: 90vh;
+          overflow: auto;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        
+        .diff-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.5rem;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .diff-header h3 {
+          margin: 0;
+          color: #2d3748;
+        }
+        
+        .close-btn {
+          background: none;
+          border: none;
+          font-size: 1.8rem;
+          cursor: pointer;
+          color: #a0aec0;
+          padding: 0;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .close-btn:hover {
+          color: #718096;
+        }
+        
+        .diff-content {
+          padding: 1.5rem;
+        }
+        
+        .diff-section {
+          margin-bottom: 2rem;
+        }
+        
+        .diff-section h4 {
+          margin-top: 0;
+          color: #2d3748;
+          border-bottom: 1px solid #e2e8f0;
+          padding-bottom: 0.5rem;
+        }
+        
+        .diff-section p {
+          margin: 0.5rem 0;
+          color: #4a5568;
+        }
+        
+        .diff-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+        }
+        
+        .diff-grid h5 {
+          margin-top: 0;
+          color: #4a5568;
+        }
+        
+        .diff-grid pre {
+          background: #f7fafc;
+          padding: 1rem;
+          border-radius: 4px;
+          overflow: auto;
+          max-height: 200px;
+          font-size: 0.85rem;
+          margin: 0;
+        }
+        
+        @media (max-width: 768px) {
+          .audit-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          
+          .export-controls {
+            width: 100%;
+            justify-content: flex-end;
+          }
+          
+          .audit-filters {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          
+          .filter-group {
+            width: 100%;
+          }
+          
+          .diff-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 }

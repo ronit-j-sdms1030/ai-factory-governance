@@ -1,370 +1,310 @@
 function FacialEnrollment() {
   // Mock data
   const employee = {
-    id: "EMP001",
+    id: "EMP00123",
     first_name: "Alex",
-    last_name: "Johnson",
+    last_name: "Morgan",
     department: "Engineering",
     location: "New York, USA"
   };
 
-  const jurisdiction = {
-    name: "United States",
-    regulations: [
-      "Biometric Information Privacy Act (BIPA)",
-      "General Data Protection Regulation (GDPR) Article 9",
-      "State privacy laws apply"
-    ],
-    consentExpiry: "2025-12-31"
+  const consentAgreement = {
+    jurisdiction: "New York, USA",
+    content: "I consent to the collection and processing of my facial biometric data for time and attendance purposes in compliance with the Biometric Information Privacy Act (BIPA). This data will be encrypted and stored securely, with no sharing to third parties.",
+    expiry_date: "2025-06-15",
+    consent_type: "BIPA Compliant"
   };
 
-  const [consentAgreed, setConsentAgreed] = React.useState(false);
-  const [cameraActive, setCameraActive] = React.useState(false);
-  const [attempts, setAttempts] = React.useState(0);
-  const [bestTemplate, setBestTemplate] = React.useState(null);
-  const [complianceFlags, setComplianceFlags] = React.useState({
-    bipa: true,
-    gdpr: false,
-    statePrivacy: true
-  });
-  const [enrolled, setEnrolled] = React.useState(false);
+  const [currentAttempt, setCurrentAttempt] = React.useState(1);
+  const [capturedImages, setCapturedImages] = React.useState([]);
+  const [selectedTemplate, setSelectedTemplate] = React.useState(null);
+  const [enrollmentStatus, setEnrollmentStatus] = React.useState("Pending");
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  
+  const complianceFlags = [
+    { regulation: "BIPA", status: "Compliant" },
+    { regulation: "GDPR", status: "Not Applicable" }
+  ];
 
-  const startEnrollment = () => {
-    setCameraActive(true);
-  };
+  const captureInstructions = [
+    "Position your face in the center of the frame",
+    "Ensure even lighting with no glare or shadows",
+    "Maintain a neutral expression with both eyes open"
+  ];
 
-  const captureImage = () => {
-    if (attempts < 3) {
-      const newAttempt = attempts + 1;
-      setAttempts(newAttempt);
+  // Handlers
+  const handleCapture = () => {
+    if (currentAttempt <= 3) {
+      // Simulate capturing an image
+      const newImage = {
+        id: currentAttempt,
+        timestamp: new Date().toLocaleTimeString(),
+        quality: Math.floor(Math.random() * 20) + 80 // 80-99 quality score
+      };
       
-      // Simulate template quality scoring
-      const qualityScore = Math.floor(Math.random() * 40) + 60; // 60-99
+      setCapturedImages([...capturedImages, newImage]);
       
-      if (!bestTemplate || qualityScore > bestTemplate.quality) {
-        setBestTemplate({
-          attempt: newAttempt,
-          quality: qualityScore
-        });
+      if (currentAttempt < 3) {
+        setCurrentAttempt(currentAttempt + 1);
+      } else {
+        // After 3 attempts, auto-select best template
+        const best = [...capturedImages, newImage].reduce((max, img) => 
+          img.quality > max.quality ? img : max, { quality: 0 });
+        setSelectedTemplate(best);
+        setEnrollmentStatus("Completed");
       }
     }
-    
-    if (attempts === 2) {
-      setTimeout(() => setEnrolled(true), 1000);
+  };
+
+  const handleRetake = () => {
+    if (currentAttempt > 1) {
+      setCurrentAttempt(currentAttempt - 1);
+      setCapturedImages(capturedImages.slice(0, -1));
     }
   };
 
-  const deleteEnrollment = () => {
-    setEnrolled(false);
-    setAttempts(0);
-    setBestTemplate(null);
+  const handleConfirmEnrollment = () => {
+    setEnrollmentStatus("Active");
+  };
+
+  const handleDeleteEnrollment = () => {
     setShowDeleteConfirm(false);
+    setEnrollmentStatus("Deleted");
+    setCapturedImages([]);
+    setSelectedTemplate(null);
+    setCurrentAttempt(1);
   };
 
   return (
-    <div style={{display: 'flex', minHeight: '100vh', backgroundColor: '#f5f7fa'}}>
-      {/* Sidebar */}
-      <div style={{width: 240, backgroundColor: '#2c3e50', color: 'white', padding: '20px 0'}}>
-        <div style={{padding: '0 20px 20px', borderBottom: '1px solid #34495e'}}>
-          <h1 style={{color: '#3498db', fontSize: 20, margin: 0}}>WorkPulse</h1>
-          <p style={{color: '#bdc3c7', fontSize: 12, marginTop: 5}}>Attendance Management</p>
-        </div>
-        <nav>
-          {['Dashboard', 'Clock In/Out', 'Attendance Calendar', 'Leave Request', 'Team Attendance', 'Shift Roster', 'Payroll Export'].map((item) => (
-            <div key={item} style={{padding: '12px 20px', cursor: 'pointer'}}>{item}</div>
-          ))}
-          <div style={{backgroundColor: '#3498db', padding: '12px 20px', cursor: 'pointer'}}>Facial Enrollment</div>
-          {['Settings', 'Admin Policy Manager', 'Audit Trail'].map((item) => (
-            <div key={item} style={{padding: '12px 20px', cursor: 'pointer'}}>{item}</div>
-          ))}
-        </nav>
-      </div>
-
-      {/* Main Content */}
-      <div style={{flex: 1, padding: 30}}>
-        <div style={{maxWidth: 1000, margin: '0 auto'}}>
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30}}>
-            <div>
-              <h1 style={{margin: 0, color: '#2c3e50', fontSize: 28}}>Facial Enrollment</h1>
-              <p style={{color: '#7f8c8d', marginTop: 5}}>Manage biometric identification for secure clock-ins</p>
-            </div>
-            <div style={{textAlign: 'right'}}>
-              <p style={{margin: 0, fontWeight: 500}}>{employee.first_name} {employee.last_name}</p>
-              <p style={{margin: 0, color: '#7f8c8d', fontSize: 14}}>{employee.department} • {employee.location}</p>
-            </div>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm py-4 px-6 border-b border-gray-200">
+        <div classNamen="flex justify-between items-center">
+          <h1 className="text-xl font-semibold text-gray-800">Facial Enrollment</h1>
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">{employee.first_name} {employee.last_name}</span> | {employee.department}
           </div>
+        </div>
+      </header>
 
-          <div style={{backgroundColor: 'white', borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', padding: 30}}>
-            {!enrolled ? (
-              <>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25}}>
-                  <h2 style={{margin: 0, color: '#2c3e50'}}>Biometric Consent</h2>
-                  <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
-                    <span style={{fontSize: 14, color: '#7f8c8d'}}>Status:</span>
-                    <span style={{padding: '4px 12px', backgroundColor: '#f1c40f', color: 'white', borderRadius: 20, fontSize: 12}}>
-                      Not Enrolled
-                    </span>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="max-w-4xl mx-auto space-y-8">
+            {/* Consent Agreement */}
+            <section className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">Jurisdiction-Specific Consent</h2>
+              <div className="border border-gray-200 rounded p-4 bg-blue-50">
+                <p className="text-gray-700 mb-4">{consentAgreement.content}</p>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Jurisdiction: {consentAgreement.jurisdiction}</span>
+                  <span>Consent Type: {consentAgreement.consent_type}</span>
+                  <span>Expiry: {consentAgreement.expiry_date}</span>
+                </div>
+              </div>
+            </section>
+
+            {/* Camera Feed */}
+            <section className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">Capture Facial Template</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Camera Preview */}
+                <div className="border border-gray-300 rounded-lg bg-gray-100 h-80 flex items-center justify-center relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-48 h-48 rounded-full border-4 border-blue-400 border-dashed"></div>
+                  </div>
+                  <div className="text-center p-4 bg-white bg-opacity-80 rounded-lg">
+                    <p className="font-medium text-gray-700">Camera Feed</p>
+                    <p className="text-sm text-gray-500 mt-1">Attempt {currentAttempt} of 3</p>
                   </div>
                 </div>
-
-                <div style={{borderBottom: '1px solid #ecf0f1', paddingBottom: 20, marginBottom: 25}}>
-                  <h3 style={{color: '#2c3e50', marginBottom: 15}}>Jurisdiction-Specific Regulations</h3>
-                  <div style={{backgroundColor: '#f8f9fa', padding: 15, borderRadius: 8, borderLeft: '4px solid #3498db'}}>
-                    <p style={{fontWeight: 600, margin: '0 0 10px'}}>{jurisdiction.name} Compliance Requirements:</p>
-                    <ul style={{margin: 0, paddingLeft: 20}}>
-                      {jurisdiction.regulations.map((reg, i) => (
-                        <li key={i} style={{marginBottom: 8}}>{reg}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div style={{marginBottom: 25}}>
-                  <h3 style={{color: '#2c3e50', marginBottom: 15}}>Consent Agreement</h3>
-                  <div style={{backgroundColor: '#f8f9fa', padding: 20, borderRadius: 8, maxHeight: 150, overflowY: 'auto', border: '1px solid #ddd'}}>
-                    <p style={{fontSize: 14, lineHeight: 1.6}}>
-                      I understand that my facial biometric data will be collected, processed, and stored securely for 
-                      authentication purposes only. This data will be encrypted and retained in compliance with applicable 
-                      privacy laws including {jurisdiction.regulations[0]} and GDPR. My consent expires on {jurisdiction.consentExpiry}.
-                    </p>
-                  </div>
+                
+                {/* Instructions */}
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-2">Capture Instructions</h3>
+                  <ul className="space-y-2">
+                    {captureInstructions.map((instruction, i) => (
+                      <li key={i} className="flex items-start">
+                        <span className="text-blue-500 mr-2">•</span>
+                        <span className="text-gray-600 text-sm">{instruction}</span>
+                      </li>
+                    ))}
+                  </ul>
                   
-                  <label style={{display: 'flex', alignItems: 'center', marginTop: 15, cursor: 'pointer'}}>
-                    <input 
-                      type="checkbox" 
-                      checked={consentAgreed}
-                      onChange={(e) => setConsentAgreed(e.target.checked)}
-                      style={{marginRight: 10, transform: 'scale(1.2)'}}
-                    />
-                    <span style={{fontSize: 14}}>I agree to the terms and consent to biometric enrollment</span>
-                  </label>
-                </div>
-
-                {consentAgreed && (
-                  <div>
-                    <h3 style={{color: '#2c3e50', marginBottom: 15}}>Facial Capture Process</h3>
-                    
-                    {!cameraActive ? (
-                      <div style={{textAlign: 'center', padding: 30}}>
-                        <button 
-                          onClick={startEnrollment}
-                          style={{
-                            backgroundColor: '#27ae60',
-                            color: 'white',
-                            border: 'none',
-                            padding: '12px 25px',
-                            borderRadius: 6,
-                            fontSize: 16,
-                            cursor: 'pointer',
-                            fontWeight: 600
-                          }}
-                        >
-                          Start Camera
-                        </button>
-                        <p style={{marginTop: 15, color: '#7f8c8d', fontSize: 14}}>
-                          Please ensure good lighting and position yourself directly in front of the camera
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <div style={{display: 'flex', gap: 30, marginBottom: 25}}>
-                          <div style={{flex: 1}}>
-                            <div style={{backgroundColor: '#34495e', height: 300, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', marginBottom: 10}}>
-                              Camera Feed Placeholder
-                            </div>
-                            <p style={{textAlign: 'center', color: '#7f8c8d', fontSize: 14, margin: 0}}>
-                              Neutral expression • Directly facing camera • Good lighting
-                            </p>
-                          </div>
-                          
-                          <div style={{flex: 1}}>
-                            <div style={{backgroundColor: '#ecf0f1', height: 300, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7f8c8d'}}>
-                              Capture Preview
-                            </div>
-                            <div style={{display: 'flex', justifyContent: 'center', marginTop: 15}}>
-                              <button 
-                                onClick={captureImage}
-                                disabled={attempts >= 3}
-                                style={{
-                                  backgroundColor: attempts < 3 ? '#3498db' : '#95a5a6',
-                                  color: 'white',
-                                  border: 'none',
-                                  padding: '10px 20px',
-                                  borderRadius: 6,
-                                  cursor: attempts < 3 ? 'pointer' : 'not-allowed',
-                                  fontWeight: 600
-                                }}
-                              >
-                                Capture Attempt {attempts + 1}/3
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h4 style={{color: '#2c3e50', marginBottom: 10}}>Capture Progress</h4>
-                          <div style={{display: 'flex', gap: 10, alignItems: 'center'}}>
-                            {[1, 2, 3].map(i => (
-                              <div key={i} style={{display: 'flex', alignItems: 'center'}}>
-                                <div style={{
-                                  width: 30,
-                                  height: 30,
-                                  borderRadius: '50%',
-                                  backgroundColor: i <= attempts ? '#27ae60' : '#ecf0f1',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  color: 'white',
-                                  fontWeight: 'bold'
-                                }}>
-                                  {i}
-                                </div>
-                                {i < 3 && <div style={{height: 2, width: 30, backgroundColor: '#ecf0f1'}}></div>}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                  <div className="mt-6 flex space-x-3">
+                    <button 
+                      onClick={handleCapture}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                      disabled={currentAttempt > 3}
+                    >
+                      Capture Image
+                    </button>
+                    {currentAttempt > 1 && (
+                      <button 
+                        onClick={handleRetake}
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        Retake
+                      </button>
                     )}
                   </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Captured Images */}
+            {capturedImages.length > 0 && (
+              <section className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-medium text-gray-800 mb-4">Captured Templates</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  {capturedImages.map((img) => (
+                    <div 
+                      key={img.id} 
+                      className={`border rounded-lg p-3 text-center ${selectedTemplate?.id === img.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                    >
+                      <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">Quality: {img.quality}%</p>
+                      <p className="text-xs text-gray-500">{img.timestamp}</p>
+                      {selectedTemplate?.id === img.id && (
+                        <span className="inline-block mt-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Selected</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {selectedTemplate && (
+                  <div className="mt-6 flex justify-end">
+                    <button 
+                      onClick={handleConfirmEnrollment}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Confirm Enrollment
+                    </button>
+                  </div>
                 )}
-              </>
-            ) : (
-              <div>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25}}>
-                  <h2 style={{margin: 0, color: '#2c3e50'}}>Enrollment Complete</h2>
-                  <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
-                    <span style={{fontSize: 14, color: '#7f8c8d'}}>Status:</span>
-                    <span style={{padding: '4px 12px', backgroundColor: '#27ae60', color: 'white', borderRadius: 20, fontSize: 12}}>
-                      Enrolled
+              </section>
+            )}
+
+            {/* Compliance & Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Compliance */}
+              <section className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-medium text-gray-800 mb-4">Compliance Status</h2>
+                <div className="space-y-3">
+                  {complianceFlags.map((flag, index) => (
+                    <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-gray-600">{flag.regulation}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${flag.status === 'Compliant' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {flag.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+              
+              {/* Enrollment Status */}
+              <section className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-medium text-gray-800 mb-4">Enrollment Details</h2>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Status</span>
+                    <span className={`px-2 py-1 rounded-full text-sm ${enrollmentStatus === 'Active' ? 'bg-green-100 text-green-800' : enrollmentStatus === 'Deleted' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                      {enrollmentStatus}
                     </span>
                   </div>
-                </div>
-                
-                <div style={{backgroundColor: '#f8f9fa', padding: 20, borderRadius: 8, marginBottom: 25}}>
-                  <h3 style={{color: '#2c3e50', marginTop: 0}}>Selected Template</h3>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div>
-                      <p style={{margin: '0 0 10px'}}>Best Quality Template: Attempt #{bestTemplate.attempt}</p>
-                      <p style={{margin: 0}}>Quality Score: {bestTemplate.quality}%</p>
-                    </div>
-                    <div style={{textAlign: 'right'}}>
-                      <p style={{margin: 0, fontSize: 14, color: '#7f8c8d'}}>Enrollment Date</p>
-                      <p style={{margin: 0, fontWeight: 600}}>June 15, 2023</p>
-                    </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Enrollment Date</span>
+                    <span className="text-gray-800">June 15, 2023</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Consent Expiry</span>
+                    <span className="text-gray-800">{consentAgreement.expiry_date}</span>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <button 
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={enrollmentStatus !== 'Active'}
+                      className="w-full py-2 px-4 border border-red-300 text-red-600 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Delete Enrollment
+                    </button>
                   </div>
                 </div>
-                
-                <div style={{marginBottom: 25}}>
-                  <h3 style={{color: '#2c3e50', marginBottom: 15}}>Compliance Status</h3>
-                  <div style={{display: 'flex', gap: 15}}>
-                    {Object.entries(complianceFlags).map(([key, value]) => (
-                      <div key={key} style={{
-                        flex: 1,
-                        padding: 15,
-                        backgroundColor: value ? '#d5f5e3' : '#fadbd8',
-                        borderRadius: 6,
-                        textAlign: 'center'
-                      }}>
-                        <div style={{fontWeight: 600, marginBottom: 5}}>
-                          {key.toUpperCase()}
-                        </div>
-                        <div style={{fontSize: 14}}>
-                          {value ? 'Compliant' : 'Not Compliant'}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25}}>
-                  <div>
-                    <h3 style={{color: '#2c3e50', marginBottom: 5}}>Consent Expiration</h3>
-                    <p style={{margin: 0, fontSize: 14, color: '#7f8c8d'}}>
-                      Your consent expires on December 31, 2025 (in 847 days)
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setShowDeleteConfirm(true)}
-                    style={{
-                      backgroundColor: '#e74c3c',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: 6,
-                      cursor: 'pointer',
-                      fontWeight: 600
-                    }}
-                  >
-                    Delete Enrollment
-                  </button>
-                </div>
-                
-                {showDeleteConfirm && (
-                  <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                  }}>
-                    <div style={{
-                      backgroundColor: 'white',
-                      padding: 30,
-                      borderRadius: 10,
-                      maxWidth: 400,
-                      textAlign: 'center'
-                    }}>
-                      <h3 style={{margin: '0 0 15px', color: '#2c3e50'}}>Confirm Deletion</h3>
-                      <p style={{margin: '0 0 20px', color: '#7f8c8d'}}>
-                        Are you sure you want to delete your facial enrollment? This action cannot be undone.
-                      </p>
-                      <div style={{display: 'flex', justifyContent: 'center', gap: 10}}>
-                        <button 
-                          onClick={() => setShowDeleteConfirm(false)}
-                          style={{
-                            backgroundColor: '#95a5a6',
-                            color: 'white',
-                            border: 'none',
-                            padding: '10px 20px',
-                            borderRadius: 6,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button 
-                          onClick={deleteEnrollment}
-                          style={{
-                            backgroundColor: '#e74c3c',
-                            color: 'white',
-                            border: 'none',
-                            padding: '10px 20px',
-                            borderRadius: 6,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              </section>
+            </div>
+
+            {/* Consent History */}
+            <section className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">Consent History & Renewals</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Given</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Consent Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">June 15, 2023</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">BIPA Compliant</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{consentAgreement.expiry_date}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">June 10, 2021</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Initial Consent</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">June 15, 2023</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          Expired
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            )}
+              <div className="mt-4 text-sm text-gray-600">
+                <p>Next renewal reminder: May 15, 2025</p>
+              </div>
+            </section>
           </div>
-          
-          <div style={{textAlign: 'center', marginTop: 20, color: '#7f8c8d', fontSize: 14}}>
-            <p>All biometric data is encrypted and stored in compliance with regional regulations</p>
+        </main>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Confirm Deletion</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to delete this facial enrollment? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteEnrollment}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
