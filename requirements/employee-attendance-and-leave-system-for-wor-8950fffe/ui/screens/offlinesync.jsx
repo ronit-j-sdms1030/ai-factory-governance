@@ -1,233 +1,205 @@
 function OfflineSync() {
   // Mock data
   const queuedOperations = [
-    { id: 1, employee_id: 1001, operation_type: 'clock_in', local_timestamp: '2023-06-15T08:45:22Z', device_info: 'iPhone 12 Pro', sync_status: 'pending' },
-    { id: 2, employee_id: 1002, operation_type: 'clock_out', local_timestamp: '2023-06-15T17:32:10Z', device_info: 'Samsung Galaxy S21', sync_status: 'conflict' },
-    { id: 3, employee_id: 1003, operation_type: 'clock_in', local_timestamp: '2023-06-15T09:12:45Z', device_info: 'iPad Air', sync_status: 'synced' }
+    { id: 1, employee: 'John Smith', type: 'Clock In', timestamp: '2023-06-15 08:45:22', device: 'iPhone 12 Pro' },
+    { id: 2, employee: 'Sarah Johnson', type: 'Clock Out', timestamp: '2023-06-15 17:30:11', device: 'Samsung Galaxy S21' },
+    { id: 3, employee: 'Michael Chen', type: 'Clock In', timestamp: '2023-06-15 09:02:47', device: 'iPad Air' },
   ];
 
-  const syncHistory = [
-    { id: 1, timestamp: '2023-06-15T07:30:00Z', status: 'success', message: '3 operations synced' },
-    { id: 2, timestamp: '2023-06-15T01:15:00Z', status: 'failure', message: 'Network timeout' },
-    { id: 3, timestamp: '2023-06-14T19:45:00Z', status: 'success', message: '5 operations synced' }
-  ];
+  const syncStatus = {
+    lastSync: '2023-06-15 14:30:00',
+    pendingOperations: 3,
+    conflicts: 2,
+    deviceStatus: 'Connected',
+    nextSync: '2023-06-15 15:00:00'
+  };
 
   const conflicts = [
-    { id: 1, employee_id: 1002, local_time: '2023-06-15T17:32:10Z', server_time: '2023-06-15T17:35:22Z', discrepancy: '3m 12s' }
+    { id: 101, employee: 'Robert Davis', localTime: '2023-06-14 18:05:00', serverTime: '2023-06-14 18:02:00', discrepancy: '+3 minutes' },
+    { id: 102, employee: 'Emma Wilson', localTime: '2023-06-14 08:58:00', serverTime: '2023-06-14 09:01:00', discrepancy: '-3 minutes' }
   ];
 
   const deviceInfo = {
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X)',
-    platform: 'iOS',
-    online: false,
-    lastSync: '2023-06-15T07:30:00Z'
+    deviceId: 'WP-DV-789456',
+    lastConnected: '2023-06-15 14:25:00',
+    storageUsed: '2.4 GB',
+    storageTotal: '32 GB',
+    appVersion: 'v2.4.1',
+    osVersion: 'Android 12'
   };
 
   // Handlers
-  const handleSyncTrigger = () => {
+  const handleSyncNow = () => {
     alert('Manual sync initiated');
   };
 
-  const handleClearQueue = () => {
-    alert('Queue cleared for resolved conflicts');
-  };
-
   const handleResolveConflict = (id) => {
-    alert(`Conflict ${id} marked for manager review`);
+    alert(`Conflict ${id} marked for resolution review`);
   };
 
-  // Status badge component
-  const StatusBadge = ({ status }) => {
-    const statusColors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      synced: 'bg-green-100 text-green-800',
-      conflict: 'bg-red-100 text-red-800'
-    };
-    
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    );
-  };
+  const QueuedOperationsTable = () => (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Queued Operations</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {queuedOperations.map(op => (
+              <tr key={op.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{op.employee}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{op.type}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{op.timestamp}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{op.device}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const SyncStatusDashboard = () => (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Sync Status</h3>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-500">Last Sync</p>
+          <p className="text-lg font-semibold">{syncStatus.lastSync}</p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-500">Pending Operations</p>
+          <p className="text-lg font-semibold text-blue-600">{syncStatus.pendingOperations}</p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-500">Conflicts</p>
+          <p className="text-lg font-semibold text-red-600">{syncStatus.conflicts}</p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-500">Device Status</p>
+          <p className="text-lg font-semibold text-green-600">{syncStatus.deviceStatus}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const ManualSyncTriggerButton = () => (
+    <div className="bg-white rounded-lg shadow p-6 text-center">
+      <button 
+        onClick={handleSyncNow}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200"
+      >
+        Sync Now
+      </button>
+      <p className="mt-2 text-sm text-gray-500">Next automatic sync: {syncStatus.nextSync}</p>
+    </div>
+  );
+
+  const ConflictList = () => (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Timestamp Conflicts</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Local Time</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Server Time</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discrepancy</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {conflicts.map(conflict => (
+              <tr key={conflict.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{conflict.employee}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{conflict.localTime}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{conflict.serverTime}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">{conflict.discrepancy}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <button 
+                    onClick={() => handleResolveConflict(conflict.id)}
+                    className="text-blue-600 hover:text-blue-900"
+                  >
+                    Resolve
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const ConflictResolutionInterface = () => (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Conflict Resolution</h3>
+      <div className="border border-gray-200 rounded-lg p-4 mb-4">
+        <p className="text-sm text-gray-500 mb-2">Pending manager review required for 2 conflicts</p>
+        <button className="bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium py-1 px-3 rounded transition duration-200">
+          Review Conflicts
+        </button>
+      </div>
+    </div>
+  );
+
+  const DeviceInfoPanel = () => (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Device Information</h3>
+      <div className="space-y-3">
+        <div>
+          <p className="text-sm text-gray-500">Device ID</p>
+          <p className="font-medium">{deviceInfo.deviceId}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Last Connected</p>
+          <p className="font-medium">{deviceInfo.lastConnected}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">Storage</p>
+          <p className="font-medium">{deviceInfo.storageUsed} of {deviceInfo.storageTotal}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">App Version</p>
+          <p className="font-medium">{deviceInfo.appVersion}</p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500">OS Version</p>
+          <p className="font-medium">{deviceInfo.osVersion}</p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Offline Sync Management</h1>
-          <p className="text-gray-600 mt-2">Manage offline operations and resolve synchronization conflicts</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Offline Sync Management</h1>
+        <p className="mt-1 text-sm text-gray-500">Manage offline operations and resolve synchronization conflicts</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2 space-y-6">
+          <QueuedOperationsTable />
+          <ConflictList />
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Device Info Panel */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Device Information</h2>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-500">Status</p>
-                <p className={`font-medium ${deviceInfo.online ? 'text-green-600' : 'text-red-600'}`}>
-                  {deviceInfo.online ? 'Online' : 'Offline'}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Platform</p>
-                <p className="font-medium">{deviceInfo.platform}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Last Sync</p>
-                <p className="font-medium">{new Date(deviceInfo.lastSync).toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sync Controls */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Sync Controls</h2>
-            <div className="space-y-4">
-              <button 
-                onClick={handleSyncTrigger}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
-              >
-                Trigger Manual Sync
-              </button>
-              <button 
-                onClick={handleClearQueue}
-                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition duration-200"
-              >
-                Clear Resolved Queue
-              </button>
-            </div>
-          </div>
-
-          {/* Sync Status Summary */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Sync Status</h2>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-yellow-600">{queuedOperations.filter(op => op.sync_status === 'pending').length}</p>
-                <p className="text-sm text-gray-500">Pending</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">{queuedOperations.filter(op => op.sync_status === 'synced').length}</p>
-                <p className="text-sm text-gray-500">Synced</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-600">{queuedOperations.filter(op => op.sync_status === 'conflict').length}</p>
-                <p className="text-sm text-gray-500">Conflicts</p>
-              </div>
-            </div>
-          </div>
+        <div className="space-y-6">
+          <SyncStatusDashboard />
+          <ManualSyncTriggerButton />
+          <DeviceInfoPanel />
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Queued Operations */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Queued Operations</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operation</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {queuedOperations.map((op) => (
-                    <tr key={op.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{op.employee_id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{op.operation_type.replace('_', ' ')}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(op.local_timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <StatusBadge status={op.sync_status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Conflicts */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Conflicts</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Local Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Server Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discrepancy</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {conflicts.map((conflict) => (
-                    <tr key={conflict.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{conflict.employee_id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(conflict.local_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(conflict.server_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">+{conflict.discrepancy}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button 
-                          onClick={() => handleResolveConflict(conflict.id)}
-                          className="text-blue-600 hover:text-blue-900 font-medium"
-                        >
-                          Review
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Sync History */}
-        <div className="bg-white rounded-lg shadow mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Sync History</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {syncHistory.map((log) => (
-                  <tr key={log.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(log.timestamp).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{log.message}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <ConflictResolutionInterface />
         </div>
       </div>
     </div>

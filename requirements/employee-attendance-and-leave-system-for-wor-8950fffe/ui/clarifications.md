@@ -1,6 +1,10 @@
-- Attendance History: Should the timezone view toggle switch the entire calendar to display dates in a selected timezone, or just annotate each day with the applied timezone?
-- Leave Approvals: For the conflict resolution interface, what specific data points (e.g., clock timestamps, GPS, device info) need to be displayed to aid manager decisions?
-- Shift Roster: Is the drag‑drop assignment limited to one employee per drag operation, or should bulk multi‑select drag be supported?
-- Policy Configuration: When creating a new policy version, is there a requirement for a “clone from previous version” option?
-- Facial Enrollment: Should the consent agreement be a separate modal per jurisdiction, or a dynamically loaded text block based on the employee's location?
-- These screens could not be generated and need another pass: Login, EmployeeDashboard, AttendanceHistory, LeaveRequestForm, LeaveApprovalsQueue, ShiftRosterManagement, PolicyConfiguration, PayrollExport, AuditTrailViewer, OfflineSyncManager
+- 1. What should be the default navigation structure? Should it be role-based tabs or a consistent navigation menu with role-specific content hiding?
+- 2. How should the offline sync conflict resolution workflow work? Should managers be notified proactively or discover conflicts in the approvals queue?
+- 3. For facial verification: Should it be required for all clock-ins or only for specific roles/locations? The BRD mentions 'optional' but doesn't define criteria.
+- 4. What should happen when an employee has multiple overlapping shift assignments? Should the system warn HR or automatically use the most recent?
+- 5. How should the 'timezone view' work in attendance history? Should it show times in the employee's timezone or the viewer's timezone?
+- 6. For the dashboard WebSocket updates: Should all role dashboards update in real-time or only relevant notifications?
+- 7. What's the expected behavior for 'manual location override' - should it require manager approval for verification?
+- 8. How should holiday management handle timezone differences for global teams? Should holidays be defined in location timezone or UTC?
+- 9. For the payroll export API keys: Should HR be able to generate multiple keys with different permissions?
+- 10. How should the system handle employees changing timezones? Should past attendance records be recalculated or shown with original timezone?
