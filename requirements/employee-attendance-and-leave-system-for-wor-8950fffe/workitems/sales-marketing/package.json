@@ -1,0 +1,32 @@
+{
+  "team": "Sales & Marketing",
+  "objective": "Create marketing materials, documentation, and user guides to support product launch and adoption.",
+  "architecture": "Marketing website, product documentation, user training materials, and demo environment for sales presentations.",
+  "techStack": [],
+  "dataModel": [],
+  "plan": [
+    {
+      "phase": "Phase 1: Marketing Materials",
+      "description": "Create marketing and sales materials",
+      "tasks": [
+        "Marketing website development",
+        "Product documentation creation",
+        "Sales demo environment setup"
+      ]
+    },
+    {
+      "phase": "Phase 2: User Training",
+      "description": "Develop user training materials",
+      "tasks": [
+        "User guide development",
+        "Training video creation",
+        "FAQ and knowledge base setup"
+      ]
+    }
+  ],
+  "securityDesign": [],
+  "dependencies": [
+    "Final product from Development team",
+    "Infrastructure access from DevOps team"
+  ]
+}

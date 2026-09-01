@@ -1,0 +1,306 @@
+{
+  "team": "Development",
+  "objective": "Build the core WorkPulse application including authentication, employee management, attendance system, leave workflows, and all business logic components.",
+  "architecture": "Full stack development including Spring Boot microservices (Auth, Employee, Attendance, Shift, Leave services), Next.js PWA frontend, PostgreSQL database schema implementation, and all business logic.",
+  "techStack": [
+    {
+      "layer": "Frontend",
+      "choice": "Next.js 15 with TypeScript, Tailwind CSS, and Workbox",
+      "rationale": "Next.js provides server-side rendering for fast initial loads and excellent PWA capabilities via next-pwa. Workbox enables robust service worker implementation for offline functionality critical for field workers. TypeScript ensures type safety across complex attendance business logic. Tailwind enables responsive designs for mobile field workers. Alternative: React without SSR would compromise initial load times critical for clock-in speed. Limitation: Next.js hydration overhead increases initial bundle size slightly for mobile users."
+    },
+    {
+      "layer": "Backend/API",
+      "choice": "Java Spring Boot 3.3 with Spring Security",
+      "rationale": "Spring Boot handles 1,000 concurrent requests efficiently with built-in connection pooling and thread management. Spring Security provides robust RBAC and OAuth2 integration with Microsoft Entra ID. Alternative: Node.js Express would require manual scaling for concurrent clock-ins and lacks built-in enterprise-grade security patterns. Limitation: Spring Boot memory footprint is higher than lightweight alternatives, requiring larger container instances."
+    },
+    {
+      "layer": "Database",
+      "choice": "PostgreSQL 16 with TimescaleDB extension",
+      "rationale": "PostgreSQL provides ACID compliance for payroll-critical attendance data. TimescaleDB extension optimizes time-series queries for attendance timestamp analysis. Native JSON support stores flexible device metadata and policy versions. Alternative: MySQL lacks native time-series optimizations and JSON query performance. Limitation: TimescaleDB hypertable partitioning adds complexity to standard backup procedures."
+    }
+  ],
+  "dataModel": [
+    {
+      "entity": "Employee",
+      "fields": [
+        "id",
+        "employee_id",
+        "first_name",
+        "last_name",
+        "email",
+        "department_id",
+        "manager_id",
+        "location_id",
+        "joining_date",
+        "employment_status",
+        "shift_type",
+        "timezone",
+        "created_at",
+        "updated_at",
+        "entra_id"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "AttendanceRecord",
+      "fields": [
+        "id",
+        "employee_id",
+        "date",
+        "clock_in_time",
+        "clock_out_time",
+        "shift_id",
+        "status",
+        "late_minutes",
+        "overtime_minutes",
+        "device_info",
+        "ip_address",
+        "gps_coordinates",
+        "facial_verified",
+        "timezone_applied",
+        "sync_status",
+        "offline_operation_id",
+        "created_at",
+        "updated_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "Shift",
+      "fields": [
+        "id",
+        "name",
+        "type",
+        "start_time_utc",
+        "end_time_utc",
+        "timezone",
+        "grace_period_minutes",
+        "half_day_threshold_hours",
+        "overtime_threshold_hours",
+        "is_overnight",
+        "location_id",
+        "created_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "ShiftAssignment",
+      "fields": [
+        "id",
+        "employee_id",
+        "shift_id",
+        "effective_from",
+        "effective_to",
+        "created_by",
+        "created_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "LeaveRequest",
+      "fields": [
+        "id",
+        "employee_id",
+        "leave_type_id",
+        "start_date",
+        "end_date",
+        "reason",
+        "status",
+        "current_approver_id",
+        "approval_path",
+        "created_at",
+        "updated_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "LeaveType",
+      "fields": [
+        "id",
+        "name",
+        "code",
+        "is_paid",
+        "max_days_per_year",
+        "accrual_policy",
+        "carry_over_limit",
+        "requires_medical_certificate"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "LeaveBalance",
+      "fields": [
+        "id",
+        "employee_id",
+        "leave_type_id",
+        "balance_days",
+        "accrued_this_year",
+        "used_this_year",
+        "carry_over_from_previous",
+        "fiscal_year"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "AuditTrail",
+      "fields": [
+        "id",
+        "entity_type",
+        "entity_id",
+        "action",
+        "old_value",
+        "new_value",
+        "actor_id",
+        "actor_role",
+        "reason",
+        "ip_address",
+        "created_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "Holiday",
+      "fields": [
+        "id",
+        "name",
+        "date",
+        "location_id",
+        "is_recurring",
+        "created_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "Notification",
+      "fields": [
+        "id",
+        "employee_id",
+        "type",
+        "title",
+        "message",
+        "metadata",
+        "sent_via",
+        "sent_at",
+        "read_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "AttendancePolicy",
+      "fields": [
+        "id",
+        "policy_version",
+        "name",
+        "description",
+        "effective_from",
+        "effective_to",
+        "grace_period_minutes",
+        "overtime_threshold_hours",
+        "half_day_threshold_hours",
+        "location_id",
+        "created_by",
+        "created_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "OfflineOperation",
+      "fields": [
+        "id",
+        "employee_id",
+        "operation_type",
+        "operation_data",
+        "local_timestamp",
+        "device_info",
+        "sync_status",
+        "conflict_resolution",
+        "created_at",
+        "synced_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "FacialTemplate",
+      "fields": [
+        "id",
+        "employee_id",
+        "encrypted_template",
+        "jurisdiction_compliance_flags",
+        "consent_type",
+        "enrollment_date",
+        "consent_given_date",
+        "consent_expiry_date",
+        "is_active",
+        "created_at"
+      ],
+      "ownedByThisDepartment": false
+    }
+  ],
+  "plan": [
+    {
+      "phase": "Phase 1: Authentication and Foundation",
+      "description": "Set up core authentication and employee services",
+      "tasks": [
+        "Microsoft Entra ID integration",
+        "Database schema migrations",
+        "Authentication service",
+        "Employee service",
+        "Next.js PWA foundation"
+      ]
+    },
+    {
+      "phase": "Phase\u4f86\u8aaa 2: Attendance Engine",
+      "description": "Build attendance system with shift management",
+      "tasks": [
+        "Shift service",
+        "Clock-in/out APIs",
+        "Attendance calculation engine",
+        "PWA dashboard",
+        "Offline queue system"
+      ]
+    },
+    {
+      "phase": "Phase 3: Leave Management",
+      "description": "Implement leave workflows and approval systems",
+      "tasks": [
+        "Leave service",
+        "Approval workflow engine",
+        "Notification service",
+        "Manager approval interface"
+      ]
+    },
+    {
+      "phase": "Phase 4: Advanced Features",
+      "description": "Add compliance, audit, and payroll features",
+      "tasks": [
+        "Jurisdiction compliance workflows",
+        "Audit trail system",
+        "Payroll export functionality",
+        "Timezone calculation engine"
+      ]
+    },
+    {
+      "phase": "Phase 5: Offline and Optimization",
+      "description": "Complete offline functionality and performance",
+      "tasks": [
+        "Complete offline sync",
+        "Adaptive rate limiting",
+        "Policy recalculation engine"
+      ]
+    }
+  ],
+  "securityDesign": [
+    "Implement Microsoft Entra ID OAuth2/OIDC authentication",
+    "JWT token validation with Redis session caching",
+    "RBAC for manager/employee/HR roles",
+    "Input validation for all API endpoints",
+    "Audit trail logging for all manual corrections",
+    "Encryption for sensitive data fields"
+  ],
+  "dependencies": [
+    "AWS infrastructure from DevOps team",
+    "Azure Face API integration from AI team",
+    "SendGrid service configuration",
+    "Testing infrastructure from QA team"
+  ]
+}

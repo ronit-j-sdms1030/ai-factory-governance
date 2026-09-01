@@ -1,0 +1,92 @@
+{
+  "team": "AI",
+  "objective": "Integrate Azure Face API for facial verification with liveness detection and build biometric template management with encryption.",
+  "architecture": "AI service layer integrating Azure Cognitive Services Face API, biometric template encryption/decryption, and facial verification workflows with consent tracking.",
+  "techStack": [
+    {
+      "layer": "Facial Verification",
+      "choice": "Azure Face API (part of Azure Cognitive Services)",
+      "rationale": "Azure Face API provides enterprise-grade face verification with Liveness detection to prevent spoofing. Microsoft's compliance certifications cover biometric data processing across multiple jurisdictions. Alternative: AWS Rekognition lacks dedicated liveness detection features critical for attendance fraud prevention. Limitation: Azure Face API costs scale linearly with verification attempts, requiring budget monitoring."
+    }
+  ],
+  "dataModel": [
+    {
+      "entity": "FacialTemplate",
+      "fields": [
+        "id",
+        "employee_id",
+        "encrypted_template",
+        "jurisdiction_compliance_flags",
+        "consent_type",
+        "enrollment_date",
+        "consent_given_date",
+        "consent_expiry_date",
+        "is_active",
+        "created_at"
+      ],
+      "ownedByThisDepartment": true
+    },
+    {
+      "entity": "Employee",
+      "fields": [
+        "id",
+        "employee_id",
+        "first_name",
+        "last_name",
+        "email",
+        "department_id",
+        "manager_id",
+        "location_id",
+        "joining_date",
+        "employment_status",
+        "shift_type",
+        "timezone",
+        "created_at",
+        "updated_at",
+        "entra_id"
+      ],
+      "ownedByThisDepartment": false
+    }
+  ],
+  "plan": [
+    {
+      "phase": "Phase 1: Azure Face API Integration",
+      "description": "Integrate with Azure Face API for face detection and verification",
+      "tasks": [
+        "Azure Face API SDK integration",
+        "Face detection and verification endpoints",
+        "Liveness detection implementation"
+      ]
+    },
+    {
+      "phase": "Phase 2: Template Management",
+      "description": "Build biometric template encryption and storage",
+      "tasks": [
+        "Template encryption/decryption logic",
+        "Facial template database management",
+        "Enrollment workflow development"
+      ]
+    },
+    {
+      "phase": "Phase 3: Verification Workflows",
+      "description": "Create complete facial verification flows",
+      "tasks": [
+        "Verification API endpoints",
+        "Consent requirement checking",
+        "Compliance flag management"
+      ]
+    }
+  ],
+  "securityDesign": [
+    "Encrypt all biometric templates before storage",
+    "Implement consent verification before facial verification",
+    "Automatic deletion of verification images from S3",
+    "Compliance with BIPA, GDPR Article 9 requirements",
+    "Audit logging of all facial verification attempts"
+  ],
+  "dependencies": [
+    "Employee data from Development team",
+    "AWS S3 storage from DevOps team",
+    "Authentication system from Development team"
+  ]
+}
