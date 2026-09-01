@@ -1,632 +1,254 @@
-function ShiftRoster() {
-  const [selectedDate, setSelectedDate] = React.useState(new Date('2024-10-15'));
-  const [timezone, setTimezone] = React.useState('America/New_York');
-  const [selectedShiftPattern, setSelectedShiftPattern] = React.useState(null);
-  const [draggedEmployee, setDraggedEmployee] = React.useState(null);
-  const [assignments, setAssignments] = React.useState([
-    { employeeId: 101, shiftId: 'morning', date: '2024-10-15' },
-    { employeeId:17, shiftId: 'night', date: '2024-10-15' },
-    { employeeId: 102, shiftId: 'morning', date: '2024-10-16' },
-    { employeeId: 103, shiftId: 'afternoon', date: '2024-10-16' },
-    { employeeId: 104, shiftId: 'flexible', date: '2024-10-17' },
-    { employeeId: 105, shiftId: 'night', date: '2024-10-17' },
-  ]);
-  const [validationWarnings, setValidationWarnings] = React.useState([
-    { employeeId: 105, date: '2024-10-18', message: 'Consecutive night shifts exceed policy limit' },
-    { employeeId: 103, date: '2024-10-17', message: 'Overlap with existing leave request' }
-  ]);
+const ShiftRoster = () => {
+  // Mock data
+  const employees = [
+    { id: 1, name: 'Alex Morgan', department: 'Engineering', timezone: 'America/New_York' },
+    { id: 2, name: 'Taylor Kim', department: 'Marketing', timezone: 'Asia/Seoul' },
+    { id: 3, name: 'Jordan Smith', department: 'Sales', timezone: 'Europe/London' },
+    { id: 4, name: 'Casey Brown', department: 'Support', timezone: 'America/Los_Angeles' },
+  ];
 
   const shifts = [
-    { id: 'morning', name: 'Morning Shift', startTime: '07:00', endTime: '15:00', color: '#3B82F6', isOvernight: false, timezone: 'America/New_York' },
-    { id: 'afternoon', name: 'Afternoon Shift', startTime: '15:00', endTime: '23:00', color: '#10B981', isOvernight: false, timezone: 'America/New_York' },
-    { id: 'night', name: 'Night Shift', startTime: '23:00', endTime: '07:00', color: '#8B5CF6', isOvernight: true, timezone: 'America/New_York' },
-    { id: 'flexible', name: 'Flexible Hours', startTime: '09:00-12:00', endTime: '17:00-to-flex', color: '#F59E0B', isOvernight: false, timezone: 'America/New_York' },
-    { id: 'remote', name: 'Remote Timezone', startTime: '10:00', endTime: '18:00', color: '#EF4444', isOvernight: false, timezone: 'America/Los_Angeles' }
+    { id: 1, name: 'Day Shift', startTime: '09:00', endTime: '17:00', isOvernight: false },
+    { id: 2, name: 'Night Shift', startTime: '22:00', endTime: '06:00', isOvernight: true },
+    { id: 3, name: 'Evening Shift', startTime: '16:00', endTime: '00:00', isOvernight: false },
   ];
 
-  const employees = [
-    { id: 101, employeeId: 'EMP-2101', name: 'Alex Johnson', department: 'Operations', location: 'NY Office', timezone: 'America/New_York' },
-    { id: 102, employeeId: 'EMP-2102', name: 'Maria Rodriguez', department: 'Engineering', location: 'Remote', timezone: 'America/Chicago' },
-    { id: 103, employeeId: 'EMP-2103', name: 'David Chen', department: 'Sales', location: 'SF Office', timezone: 'America/Los_Angeles' },
-    { id: 104, employeeId: 'EMP-2104', name: 'Sarah Williams', department: 'Customer Support', location: 'Remote', timezone: 'America/New_York' },
-    { id: 105, employeeId: 'EMP-2105', name: 'Michael Brown', department: 'Operations', location: 'NY Office', timezone: 'America/New_York' },
-    { id: 106, employeeId: 'EMP-2106', name: 'Jessica Taylor', department: 'Engineering', location: 'Remote', timezone: 'America/Denver' },
-    { id: 107, employeeId: 'EMP-2107', name: 'Robert Kim', department: 'Sales', location: 'NY Office', timezone: 'America/New_York' }
+  const assignments = [
+    { employeeId: 1, shiftId: 1, date: '2023-06-15' },
+    { employeeId: 2, shiftId: 2, date: '2023-06-15' },
+    { employeeId: 3, shiftId: 3, date: '2023-06-15' },
   ];
 
-  const shiftPatterns = [
-    { id: 'pattern-1', name: 'Weekday Rotation', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], shifts: ['morning', 'morning', 'morning', 'afternoon', 'flexible'] },
-    { id: 'pattern-2', name: 'Night Rotation', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], shifts: ['night', 'night', 'night', 'night', 'off'] },
-    { id: 'pattern-3', name: 'Remote Schedule', days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], shifts: ['remote', 'remote', 'remote', 'remote', 'remote'] }
-  ];
+  const [selectedDate, setSelectedDate] = React.useState('2023-06-15');
+  const [selectedTimezone, setSelectedTimezone] = React.useState('UTC');
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [draggedEmployee, setDraggedEmployee] = React.useState(null);
 
-  const weekDays = [
-    { date: '2024-10-14', day: 'Mon', display: 'Oct 14' },
-    { date: '2024-10-15', day: 'Tue', display: 'Oct 15' },
-    { date: '2024-10-16', day: 'Wed', display: 'Oct 16' },
-    { date: '2024-10-17', day: 'Thu', display: 'Oct 17' },
-    { date: '2024-10-18', day: 'Fri', display: 'Oct 18' },
-    { date: '2024.10-19', day: 'Sat', display: 'Oct 19' },
-    { date: '2024-10-20', day: 'Sun', display: 'Oct 20' }
-  ];
+  const filteredEmployees = employees.filter(emp => 
+    emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.department.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleDragStart = (employee) => {
+  const handleDragStart = (e, employee) => {
     setDraggedEmployee(employee);
-  };
-
-  const handleDrop = (date, employeeId) => {
-    if (draggedEmployee) {
-      const shiftId = document.getElementById(`shift-dropdown-${employeeId}`)?.value || 'morning';
-      const newAssignment = { employeeId: draggedEmployee.id, shiftId, date };
-      
-      // Check for overlaps
-      const existing = assignments.find(a => a.employeeId === draggedEmployee.id && a.date === date);
-      if (existing) {
-        setValidationWarnings(prev => [...prev, {
-          employeeId: draggedEmployee.id,
-          date,
-          message: `Shift assignment already exists for ${draggedEmployee.name}`
-        }]);
-        return;
-      }
-      
-      setAssignments(prev => [...prev, newAssignment]);
-      setDraggedEmployee(null);
-    }
+    e.dataTransfer.effectAllowed = 'copy';
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
   };
 
-  const handleRemoveAssignment = (employeeId, date) => {
-    setAssignments(prev => prev.filter(a => !(a.employeeId === employeeId && a.date === date)));
+  const handleDrop = (e, shiftId) => {
+    e.preventDefault();
+    // In a real app, this would update assignments
+    console.log(`Assigned ${draggedEmployee.name} to shift ${shiftId}`);
+    setDraggedEmployee(null);
   };
 
-  const handleBulkExport = () => {
-    alert('CSV export started for October 15-20, 2024 roster. File will download shortly.');
+  const exportToCSV = () => {
+    alert('Exporting shift roster to CSV...');
   };
 
-  const handleBulkImport = () => {
-    alert('CSV import dialog opened. Select a file to upload shift assignments.');
-  };
-
-  const handleTimezoneChange = (e) => {
-    setTimezone(e.target.value);
-    alert(`Timezone changed to ${e.target.value}. All shift times will be displayed in this timezone.`);
-  };
-
-  const handleSavePattern = () => {
-    if (selectedShiftPattern) {
-      alert(`Shift pattern "${selectedShiftPattern.name}" saved and applied to selected employees.`);
-    } else {
-      alert('Please select a shift pattern first.');
-    }
-  };
-
-  const getAssignmentForDay = (employeeId, date) => {
-    return assignments.find(a => a.employeeId === employeeId && a.date === date);
-  };
-
-  const getShiftById = (shiftId) => {
-    return shifts.find(s => s.id === shiftId);
+  const importFromCSV = () => {
+    alert('Importing shift roster from CSV...');
   };
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>Shift Roster Management</h1>
-        <div style={styles.headerActions}>
-          <button style={styles.exportButton} onClick={handleBulkExport}>
-            Export CSV
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-md p-4">
+        <h2 className="text-xl font-bold text-gray-800 mb-6">Shift Roster</h2>
+        
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+          <select 
+            className="w-full p-2 border border-gray-300 rounded-md"
+            value={selectedTimezone}
+            onChange={(e) => setSelectedTimezone(e.target.value)}
+          >
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">Eastern Time</option>
+            <option value="Europe/London">London</option>
+            <option value="Asia/Seoul">Seoul</option>
+          </select>
+        </div>
+        
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Search Employees</label>
+          <input
+            type="text"
+            className="w-full p-2 border border-gray-300 rounded-md"
+            placeholder="Name or department"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="mb-6">
+          <h3 className="font-medium text-gray-700 mb-2">Shift Templates</h3>
+          <ul className="space-y-2">
+            <li className="text-sm text-blue-600 cursor-pointer hover:underline">Standard Day Shift</li>
+            <li className="text-sm text-blue-600 cursor-pointer hover:underline">Night Rotation</li>
+            <li className="text-sm text-blue-600 cursor-pointer hover:underline">Weekend Coverage</li>
+          </ul>
+        </div>
+        
+        <div className="flex space-x-2">
+          <button 
+            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+            onClick={exportToCSV}
+          >
+            Export
           </button>
-          <button style={styles.importButton} onClick={handleBulkImport}>
-            Import CSV
+          <button 
+            className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition"
+            onClick={importFromCSV}
+          >
+            Import
           </button>
         </div>
-      </header>
+      </div>
 
-      <div style={styles.content}>
-        <aside style={styles.sidebar}>
-          <div style={styles.sidebarSection}>
-            <h3 style={styles.sidebarTitle}>Timezone Settings</h3>
-            <div style={styles.timezoneSelector}>
-              <label style={styles.label}>Display Timezone:</label>
-              <select 
-                style={styles.select} 
-                value={timezone} 
-                onChange={handleTimezoneChange}
-              >
-                <option value="America/New_York">Eastern Time (New York)</option>
-                <option value="America/Chicago">Central Time (Chicago)</option>
-                <option value="America/Denver">Mountain Time (Denver)</option>
-                <option value="America/Los_Angeles">Pacific Time (Los Angeles)</option>
-                <option value="Europe/London">GMT (London)</option>
-                <option value="Asia/Singapore">Singapore Time</option>
-              </select>
+      {/* Main Content */}
+      <div className="flex-1 p-6 overflow-auto">
+        <div className="bg-white rounded-lg shadow mb-6 p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold text-gray-800">June 2023</h1>
+            <div className="flex space-x-2">
+              <button className="p-2 rounded-md hover:bg-gray-100">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button className="p-2 rounded-md hover:bg-gray-100">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
-
-          <div style={styles.sidebarSection}>
-            <h3 style={styles.sidebarTitle}>Shift Legend</h3>
-            <div style={styles.legend}>
-              {shifts.map(shift => (
-                <div key={shift.id} style={styles.legendItem}>
-                  <div style={{...styles.legendColor, backgroundColor: shift.color}}></div>
-                  <div style={styles.legendText}>
-                    <strong>{shift.name}</strong>
-                    <small>{shift.startTime} - {shift.endTime} {shift.isOvernight ? '🌙' : ''}</small>
-                  </div>
-                </div>
-              ))}
-            </div>
+          
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+              <div key={day} className="text-center font-medium text-gray-500 py-2">{day}</div>
+            ))}
           </div>
-
-          <div style={styles.sidebarSection}>
-            <h3 style={styles.sidebarTitle}>Shift Patterns</h3>
-            <div style={styles.patterns}>
-              {shiftPatterns.map(pattern => (
+          
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 30 }, (_, i) => {
+              const date = `2023-06-${String(i + 1).padStart(2, '0')}`;
+              const isToday = date === selectedDate;
+              return (
                 <div 
-                  key={pattern.id} 
-                  style={{
-                    ...styles.patternCard,
-                    ...(selectedShiftPattern?.id === pattern.id ? styles.selectedPattern : {})
-                  }}
-                  onClick={() => setSelectedShiftPattern(pattern)}
+                  key={date}
+                  className={`min-h-24 border rounded-md p-2 ${isToday ? 'bg-blue-50 border-blue-300' : 'border-gray-200'}`}
+                  onClick={() => setSelectedDate(date)}
                 >
-                  <h4 style={styles.patternName}>{pattern.name}</h4>
-                  <div style={styles.patternDays}>
-                    {pattern.days.map((day, idx) => (
-                      <span key={idx} style={styles.patternDay}>
-                        {day}: {pattern.shifts[idx] || 'off'}
-                      </span>
-                    ))}
+                  <div className="font-medium text-gray-700">{i + 1}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {assignments.filter(a => a.date === date).length} assigned
                   </div>
                 </div>
-              ))}
-            </div>
-            <button style={styles.applyPatternButton} onClick={handleSavePattern}>
-              Apply Selected Pattern
-            </button>
+              );
+            })}
           </div>
-        </aside>
-
-        <main style={styles.main}>
-          <div style={styles.calendarHeader}>
-            <h2 style={styles.calendarTitle}>October 2024 - Week 42</h2>
-            <div style={styles.calendarControls}>
-              <button style={styles.navButton}>← Previous Week</button>
-              <button style={styles.navButton}>Next Week →</button>
-            </div>
-          </div>
-
-          {validationWarnings.length > 0 && (
-            <div style={styles.warnings}>
-              <h4 style={styles.warningsTitle}>Validation Warnings</h4>
-              {validationWarnings.map((warning, idx) => (
-                <div key={idx} style={styles.warning}>
-                  ⚠️ {warning.message} for EMP-{warning.employeeId} on {warning.date}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div style={styles.calendarGrid}>
-            <div style={styles.employeeList}>
-              <div style={styles.employeeListHeader}>
-                <h4 style={styles.employeeListTitle}>Employees</h4>
-                <small>Drag to assign</small>
-              </div>
-              {employees.map(employee => (
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Employee List */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Employees</h2>
+            <div className="space-y-3">
+              {filteredEmployees.map(employee => (
                 <div 
                   key={employee.id}
-                  style={styles.employeeCard}
-                  draggable="true"
-                  onDragStart={() => handleDragStart(employee)}
+                  className="flex items-center p-3 border border-gray-200 rounded-md cursor-move hover:bg-gray-50"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, employee)}
                 >
-                  <div style={styles.employeeInfo}>
-                    <strong>{employee.name}</strong>
-                    <small>{employee.department} • {employee.location}</small>
+                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
+                  <div className="ml-3">
+                    <div className="font-medium text-gray-800">{employee.name}</div>
+                    <div className="text-sm text-gray-500">{employee.department}</div>
                   </div>
-                  <div style={styles.employeeId}>{employee.employeeId}</div>
                 </div>
               ))}
             </div>
-
-            {weekDays.map(day => (
-              <div key={day.date} style={styles.dayColumn}>
-                <div style={styles.dayHeader}>
-                  <strong>{day.day}</strong>
-                  <small>{day.display}</small>
-                </div>
-                {employees.map(employee => {
-                  const assignment = getAssignmentForDay(employee.id, day.date);
-                  const shift = assignment ? getShiftById(assignment.shiftId) : null;
+          </div>
+          
+          {/* Shift Assignments */}
+          <div className="lg:col-span-2 bg-white rounded-lg shadow p-4">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Shift Assignments - {selectedDate}</h2>
+            
+            <div className="space-y-4">
+              {shifts.map(shift => (
+                <div 
+                  key={shift.id}
+                  className="border border-gray-200 rounded-md p-4"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, shift.id)}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium text-gray-800">{shift.name}</h3>
+                    {shift.isOvernight && (
+                      <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Overnight</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600 mb-3">
+                    {shift.startTime} - {shift.endTime} ({shift.isOvernight ? 'Next Day' : 'Same Day'})
+                  </div>
                   
-                  return (
-                    <div 
-                      key={`${employee.id}-${day.date}`}
-                      style={{
-                        ...styles.shiftCell,
-                        ...(assignment ? { backgroundColor: shift?.color + '20', borderLeft: `4px solid ${shift?.color}` } : {})
-                      }}
-                      onDragOver={handleDragOver}
-                      onDrop={() => handleDrop(day.date, employee.id)}
-                    >
-                      {assignment ? (
-                        <div style={styles.assignedShift}>
-                          <div style={styles.shiftName}>{shift?.name}</div>
-                          <div style={styles.shiftTime}>{shift?.startTime} - {shift?.endTime}</div>
-                          <button 
-                            style={styles.removeButton}
-                            onClick={() => handleRemoveAssignment(employee.id, day.date)}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ) : (
-                        <div style={styles.emptyCell}>
-                          <select 
-                            id={`shift-dropdown-${employee.id}`}
-                            style={styles.shiftSelect}
-                            defaultValue="morning"
-                          >
-                            {shifts.map(s => (
-                              <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                          </select>
-                          <small style={styles.dropHint}>Drop here</small>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                  <div className="space-y-2">
+                    {assignments
+                      .filter(a => a.shiftId === shift.id && a.date === selectedDate)
+                      .map(assignment => {
+                        const employee = employees.find(e => e.id === assignment.employeeId);
+                        return (
+                          <div key={`${assignment.employeeId}-${assignment.date}`} className="flex items-center p-2 bg-gray-50 rounded">
+                            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-8 h-8" />
+                            <div className="ml-2 text-sm text-gray-700">{employee?.name}</div>
+                          </div>
+                        );
+                      })
+                    }
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex">
+                <svg className="w-5 h-5 text-yellow-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <h4 className="font-medium text-yellow-800">Overlap Warning</h4>
+                  <p className="text-sm text-yellow-700 mt-1">2 employees have overlapping shifts. Please review assignments.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-6 bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Team Capacity</h2>
+          <div className="flex items-end h-32 space-x-2">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+              <div key={day} className="flex-1 flex flex-col items-center">
+                <div 
+                  className="w-full bg-blue-500 rounded-t" 
+                  style={{ height: `${70 - index * 8}%` }}
+                ></div>
+                <div className="text-xs text-gray-600 mt-2">{day}</div>
               </div>
             ))}
           </div>
-
-          <div style={styles.stats}>
-            <div style={styles.statCard}>
-              <h4>Total Assigned Shifts</h4>
-              <div style={styles.statNumber}>{assignments.length}</div>
-            </div>
-            <div style={styles.statCard}>
-              <h4>Coverage This Week</h4>
-              <div style={styles.statNumber}>94%</div>
-            </div>
-            <div style={styles.statCard}>
-              <h4>Night Shifts</h4>
-              <div style={styles.statNumber}>12</div>
-            </div>
-            <div style={styles.statCard}>
-              <h4>Pending Changes</h4>
-              <div style={styles.statNumber}>3</div>
-            </div>
+          <div className="mt-4 text-sm text-gray-600">
+            <p>Current capacity: 85% (42/50 scheduled)</p>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
-}
-
-const styles = {
-  container: {
-    backgroundColor: '#f8fafc',
-    minHeight: '100vh',
-    padding: '20px'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '30px',
-    paddingBottom: '20px',
-    borderBottom: '1px solid #e2e8f0'
-  },
-  title: {
-    fontSize: '28px',
-    fontWeight: '600',
-    color: '#1e293b',
-    margin: 0
-  },
-  headerActions: {
-    display: 'flex',
-    gap: '12px'
-  },
-  exportButton: {
-    backgroundColor: '#3B82F6',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '14px'
-  },
-  importButton: {
-    backgroundColor: 'white',
-    color: '#3B82F6',
-    border: '1px solid #3B82F6',
-    padding: '10px 20px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '14px'
-  },
-  content: {
-    display: 'flex',
-    gap: '30px'
-  },
-  sidebar: {
-    width: '320px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 .px 3px rgba(0,0,0,0.1)',
-    border: '1px solid #e2e8f0'
-  },
-  sidebarSection: {
-    marginBottom: '30px'
-  },
-  sidebarTitle: {
-    fontSize: '16px',
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '16px',
-    paddingBottom: '10px',
-    borderBottom: '1px solid #f1f5f9'
-  },
-  timezoneSelector: {
-    marginBottom: '20px'
-  },
-  label: {
-    display: 'block',
-    fontSize: '14px',
-    color: '#64748b',
-    marginBottom: '8px'
-  },
-  select: {
-    width: '100%',
-    padding: '10px',
-    border: '1px solid #cbd5e1',
-    borderRadius: '6px',
-    fontSize: '14px',
-    backgroundColor: 'white'
-  },
-  legend: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px'
-  },
-  legendItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  legendColor: {
-    width: '16px',
-    height: '16px',
-    borderRadius: '4px'
-  },
-  legendText: {
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  patterns: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px'
-  },
-  patternCard: {
-    padding: '12px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s'
-  },
-  selectedPattern: {
-    borderColor: '#3B82F6',
-    backgroundColor: '#eff6ff'
-  },
-  patternName: {
-    fontSize: '14px',
-    fontWeight: '600',
-    margin: '0 0 8px 0',
-    color: '#1e293b'
-  },
-  patternDays: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px'
-  },
-  patternDay: {
-    fontSize: '12px',
-    color: '#64748b'
-  },
-  applyPatternButton: {
-    width: '100%',
-    backgroundColor: '#10B981',
-    color: 'white',
-    border: 'none',
-    padding: '12px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontWeight: '500',
-    fontSize: '14px',
-    marginTop: '16px'
-  },
-  main: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    border: '1px solid #e2e8f0'
-  },
-  calendarHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '24px'
-  },
-  calendarTitle: {
-    fontSize: '20px',
-    fontWeight: '600',
-    color: '#1e293b',
-    margin: 0
-  },
-  calendarControls: {
-    display: 'flex',
-    gap: '12px'
-  },
-  navButton: {
-    backgroundColor: 'white',
-    color: '#64748b',
-    border: '1px solid #cbd5e1',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px'
-  },
-  warnings: {
-    backgroundColor: '#fef3c7',
-    border: '1px solid #f59e0b',
-    borderRadius: '8px',
-    padding: '16px',
-    marginBottom: '24px'
-  },
-  warningsTitle: {
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#92400e',
-    margin: '0 0马力 8px 0'
-  },
-  warning: {
-    fontSize: '13px',
-    color: '#92400e',
-    padding: '6px 0'
-  },
-  calendarGrid: {
-    display: 'flex',
-    gap: '2px',
-    marginBottom: '30px'
-  },
-  employeeList: {
-    width: '220px'
-  },
-  employeeListHeader: {
-    padding: '12px',
-    backgroundColor: '#f1f5f9',
-    border: '1px solid #e2e8f0',
-    borderRadius: '6px 6px 0 0'
-  },
-  employeeListTitle: {
-    fontSize: '14px',
-    fontWeight: '600',
-    margin: '0 0 4px 0',
-    color: '#1e293b'
-  },
-  employeeCard: {
-    padding: '12px',
-    border: '1px solid #e2e8f0',
-    borderTop: 'none',
-    cursor: 'grab',
-    backgroundColor: 'white',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  employeeInfo: {
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  employeeId: {
-    fontSize: '12px',
-    color: '#64748b',
-    fontWeight: '600'
-  },
-  dayColumn: {
-    flex: 1
-  },
-  dayHeader: {
-    padding: '12px',
-    backgroundColor: '#f1f5f9',
-    border: '1px solid #e2e8f0',
-    textAlign: 'center',
-    display: 'flex',
-    flexDirection: 'column',
-    borderRadius: '6px 6px 0 0'
-  },
-  shiftCell: {
-    minHeight: '70px',
-    padding: '8px',
-    border: '1px solid #e2e8f0',
-    borderTop: 'none',
-    transition: 'all 0.2s'
-  },
-  assignedShift: {
-    position: 'relative'
-  },
-  shiftName: {
-    fontSize: '13px',
-    fontWeight: '600',
-    marginBottom: '2px'
-  },
-  shiftTime: {
-    fontSize: '11px',
-    color: '#64748b'
-  },
-  removeButton: {
-    position: 'absolute',
-    top: '0',
-    right: '0',
-    background: 'none',
-    border: 'none',
-    color: '#94a3b8',
-    cursor: 'pointer',
-    fontSize: '16px',
-    padding: '0',
-    width: '20px',
-    height: '20px'
-  },
-  emptyCell: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    minHeight: '54px'
-  },
-  shiftSelect: {
-    width: '100%',
-    padding: '6px',
-    border: '1px solid #cbd5e1',
-    borderRadius: '4px',
-    fontSize: '12px',
-    marginBottom: '4px'
-  },
-  dropHint: {
-    fontSize: '11px',
-    color: '#94a3b8',
-    textAlign: 'center'
-  },
-  stats: {
-    display: 'flex',
-    gap: '20px',
-    marginTop: '30px'
-  },
-  statCard: {
-    flex: 1,
-    padding: '20px',
-    backgroundColor: '#f8fafc',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-    textAlign: 'center'
-  },
-  statNumber: {
-    fontSize: '32px',
-    fontWeight: '600',
-    color: '#3B82F6',
-    marginTop: '8px'
-  }
 };

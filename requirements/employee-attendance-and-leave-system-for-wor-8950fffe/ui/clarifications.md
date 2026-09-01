@@ -1,11 +1,7 @@
-- What determines whether facial verification is 'enabled' for an employee - is it a global system setting, location-based, role-based, or opt-in per employee?
-- For the 'conflict resolution interface for offline attendance discrepancies' - what specific UI should be presented to managers? Should they see side-by-side timestamps, choose which to keep, or add a comment?
-- In the TeamAttendance grid, what constitutes a 'color-coded status' - just present/absent/late, or should it include half-day, on-leave, etc.?
-- For the 'timezone view' filter in AttendanceCalendar - should employees be able to view attendance in different timezones (like viewing remote team's local times), or just their own?
-- What should happen when an employee tries to clock in/out while offline multiple times - should they see a queue of pending operations, or just the most recent?
-- For the 'real-time balance display updates as dates selected' in LeaveRequest - should this show projected balance AFTER the requested leave, or remaining balance BEFORE the leave?
-- In the payroll export, does 'lock status' prevent further modifications to that period's attendance records, or just prevent new exports?
-- What should the 'offline capability badge' on ClockInterface look like - just an icon, text notification, or full status panel?
-- For shift assignments in ShiftRoster, should managers see only their team's assignments, or can HR see all assignments? What are the permissions?
-- What is the expected behavior when an employee with facial verification enabled tries to clock in but camera fails - fallback to unverified, or block clocking entirely?
-- These screens could not be generated and need another pass: SettingsPolicies, AuditTrail
+- Does facial verification have separate enrollment and verification interfaces, or is it a single flow? The BRD mentions '/profile/facial' for enrollment but facial verification during clock-in - should these be separate screens?
+- What should happen when a manager views the team attendance grid - should it show today only, or a date range? Should managers be able to see historical team attendance?
+- For the conflict resolution interface mentioned in '/leave/approvals' - should this be part of the TeamAttendance screen or a separate dedicated conflict resolution area?
+- The BRD mentions both '/admin/policies' and '/offline/sync' as separate pages. Should offline sync management be part of Settings or Admin area, or both?
+- Should there be separate navigation paths for Employee, Manager, and HR roles, or a unified navigation that shows/hides items based on permissions?
+- What's the intended behavior for the 'timezone view' filter in attendance history - does this show records converted to selected timezone, or filter by employee timezone?
+- For the payroll export - should HR be able to preview calculations before locking a period, or is locking required before export generation?

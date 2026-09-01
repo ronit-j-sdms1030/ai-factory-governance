@@ -1,878 +1,374 @@
 function AttendanceCalendar() {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date(2024, dictateCurrentMonth, 1));
+  const [currentDate, setCurrentDate] = React.useState(new Date());
   const [selectedDate, setSelectedDate] = React.useState(null);
-  const [activeFilters, setActiveFilters] = React.useState({
-    present: true,
-    late: true,
-    absent: true,
-    leave: true,
-    offline: true
-  });
-  const [selectedTimezone, setSelectedTimezone] = React.useState('America/New_York');
-  
-  // Mock data for current user's attendance
-  const mockAttendance = {
-    "2024-03-
+  const [filterStatus, setFilterStatus] = React.useState('all');
+  const [timezone, setTimezone] = React.useState('Asia/Kolkata');
+  const [showModal, setShowModal] = React.useState(false);
+  const [modalData, setModalData] = React.useState(null);
 
-<｜DSML｜function_calls>
-<｜DSML｜invoke name="ScreenSource">
-<｜DSML｜parameter name="source" string="true">function AttendanceCalendar() {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date(2024, 2,133, 1));
-  const [selectedDate, setSelectedDate] = React.useState(null);
-  const [activeFilters, setActiveFilters] = React.useState({
-    present: true,
-    late: true,
-    absent: true,
-    leave: true,
-    offline: true
-  });
-  const [selectedTimezone, setSelectedTimezone] = React.useState('America/New_York');
-  
-  // Mock data for current user's attendance
-  const mockAttendance = {
-    "2024-03-
-    15": {
-      clockIn: "08:45",
-      clockOut: "17:30",
-      status: "present",
-      device: "iPhone 14 Pro",
-      ipAddress: "192.168.1.105",
-      facialVerified: true,
-      offline: false
-    },
-    "2024-03-18": {
-      clockIn: "09:15",
-      clockOut: "17:45",
-      status: "late",
-      lateMinutes: 15,
-      device: "Chrome on Windows",
-      ipAddress: "10.0.1.22",
-      facialVerified: false,
-      offline: false
-    },
-    "2024-03-19": {
-      clockIn: null,
-      clockOut: null,
-      status: "leave",
-      leaveType: "Sick Leave",
-      device: null,
-      ipAddress: null,
-      facialVerified: null,
-      offline: false
-    },
-    "2024-03-20": {
-      clockIn: "08:55",
-      clockOut: "17:10",
-      status: "present",
-      device: "Android Samsung S23",
-      ipAddress: "172.20.5.88",
-      facialVerified: true,
-      offline: true,
-      syncStatus: "pending"
-    },
-    "2024-03-21": {
-      clockIn: null,
-      clockOut: null,
-      status: "absent",
-      device: null,
-      ipAddress: null,
-      facialVerified: null,
-      offline: false
-    },
-    "2024-03-
+  // Mock attendance data
+  const mockAttendanceData = [
+    { date: '2024-06-01', status: 'present', clockIn: '09:05', clockOut: '18:10', lateMinutes: 5, device: 'Web App', verified: true, sync: 'synced' },
+    { date: '2024-06-02', status: 'late', clockIn: '10:30', clockOut: '19:00', lateMinutes: 90, device: 'Mobile App', verified: true, sync: 'synced' },
+    { date: '2024-06-03', status: 'absent', clockIn: null, clockOut: null, lateMinutes: 0, device: null, verified: false, sync: 'synced' },
+    { date: '2024-06-04', status: 'present', clockIn: '08:55', clockOut: '17:58', lateMinutes: 0, device: 'Desktop Client', verified: true, sync: 'synced' },
+    { date: '2024-06-05', status: 'leave', clockIn: null, clockOut: null, lateMinutes: 0, device: null, verified: false, sync: 'synced' },
+    { date: '2024-06-06', status: 'present', clockIn: '09:02', clockOut: '18:05', lateMinutes: 2, device: 'Web App', verified: true, sync: 'synced' },
+    { date: '2024-06-07', status: 'present', clockIn: '08:58', clockOut: '18:15', lateMinutes: 0, device: 'Mobile App', verified: false, sync: 'pending' },
+    { date: '2024-06-08', status: 'present', clockIn: '09:15', clockOut: '18:20', lateMinutes: 15, device: 'Web App', verified: true, sync: 'synced' },
+    { date: '2024-06-09', status: 'absent', clockIn: null, clockOut: null, lateMinutes: 0, device: null, verified: false, sync: 'synced' },
+    { date: '2024-06-10', status: 'late', clockIn: '09:45', clockOut: '18:30', lateMinutes: 45, device: 'Mobile App', verified: true, sync: 'synced' },
+    { date: '2024-06-11', status: 'present', clockIn: '09:00', clockOut: '18:00', lateMinutes: 0, device: 'Desktop Client', verified: true, sync: 'synced' },
+    { date: '2024-06-12', status: 'present', clockIn: '08:55', clockOut: '17:55', lateMinutes: 0, device: 'Web App', verified: true, sync: 'synced' },
+    { date: '2024-06-13', status: 'present', clockIn: '09:05', clockOut: '18:10', lateMinutes: 5, device: 'Mobile App', verified: false, sync: 'synced' },
+    { date: '2024-06-14', status: 'leave', clockIn: null, clockOut: null, lateMinutes: 0, device: null, verified: false, sync: 'synced' },
+    { date: '2024-06-15', status: 'present', clockIn: '09:00', clockOut: '18:05', lateMinutes: 0, device: 'Web App', verified: true, sync: 'synced' },
+  ];
 
-<｜DSML｜function_calls>
-<｜DSML｜invoke name="ScreenSource">
-<｜DSML｜parameter name="source" string="true">function AttendanceCalendar() {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date(2024, 2, 1));
-  const [selectedDate, setSelectedDate] = React.useState(null);
-  const [activeFilters, setActiveFilters] = React.useState({
-    present: true,
-    late: true,
-    absent: true,
-    leave: true,
-    offline: true
-  });
-  const [selectedTimezone, setSelectedTimezone] = React.useState('America/New_York');
-  
-  // Mock data for current user's attendance
-  const mockAttendance = {
-    "2024-03-15": {
-      clockIn: "08:45",
-      clockOut: "17:30",
-      status: "present",
-      device: "iPhone 14 Pro",
-      ipAddress: "192.168.1.105",
-      facialVerified: true,
-      offline: false
-    },
-    "2024-03-18": {
-      clockIn: "09:15",
-      clockOut: "17:45",
-      status: "late",
-      lateMinutes: 15,
-      device: "Chrome on Windows",
-      ipAddress: "10.0.1.22",
-      facialVerified: false,
-      offline: false
-    },
-    "2024-03-19": {
-      clockIn: null,
-      clockOut: null,
-      status: "leave",
-      leaveType: "Sick Leave",
-      device: null,
-      ipAddress: null,
-      facialVerified: null,
-      offline: false
-    },
-    "2024-03-20": {
-      clockIn: "08:55",
-      clockOut: "17:10",
-      status: "present",
-      device: "Android Samsung S23",
-      ipAddress: "172.20.5.88",
-      facialVerified: true,
-      offline: true,
-      syncStatus: "pending"
-    },
-    "2024-03-21": {
-      clockIn: null,
-      clockOut: null,
-      status: "absent",
-      device: null,
-      ipAddress: null,
-      facialVerified: null,
-      offline: false
-    },
-    "2024-03-22": {
-      clockIn: "08:30",
-      clockOut: "17:00",
-      status: "present",
-      device: "Safari on Mac",
-      ipAddress: "203.0.113.42",
-      facialVerified: true,
-      offline: false
-    },
-    "2024-03-25": {
-      clockIn: "09:05",
-      clockOut: "17:20",
-      status: "late",
-      lateMinutes: -5,
-      device: "Edge on Windows",
-      ipAddress: "198.51.100.23",
-      facialVerified: false,
-      offline: false
-    },
-    "2024-03-26": {
-      clockIn: null,
-      clockOut: null,
-      status: "leave",
-      leaveType: "Annual Leave",
-      device: null,
-      ipAddress: null,
-      facialVerified: null,
-      offline: false
-    },
-    "2024-03-27": {
-      clockIn: "08:50",
-      clockOut: "18:15",
-      status: "present",
-      device: "iPhone 15",
-      ipAddress: "192.168.2.101",
-      facialVerified: true,
-      offline: true,
-      syncStatus: "synced"
-    },
-    "2024-03-28": {
-      clockIn: "08:45",
-      clockOut: "17:30",
-      status: "present",
-      device: "Chrome on Windows",
-      ipAddress: "10.0.0.15",
-      facialVerified: false,
-      offline: false
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'present': return 'bg-green-500';
+      case 'late': return 'bg-orange-500';
+      case 'absent': return 'bg-red-500';
+      case 'leave': return 'bg-blue-500';
+      default: return 'bg-gray-300';
     }
   };
-  
-  // Calculate summary statistics
-  const calculateSummary = () => {
-    const days = Object.values(mockAttendance);
-    const present = days.filter(d => d.status === 'present').length;
-    const late = days.filter(d => d.status === 'late').length;
-    const absent = days.filter(d => d.status === 'absent').length;
-    const leave = days.filter(d => d.status === 'leave').length;
-    const offline = days.filter(d => d.offline).length;
-    const verified = days.filter(d => d.facialVerified).length;
-    
-    return { present, late, absent, leave, offline, verified, total: days.length };
-  };
-  
-  const summary = calculateSummary();
-  
-  // Generate calendar days for current month
-  const generateCalendarDays = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
+
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    
+    const startingDayOfWeek = firstDay.getDay();
+
     const days = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add days of the month
     for (let i = 1; i <= daysInMonth; i++) {
-      const date = new Date(year, month, i);
-      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-      const attendance = mockAttendance[dateKey];
+      const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      const attendance = mockAttendanceData.find(d => d.date === dateString);
       days.push({
-        date,
-        dateKey,
+        date: i,
+        dateString,
         attendance
       });
     }
     
     return days;
   };
+
+  const days = getDaysInMonth(currentDate);
+  const monthNames = ["January", "February", "March", "April", "May", "June", 
+                      "July", "August", "September", "October", "November", "December"];
   
-  const calendarDays = generateCalendarDays();
-  
-  // Handle month navigation
+  const filteredDays = filterStatus === 'all' 
+    ? days 
+    : days.filter(day => day && day.attendance && day.attendance.status === filterStatus);
+
   const handlePrevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
-  
+
   const handleNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
-  
-  const handleMonthChange = (e) => {
-    const [year, month] = e.target.value.split('-');
-    setCurrentMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+
+  const handleToday = () => {
+    setCurrentDate(new Date());
   };
-  
-  // Handle filter toggles
-  const handleFilterToggle = (filter) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [filter]: !prev[filter]
-    }));
-  };
-  
-  // Handle export to CSV
-  const handleExportCSV = () => {
-    alert(`Exporting attendance data for ${currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })} to CSV...`);
-    // In real implementation, this would generate and download CSV
-  };
-  
-  // Get status color
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'present': return '#10b981';
-      case 'late': return '#f59e0b';
-      case 'absent': return '#ef4444';
-      case 'leave': return '#3b82f6';
-      default: return '#6b7280';
+
+  const openDayDetail = (day) => {
+    if (day && day.attendance) {
+      setModalData(day.attendance);
+      setShowModal(true);
     }
   };
-  
-  // Get status label
-  const getStatusLabel = (status) => {
-    switch(status) {
-      case 'present': return 'Present';
-      case 'late': return 'Late';
-      case 'absent': return 'Absent';
-      case 'leave': return 'Leave';
-      default: return 'Not Recorded';
-    }
+
+  const closeModal = () => {
+    setShowModal(false);
+    setModalData(null);
   };
-  
-  // Get day detail content
-  const getDayDetailContent = (attendance) => {
-    if (!attendance) return <p>No attendance record for this day.</p>;
-    
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            backgroundColor: getStatusColor(attendance.status)
-          }}></div>
-          <strong>{getStatusLabel(attendance.status)}</strong>
-        </div>
-        
-        {attendance.clockIn && (
-          <div>
-            <strong>Clock Times:</strong>
-            <div style={{ marginLeft: '16px', marginTop: '4px' }}>
-              In: {attendance.clockIn} | Out: {attendance.clockOut || 'Not clocked out'}
-              {attendance.lateMinutes && ` (${Math.abs(attendance.lateMinutes)} minutes ${attendance.lateMinutes > 0 ? 'late' : 'early'})`}
-            </div>
-          </div>
-        )}
-        
-        {attendance.device && (
-          <div>
-            <strong>Device Info:</strong>
-            <div style={{ marginLeft: '16px', marginTop: '4px' }}>{attendance.device}</div>
-          </div>
-        )}
-        
-        {attendance.ipAddress && (
-          <div>
-            <strong>IP Address:</strong>
-            <div style={{ marginLeft: '16px', marginTop: '4px' }}>{attendance.ipAddress}</div>
-          </div>
-        )}
-        
-        <div>
-          <strong>Verification:</strong>
-          <div style={{ marginLeft: '16px', marginTop: '4px' }}>
-            {attendance.facialVerified === true ? '✓ Facial Verified' : 
-             attendance.facialVerified === false ? 'No facial verification' : 'N/A'}
-          </div>
-        </div>
-        
-        {attendance.offline && (
-          <div>
-            <strong>Offline Record:</strong>
-            <div style={{ marginLeft: '16px', marginTop: '4px', color: attendance.syncStatus === 'pending' ? '#f59e0b' : '#10b981' }}>
-              {attendance.syncStatus === 'pending' ? '⏳ Sync Pending' : '✓ Synced'}
-            </div>
-          </div>
-        )}
-        
-        {attendance.leaveType && (
-          <div>
-            <strong>Leave Type:</strong>
-            <div style={{ marginLeft: '16px', marginTop: '4px' }}>{attendance.leaveType}</div>
-          </div>
-        )}
-      </div>
-    );
+
+  const exportToCSV = () => {
+    alert('Attendance data exported to CSV successfully!');
   };
-  
-  // Timezone options
-  const timezones = [
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Berlin',
-    'Asia/Singapore',
-    'Asia/Tokyo',
-    'Australia/Sydney'
-  ];
-  
+
+  const getStatusCount = (status) => {
+    return mockAttendanceData.filter(d => d.status === status).length;
+  };
+
   return (
-    <div style={{
-      display: 'flex',
-      minHeight: '100vh',
-      backgroundColor: '#f8fafc'
-    }}>
-      {/* Sidebar */}
-      <div style={{
-        width: '240px',
-        backgroundColor: '#ffffff',
-        borderRight: '1px solid #e2e8f0',
-        padding: '24px'
-      }}>
-        <h2 style={{
-          margin: '0 0 опя24px',
-          fontSize: '20px',
-          fontWeight: '600',
-          color: '#1e293b'
-        }}>WorkPulse</h2>
-        
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <a href="/" style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            color: '#475569',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}>Dashboard</a>
-          <a href="/clock" style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            color: '#475569',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}>Clock In/Out</a>
-          <a href="/attendance" style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            backgroundColor: '#eff6ff',
-            color: '#3b82f6',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}>Attendance Calendar</a>
-          <a href="/leave/my-leave" style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            color: '#475569',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}>My Leave</a>
-          <a href="/team/attendance" style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            color: '#475569',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}>Team Attendance</a>
-          <a href="/roster" style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            color: '#475569',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}>Shift Roster</a>
-          <a href="/profile" style={{
-            padding: '8px 12px',
-            borderRadius: '6px',
-            color: '#475569',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}>Profile</a>
-        </nav>
-      </div>
-      
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1e293b', margin: '0 0 8px' }}>
-              Attendance Calendar
-            </h1>
-            <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
-              View your attendance history with timezone-aware calculations
-            </p>
-          </div>
-          
-          <button onClick={handleExportCSV} style={{
-            padding: '10px 20px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '500',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span>📥</span>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Attendance Calendar</h1>
+          <button 
+            onClick={exportToCSV}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
             Export to CSV
           </button>
         </div>
-        
-        <div style={{ display: 'flex', gap: '32px' }}>
-          {/* Filters Panel */}
-          <div style={{
-            width: '280px',
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <h3 style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              color: '#1e293b',
-              margin: '0 0 20px'
-            }}>Filters</h3>
-            
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#475569',
-                marginBottom: '8px'
-              }}>Show Status</label>
-              
-              {['present', 'late', 'absent', 'leave', 'offline'].map(filter => (
-                <div key={filter} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '8px',
-                  cursor: 'pointer'
-                }} onClick={() => handleFilterToggle(filter)}>
-                  <div style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '4px',
-                    border: `2px solid ${activeFilters[filter] ? getStatusColor(filter === 'offline' ? 'present' : filter) : '#cbd5e1'}`,
-                    backgroundColor: activeFilters[filter] ? getStatusColor(filter === 'offline' ? 'present' : filter) : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    {activeFilters[filter] && '✓'}
-                  </div>
-                  <span style={{
-                    fontSize: '14px',
-                    color: '#475569',
-                    textTransform: 'capitalize'
-                  }}>{filter}</span>
-                </div>
-              ))}
-            </div>
-            
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#475569',
-                marginBottom: '8px'
-              }}>Timezone View</label>
-              
-              <select 
-                value={selectedTimezone}
-                onChange={(e) => setSelectedTimezone(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '14px',
-                  color: '#1e293b',
-                  backgroundColor: '#ffffff'
-                }}
-              >
-                {timezones.map(tz => (
-                  <option key={tz} value={tz}>{tz}</option>
-                ))}
-              </select>
-              
-              <p style={{
-                fontSize: '12px',
-                color: '#64748b',
-                marginTop: '8px',
-                marginBottom: '0'
-              }}>
-                All times displayed in {selectedTimezone}
-              </p>
-            </div>
+
+        {/* Summary Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm text-gray-500">Present Days</div>
+            <div className="text-2xl font-bold text-green-600">{getStatusCount('present')}</div>
           </div>
-          
-          {/* Main Calendar Area */}
-          <div style={{ flex: 1 }}>
-            {/* Calendar Header */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '24px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button onClick={handlePrevMonth} style={{
-                  padding: '8px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer'
-                }}>
-                  ←
-                </button>
-                
-                <input
-                  type="month"
-                  value={`${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`}
-                  onChange={handleMonthChange}
-                  style={{
-                    padding: '8px',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                    fontWeight: '500',
-                    color: '#1e293b'
-                  }}
-                />
-                
-                <button onClick={handleNextMonth} style={{
-                  padding: '8px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  backgroundColor: '#ffffff',
-                  cursor: 'pointer'
-                }}>
-                  →
-                </button>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm text-gray-500">Late Arrivals</div>
+            <div className="text-2xl font-bold text-orange-600">{getStatusCount('late')}</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm text-gray-500">Absent Days</div>
+            <div className="text-2xl font-bold text-red-600">{getStatusCount('absent')}</div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow">
+            <div className="text-sm text-gray-500">Leave Days</div>
+            <div className="text-2xl font-bold text-blue-600">{getStatusCount('leave')}</div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
+                <select 
+                  value={filterStatus} 
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="present">Present</option>
+                  <option value="late">Late</option>
+                  <option value="absent">Absent</option>
+                  <option value="leave">On Leave</option>
+                </select>
               </div>
               
-              <div style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>
-                {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                <select 
+                  value={timezone} 
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="America/New_York">America/New York (EST)</option>
+                  <option value="Europe/London">Europe/London (GMT)</option>
+                  <option value="Australia/Sydney">Australia/Sydney (AEDT)</option>
+                </select>
               </div>
             </div>
             
-            {/* Summary Statistics */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '16px',
-              marginBottom: '24px'
-            }}>
-              <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Present Days</div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>{summary.present}</div>
-              </div>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={handlePrevMonth}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
               
-              <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Late Arrivals</div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#f59e0b' }}>{summary.late}</div>
-              </div>
+              <button 
+                onClick={handleToday}
+                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                Today
+              </button>
               
-              <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Leave Days</div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#3b82f6' }}>{summary.leave}</div>
-              </div>
+              <button 
+                onClick={handleNextMonth}
+                className="p-2 rounded-full hover:bg-gray-100"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
               
-              <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Absent Days</div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#ef4444' }}>{summary.absent}</div>
-              </div>
-              
-              <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Offline Records</div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#8b5cf6' }}>{summary.offline}</div>
-              </div>
-              
-              <div style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e2e8f0'
-              }}>
-                <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Facial Verified</div>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#10b981' }}>{summary.verified}</div>
-              </div>
-            </div>
-            
-            {/* Calendar Grid */}
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '12px',
-              padding: '24px',
-              border: '1px solid #e2e8f0'
-            }}>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '8px',
-                marginBottom: '16px'
-              }}>
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} style={{
-                    textAlign: 'center',
-                    fontSize: '12px',
-                    fontWeight: '500',
-                    color: '#64748b',
-                    padding: '8px'
-                  }}>
-                    {day}
-                  </div>
-                ))}
-              </div>
-              
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: '8px'
-              }}>
-                {calendarDays.map(day => {
-                  const shouldShow = day.attendance ? activeFilters[day.attendance.status] : true;
-                  
-                  if (!shouldShow) return (
-                    <div key={day.dateKey} style={{
-                      aspectRatio: '1',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#f8fafc',
-                      borderRadius: '8px',
-                      opacity: '0.5'
-                    }}>
-                      <div style={{ fontSize: '14px', color: '#94a3b8' }}>{day.date.getDate()}</div>
-                    </div>
-                  );
-                  
-                  return (
-                    <div
-                      key={day.dateKey}
-                      onClick={() => setSelectedDate(day)}
-                      style={{
-                        aspectRatio: '1',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: day.attendance ? '#ffffff' : '#f8fafc',
-                        borderRadius: '8px',
-                        border: day.attendance ? `2px solid ${getStatusColor(day.attendance.status)}` : '1px solid #e2e8f0',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                      <div style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
-                        {day.date.getDate()}
-                      </div>
-                      
-                      {day.attendance && (
-                        <div style={{
-                          fontSize: '10px',
-                          color: getStatusColor(day.attendance.status),
-                          fontWeight: '500',
-                          marginTop: '4px'
-                        }}>
-                          {getStatusLabel(day.attendance.status).substring(0, 3)}
-                        </div>
-                      )}
-                      
-                      {day.attendance?.offline && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '4px',
-                          right: '4px',
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: day.attendance.syncStatus === 'pending' ? '#f59e0b' : '#10b981'
-                        }}></div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Legend */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '16px',
-                marginTop: '24px',
-                fontSize: '12px',
-                color: '#64748b'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#10b981' }}></div>
-                  Present
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#f59e0b' }}></div>
-                  Late
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#ef4444' }}></div>
-                  Absent
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#3b82f6' }}></div>
-                  Leave
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b' }}></div>
-                  Offline Pending
-                </div>
+              <div className="text-lg font-semibold text-gray-800">
+                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
               </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Day Detail Modal */}
-      {selectedDate && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }} onClick={() => setSelectedDate(null)}>
-          <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '400px',
-            maxWidth: '90%',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-          }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b', margin: 0 }}>
-                {selectedDate.date.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </h3>
-              <button onClick={() => setSelectedDate(null)} style={{
-                padding: '4px 8px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                fontSize: '20px',
-                cursor: 'pointer',
-                color: '#64748b'
-              }}>
-                ×
-              </button>
+
+        {/* Calendar */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="grid grid-cols-7 gap-px bg-gray-200 border-b">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+              <div key={day} className="bg-white p-3 text-center text-sm font-medium text-gray-500">
+                {day}
+              </div>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-7 gap-px bg-gray-200">
+            {filteredDays.map((day, index) => (
+              <div 
+                key={index} 
+                className={`min-h-24 bg-white p-2 cursor-pointer hover:bg-gray-50 transition-colors ${
+                  day?.attendance?.sync === 'pending' ? 'border-l-4 border-yellow-400' : ''
+                }`}
+                onClick={() => openDayDetail(day)}
+              >
+                {day ? (
+                  <>
+                    <div className="text-right text-sm font-medium text-gray-700">
+                      {day.date}
+                    </div>
+                    {day.attendance ? (
+                      <div className="mt-1">
+                        <div className={`w-3 h-3 rounded-full ${getStatusColor(day.attendance.status)} inline-block mr-1`}></div>
+                        <span className="text-xs capitalize">
+                          {day.attendance.status}
+                        </span>
+                        {day.attendance.sync === 'pending' && (
+                          <span className="ml-1 text-xs text-yellow-600">Offline</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 mt-1">No record</div>
+                    )}
+                  </>
+                ) : (
+                  <div className="h-full"></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="mt-6 bg-white p-4 rounded-lg shadow">
+          <div className="flex flex-wrap items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+                <span className="text-sm">Present</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-orange-500 mr-2"></div>
+                <span className="text-sm">Late Arrival</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                <span className="text-sm">Absent</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                <span className="text-sm">On Leave</span>
+              </div>
             </div>
-            
-            {getDayDetailContent(selectedDate.attendance)}
-            
-            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button onClick={() => setSelectedDate(null)} style={{
-                padding: '8px 16px',
-                backgroundColor: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}>
-                Close
-              </button>
+            <div className="flex items-center">
+              <div className="w-3 h-3 border-l-4 border-yellow-400 mr-2"></div>
+              <span className="text-sm">Offline Record</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Day Detail Modal */}
+      {showModal && modalData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Attendance Details
+                </h3>
+                <button 
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="mt-4 space-y-4">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Date:</span>
+                  <span className="font-medium">{modalData.date}</span>
+                </div>
+                
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Status:</span>
+                  <span className={`font-medium capitalize ${
+                    modalData.status === 'present' ? 'text-green-600' :
+                    modalData.status === 'late' ? 'text-orange-600' :
+                    modalData.status === 'absent' ? 'text-red-600' : 'text-blue-600'
+                  }`}>
+                    {modalData.status}
+                  </span>
+                </div>
+                
+                {modalData.clockIn && (
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-gray-600">Clock In:</span>
+                    <span className="font-medium">{modalData.clockIn}</span>
+                  </div>
+                )}
+                
+                {modalData.clockOut && (
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-gray-600">Clock Out:</span>
+                    <span className="font-medium">{modalData.clockOut}</span>
+                  </div>
+                )}
+                
+                {modalData.lateMinutes > 0 && (
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-gray-600">Late By:</span>
+                    <span className="font-medium text-orange-600">{modalData.lateMinutes} minutes</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Device:</span>
+                  <span className="font-medium">{modalData.device || 'N/A'}</span>
+                </div>
+                
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Verification:</span>
+                  <span className={`font-medium ${modalData.verified ? 'text-green-600' : 'text-gray-500'}`}>
+                    {modalData.verified ? 'Verified' : 'Not Verified'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Sync Status:</span>
+                  <span className={`font-medium ${
+                    modalData.sync === 'synced' ? 'text-green-600' : 'text-yellow-600'
+                  }`}>
+                    {modalData.sync.charAt(0).toUpperCase() + modalData.sync.slice(1)}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
