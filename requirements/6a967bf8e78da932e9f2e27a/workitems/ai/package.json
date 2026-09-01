@@ -1,0 +1,16 @@
+{
+  "team": "AI",
+  "objective": "Implement Damage Severity Assessment",
+  "architecture": "This package focuses on the heuristic analysis of uploaded photos to assess damage severity based on defect pixels. The output integrates with the write-off records submitted by warehouse staff.",
+  "tech_stack": [
+    {
+      "layer": "Damage Severity Assessment",
+      "choice": "Heuristic image analysis with sharp library",
+      "rationale": "A practical heuristic approach analyzes uploaded photos for defect pixel percentage (dark/abnormal areas) and combines with damage reason to produce a severity tier (Low/Medium/High) that correlates better with warehouse judgment than arbitrary classification scores. The leading alternative, Google Vertex AI Vision with CLIP model, was rejected because it produces meaningless severity scores for damage assessment, being trained for object classification not damage regression. The main limitation is that the heuristic may miss subtle damage types, but it provides useful guidance without misleading scores."
+    }
+  ],
+  "data_model": [],
+  "dependencies": [
+    "WI-09"
+  ]
+}

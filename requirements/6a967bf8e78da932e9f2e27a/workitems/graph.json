@@ -1,0 +1,171 @@
+{
+  "work_items": [
+    {
+      "id": "WI-01",
+      "title": "Set up AWS serverless infrastructure",
+      "department": "Development",
+      "description": "Set up AWS API Gateway, Lambda, Aurora Serverless, and S3 for the project.",
+      "depends_on": []
+    },
+    {
+      "id": "WI-02",
+      "title": "Create Item and User tables",
+      "department": "Development",
+      "description": "Implement the Item and User tables in Aurora Serverless based on the data model.",
+      "depends_on": [
+        "WI-01"
+      ]
+    },
+    {
+      "id": "WI-03",
+      "title": "Implement authentication for web and mobile",
+      "department": "Development",
+      "description": "Create session cookie authentication for the web and secure storage for the mobile app.",
+      "depends_on": [
+        "WI-02"
+      ]
+    },
+    {
+      "id": "WI-04",
+      "title": "Build React Native app skeleton",
+      "department": "Development",
+      "description": "Create the basic structure of the mobile app, including login and navigation.",
+      "depends_on": [
+        "WI-03"
+      ]
+    },
+    {
+      "id": "WI-05",
+      "title": "Integrate native barcode scanning libraries",
+      "department": "Development",
+      "description": "Implement iOS AVFoundation and Android ML Kit for barcode scanning in the mobile app.",
+      "depends_on": [
+        "WI-04"
+      ]
+    },
+    {
+      "id": "WI-06",
+      "title": "Implement scan screen and damage form",
+      "department": "Development",
+      "description": "Create UI components for barcode scanning and a form for damage reporting.",
+      "depends_on": [
+        "WI-05"
+      ]
+    },
+    {
+      "id": "WI-07",
+      "title": "Backend API for barcode validation and pending write-off storage",
+      "department": "Development",
+      "description": "Develop the backend API that validates scanned barcodes and stores pending write-offs.",
+      "depends_on": [
+        "WI-06"
+      ]
+    },
+    {
+      "id": "WI-08",
+      "title": "S3 photo upload flow",
+      "department": "Development",
+      "description": "Implement the functionality to upload damage photos to S3 and store the key in the write-off record.",
+      "depends_on": [
+        "WI-07"
+      ]
+    },
+    {
+      "id": "WI-09",
+      "title": "Implement heuristic image analysis",
+      "department": "AI",
+      "description": "Develop a heuristic analysis that calculates defect pixel percentage using the sharp library to establish severity tiers.",
+      "depends_on": [
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-10",
+      "title": "Build responsive web dashboard for supervisors",
+      "department": "Development",
+      "description": "Create a web interface for supervisors to review pending write-offs with details and severity tiers.",
+      "depends_on": [
+        "WI-09"
+      ]
+    },
+    {
+      "id": "WI-11",
+      "title": "Implement approval/reject endpoints",
+      "department": "Development",
+      "description": "Create endpoints for supervisors to approve or reject write-offs, triggering inventory deductions upon approval.",
+      "depends_on": [
+        "WI-10"
+      ]
+    },
+    {
+      "id": "WI-12",
+      "title": "Create InventoryTransaction table",
+      "department": "Development",
+      "description": "Implement the InventoryTransaction table to log stock deductions.",
+      "depends_on": [
+        "WI-11"
+      ]
+    },
+    {
+      "id": "WI-13",
+      "title": "Offline sync mechanism for mobile app",
+      "department": "Development",
+      "description": "Implement a sync mechanism in the mobile app to handle offline write-off submissions.",
+      "depends_on": [
+        "WI-12"
+      ]
+    },
+    {
+      "id": "WI-14",
+      "title": "Develop reporting page with Chart.js for web",
+      "department": "Development",
+      "description": "Create a reporting component on the web dashboard displaying historical write-offs using Chart.js.",
+      "depends_on": [
+        "WI-13"
+      ]
+    },
+    {
+      "id": "WI-15",
+      "title": "Add mobile app reports view",
+      "department": "Development",
+      "description": "Implement a reporting view in the mobile app allowing users to filter and view historical write-offs.",
+      "depends_on": [
+        "WI-14"
+      ]
+    },
+    {
+      "id": "WI-16",
+      "title": "Conduct user testing",
+      "department": "QA",
+      "description": "Test the mobile app and web components with actual warehouse staff for usability under real conditions.",
+      "depends_on": [
+        "WI-15"
+      ]
+    },
+    {
+      "id": "WI-17",
+      "title": "Final security review and configuration",
+      "department": "DevOps",
+      "description": "Perform a final security review and configure Aurora Serverless for cost optimization.",
+      "depends_on": [
+        "WI-16"
+      ]
+    },
+    {
+      "id": "WI-18",
+      "title": "Deploy to production and create documentation",
+      "department": "DevOps",
+      "description": "Deploy the entire application to production, create user documentation, and train users on the system.",
+      "depends_on": [
+        "WI-17"
+      ]
+    }
+  ],
+  "integrity": {
+    "unowned": [],
+    "multiply_owned": [],
+    "inconsistent_spelling": [],
+    "cycles": [],
+    "dangling": []
+  }
+}
