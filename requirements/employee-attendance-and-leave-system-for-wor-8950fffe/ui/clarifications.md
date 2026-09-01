@@ -1,0 +1,7 @@
+- What specific conflict resolution interface is needed for managers - should it be integrated into TeamManagement screen or separate?
+- Should facial verification be required or optional for all clock-ins when enabled? The BRD mentions 'optional facial verification' but doesn't specify user choice flow.
+- What constitutes 'timezone view' in attendance history - should it show converted times or just indicate which timezone was applied?
+- Are there any specific workflows for handling overnight shifts that cross midnight in the shift roster interface?
+- Should the payroll export CSV include employee names or only IDs as mentioned in BRD? The BRD says 'employee_id' but payroll might need names.
+- What is the expected behavior for 'location override button' - should field workers be able to set any location or choose from predefined options?
+- These screens could not be generated and need another pass: ShiftRoster, PolicyManagement, PayrollExport, FacialEnrollment, SyncManagement
