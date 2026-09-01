@@ -1,67 +1,43 @@
 erDiagram
-    item ||--o{ write_off : "has"
-    write_off ||--o{ write_off_photo : "includes"
-    user ||--o{ write_off : "submits"
-    user ||--o{ write_off : "approves"
-    write_off ||--o{ audit_log : "generates"
-    
-    item {
+    Item ||--o{ WriteOff : "has"
+    Item {
         string sku PK
-        string upc_ean UK
         string description
-        string category
-        decimal unit_cost
         integer current_stock
-        string status
-        timestamp last_updated
+        string category
+        string storage_location
     }
-    
-    write_off {
-        uuid write_off_id PK
-        string sku FK
-        uuid submitted_by FK
-        timestamp submitted_at
-        string reason
-        integer quantity
-        integer ai_severity_score
-        uuid supervisor_approved_by FK
-        timestamp approved_at
-        string status
-        text notes
-        decimal total_value
-        boolean is_unknown_item
-        string sync_status
-    }
-    
-    write_off_photo {
-        uuid photo_id PK
-        uuid write_off_id FK
-        string photo_type
-        string azure_blob_url
-        string local_path
-        timestamp uploaded_at
-        integer file_size
-        json ai_analysis_json
-        string sync_status
-    }
-    
-    user {
-        uuid employee_id PK
-        string azure_ad_id UK
-        string full_name
-        string email
-        string role
-        string warehouse_location
+    User ||--o{ WriteOff : "submits"
+    User {
+        string employee_id PK
+        string name
+        enum role
+        string password_hash
         boolean is_active
     }
-    
-    audit_log {
-        uuid log_id PK
-        uuid write_off_id FK
-        uuid user_id FK
-        string action
-        timestamp timestamp
-        string ip_address
-        string user_agent
-        integer quantity_affected
+    WriteOff ||--|| InventoryTransaction : "triggers"
+    WriteOff {
+        uuid writeoff_id PK
+        string sku FK
+        string employee_id FK
+        enum damage_reason
+        string photo_s3_key
+        decimal submitted_value
+        enum value_source
+        enum severity_tier
+        decimal defect_pixel_percentage
+        enum status
+        timestamp submitted_at
+        string reviewed_by FK
+        timestamp reviewed_at
+        string review_comment
     }
+    InventoryTransaction {
+        uuid transaction_id PK
+        string sku FK
+        uuid writeoff_id FK
+        integer quantity_change
+        integer resulting_stock
+        timestamp timestamp
+    }
+    User ||--o{ WriteOff : "reviews"

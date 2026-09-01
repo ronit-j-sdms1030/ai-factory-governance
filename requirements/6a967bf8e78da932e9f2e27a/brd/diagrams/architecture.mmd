@@ -1,24 +1,20 @@
 flowchart TD
-    A[Mobile Device Camera<br/>Warehouse Staff] --> B[React Native with WatermelonDB<br/>Offline-First iOS/Android]
-    B --> C{Scan Barcode}
-    C --> D[Validate UPC/EAN<br/>Local SQLite Cache]
-    D --> E[Capture 3 Required Photos<br/>Barcode/Label, Overall, Close-up]
-    E --> F[Local Storage & Compression<br/>WatermelonDB Offline Queue]
-    F --> G{Wi-Fi Available?}
-    G -- No --> H[Store Draft Locally<br/>Continue Working Offline]
-    G -- Yes --> I[Batch Sync to Cloud]
-    I --> J[Upload Photos to<br/>Azure Blob Storage]
-    J --> K[Azure Computer Vision<br/>Damage Grading API]
-    K --> L[Submit Write-off<br/>with Quantity & AI Score]
-    L --> M[PostgreSQL<br/>write_offs Table]
-    M --> N[Slack Webhook<br/>Supervisor Notification]
-    N --> O[React Web Dashboard<br/>Supervisor Review]
-    O --> P{Approve/Reject}
-    P --> Q[Update Inventory Status<br/>active → written_off]
-    Q --> R[Reduce Stock by Quantity<br/>Update current_stock]
-    R --> S[Email Confirmation<br/>SMTP via SendGrid]
-    M --> T[Reporting Engine<br/>CSV Export]
-    T --> U[Monthly Compliance<br/>Excel/Sheets]
-    H -- On Connectivity Restore --> I
-    D -- Scan Failed --> V[Search by Description/Category<br/>or Photo for Later ID]
-    E -- Validation --> W[3-Photo Requirement<br/>Enforced Before Submit]
+    A[Warehouse Staff Mobile Device] -->|Native barcode scan| B[React Native Mobile App]
+    B -->|Offline queue when disconnected| B
+    B -->|Sync when connected| C[AWS API Gateway]
+    C -->|Route request| D[AWS Lambda Backend]
+    D -->|Validate barcode| E[Aurora Serverless PostgreSQL]
+    E -->|Return item details| D
+    D -->|Store pending write-off| E
+    D -->|Upload photo| F[AWS S3 Photo Storage]
+    D -->|Trigger severity assessment| D
+    D -->|Image analysis: defect pixel %| D
+    D -->|Combine with damage reason| D
+    D -->|Store severity tier (Low/Med/High)| E
+    G[Supervisor Web Dashboard] -->|Fetch pending list| C
+    C -->|Return pending with severity tiers| G
+    G -->|Review, approve/reject with comment| C
+    C -->|Update status, deduct inventory| E
+    H[Reporting Dashboard] -->|Fetch historical data| C
+    C -->|Return filtered write-offs| H
+    H -->|Chart.js render trends| H
