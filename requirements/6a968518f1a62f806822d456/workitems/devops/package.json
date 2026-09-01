@@ -1,0 +1,29 @@
+{
+  "team": "DevOps",
+  "objective": "Set up the necessary cloud infrastructure and deployment processes for the system.",
+  "architecture": "This package builds out the AWS infrastructure needed to support lower-level services like RDS, S3, and SQS, alongside deployment mechanisms using ECS Fargate for hosting.",
+  "tech_stack": [
+    {
+      "layer": "Hosting",
+      "choice": "AWS Fargate on ECS",
+      "rationale": "Fargate's serverless containers eliminate EC2 patching, scales with API Gateway requests and SQS queue depth. Rejected EKS due to complexity; Lambda rejected due to long-running SAP sync jobs. Limitation: Cold starts may affect initial supervisor login, warm pool needed."
+    },
+    {
+      "layer": "Database",
+      "choice": "Amazon RDS PostgreSQL 15",
+      "rationale": "PostgreSQL's JSONB supports flexible metadata, referential integrity ensures proper workflow state transitions. Rejected DynamoDB because relational joins for supervisor dashboards are complex. Limitation: Multi-AZ RDS latency acceptable but adds overhead to frequent status updates."
+    },
+    {
+      "layer": "File Storage",
+      "choice": "Amazon S3 with SSE-KMS",
+      "rationale": "S3's durability guarantees compressed photo preservation, KMS encryption meets internal data policy. Rejected EFS due to complexity with mobile uploads. Limitation: Requires lifecycle policy for compressed photo volume."
+    },
+    {
+      "layer": "Queue Service",
+      "choice": "Amazon SQS Standard Queue",
+      "rationale": "SQS provides reliable async processing for SAP validation of offline submissions, decouples submission from SAP availability. Rejected Redis because SQS integrates better with Spring Cloud AWS; Kafka considered but overkill for 200 daily transactions. Limitation: SQS standard queue doesn't guarantee order, but write-off validation order isn't critical."
+    }
+  ],
+  "data_model": [],
+  "dependencies": []
+}

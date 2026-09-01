@@ -1,0 +1,91 @@
+{
+  "team": "AI",
+  "objective": "Manage the logic for handling submissions and integration with external systems.",
+  "architecture": "AI oversees the processing logic mainly for the backend APIs, focusing on the validation of requests against the external SAP systems and the orchestration of the data flow between components.",
+  "tech_stack": [
+    {
+      "layer": "Backend/API",
+      "choice": "Spring Boot 3.2 with Java 17",
+      "rationale": "Spring Boot's mature REST controller pattern handles SAP integration complexity, Java's type safety prevents financial errors, Spring Integration supports async SQS processing for offline submissions. Rejected Node.js due to weaker type safety for financial transactions. Limitation: Container memory footprint demands careful Fargate sizing for combined web and async processing loads."
+    }
+  ],
+  "data_model": [
+    {
+      "entity": "write_off_request",
+      "fields": [
+        "id",
+        "staff_id",
+        "site_id",
+        "item_sku",
+        "item_description",
+        "damage_reason_code",
+        "severity_tier",
+        "damaged_quantity_counted",
+        "status",
+        "submitted_at",
+        "validated_at",
+        "sap_validation_status",
+        "sap_validation_error",
+        "supervisor_id",
+        "decision_at",
+        "decision_comment",
+        "sap_inventory_doc_num",
+        "sap_fi_doc_num",
+        "sap_sync_error",
+        "sap_sync_attempts",
+        "offline_submission_id",
+        "last_sync_attempt"
+      ],
+      "owned_by_this_department": true
+    },
+    {
+      "entity": "write_off_photo",
+      "fields": [
+        "id",
+        "write_off_request_id",
+        "s3_bucket",
+        "s3_key",
+        "uploaded_at",
+        "file_size_bytes",
+        "content_type",
+        "compression_ratio",
+        "original_file_name",
+        "upload_status"
+      ],
+      "owned_by_this_department": true
+    },
+    {
+      "entity": "audit_log",
+      "fields": [
+        "id",
+        "timestamp",
+        "user_id",
+        "action",
+        "entity_type",
+        "entity_id",
+        "old_values",
+        "new_values",
+        "ip_address",
+        "sync_context"
+      ],
+      "owned_by_this_department": true
+    },
+    {
+      "entity": "offline_sync_queue",
+      "fields": [
+        "id",
+        "device_id",
+        "staff_id",
+        "offline_submission_id",
+        "submission_data",
+        "sync_status",
+        "created_at",
+        "synced_at",
+        "sync_attempts",
+        "last_error"
+      ],
+      "owned_by_this_department": true
+    }
+  ],
+  "dependencies": []
+}

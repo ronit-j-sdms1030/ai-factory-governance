@@ -1,0 +1,157 @@
+{
+  "work_items": [
+    {
+      "id": "WI-01",
+      "title": "Set up AWS infrastructure",
+      "department": "DevOps",
+      "description": "Configure AWS environment for RDS, S3, SQS, and Fargate services, ensuring security groups and IAM roles are established for all services.",
+      "depends_on": []
+    },
+    {
+      "id": "WI-02",
+      "title": "Implement Service Worker with Workbox",
+      "department": "Development",
+      "description": "Create Service Worker using Workbox to handle offline caching mechanisms for the PWA, ensuring assets are appropriately cached.",
+      "depends_on": [
+        "WI-01"
+      ]
+    },
+    {
+      "id": "WI-03",
+      "title": "Create IndexedDB schema for offline submissions",
+      "department": "Development",
+      "description": "Design and implement the schema for IndexedDB to store offline submissions, including tracking submission status and retry logic.",
+      "depends_on": [
+        "WI-01"
+      ]
+    },
+    {
+      "id": "WI-04",
+      "title": "Spring Boot with SQS integration",
+      "department": "Development",
+      "description": "Develop and configure the Spring Boot backend to receive messages from SQS for async processing of offline submissions.",
+      "depends_on": [
+        "WI-01"
+      ]
+    },
+    {
+      "id": "WI-05",
+      "title": "Build mobile form with global barcode listener",
+      "department": "Development",
+      "description": "Create a mobile form allowing warehouse staff to scan damaged items, input damage details, and submit them offline.",
+      "depends_on": [
+        "WI-02",
+        "WI-03"
+      ]
+    },
+    {
+      "id": "WI-06",
+      "title": "Implement photo compression (Canvas API)",
+      "department": "Development",
+      "description": "Integrate photo compression functionality within the mobile form, ensuring that images are saved in the correct format and size before submission.",
+      "depends_on": [
+        "WI-05"
+      ]
+    },
+    {
+      "id": "WI-07",
+      "title": "Implement background sync with retry logic",
+      "department": "Development",
+      "description": "Develop the logic for background syncing of offline submissions to the server when connectivity is restored, including handling retrials on failure.",
+      "depends_on": [
+        "WI-03",
+        "WI-04"
+      ]
+    },
+    {
+      "id": "WI-08",
+      "title": "Implement SQS processing for SAP validation",
+      "department": "Development",
+      "description": "Build the logic to validate submitted items against SAP using data retrieved from SQS, transitioning statuses appropriately.",
+      "depends_on": [
+        "WI-06",
+        "WI-07"
+      ]
+    },
+    {
+      "id": "WI-09",
+      "title": "Enhanced supervisor dashboard",
+      "department": "Development",
+      "description": "Create a dashboard for supervisors to review and manage validated write-off requests with options for approval or rejection.",
+      "depends_on": [
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-10",
+      "title": "Audit logging for offline-to-online transitions",
+      "department": "Development",
+      "description": "Implement audit logging to track actions taken on offline submissions, specifically during transitions to online state.",
+      "depends_on": [
+        "WI-08"
+      ]
+    },
+    {
+      "id": "WI-11",
+      "title": "Build SAP sync job with monitoring",
+      "department": "Development",
+      "description": "Create a background job to handle syncing approved write-offs to SAP, implementing monitoring and failure handling mechanisms.",
+      "depends_on": [
+        "WI-09",
+        "WI-10"
+      ]
+    },
+    {
+      "id": "WI-12",
+      "title": "Token refresh implementation",
+      "department": "Development",
+      "description": "Implement token refresh logic in the application to maintain user sessions aligned with 12-hour shifts, ensuring seamless transitions.",
+      "depends_on": [
+        "WI-11"
+      ]
+    },
+    {
+      "id": "WI-13",
+      "title": "Test the offline scenario in a warehouse mock environment",
+      "department": "QA",
+      "description": "Conduct offline scenario testing in a controlled environment to validate the functionality of all features under offline conditions.",
+      "depends_on": [
+        "WI-12"
+      ]
+    },
+    {
+      "id": "WI-14",
+      "title": "Conduct load testing",
+      "department": "QA",
+      "description": "Perform load testing on the system to review the performance under peak loads of 200 daily submissions, ensuring stability and responsiveness.",
+      "depends_on": [
+        "WI-13"
+      ]
+    },
+    {
+      "id": "WI-15",
+      "title": "Security review of local encryption",
+      "department": "QA",
+      "description": "Review the implementation of local encryption for sensitive data stored in IndexedDB, ensuring compliance with organizational policies.",
+      "depends_on": [
+        "WI-14"
+      ]
+    },
+    {
+      "id": "WI-16",
+      "title": "Production deployment with data migration",
+      "department": "DevOps",
+      "description": "Deploy the system to production and handle any necessary data migration tasks to ensure continuity.",
+      "depends_on": [
+        "WI-15"
+      ]
+    }
+  ],
+  "integrity": {
+    "unowned": [],
+    "multiply_owned": [],
+    "inconsistent_spelling": [],
+    "cycles": [],
+    "dangling": []
+  }
+}

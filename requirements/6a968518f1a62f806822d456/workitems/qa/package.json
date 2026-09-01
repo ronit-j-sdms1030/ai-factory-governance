@@ -1,0 +1,11 @@
+{
+  "team": "QA",
+  "objective": "Ensure the system functions correctly through rigorous testing phases and compliance checks.",
+  "architecture": "QA focuses on testing the application in multiple dimensions including offline scenarios, load testing, and security assessments, ensuring compliance with established requirements for functionality and data security.",
+  "tech_stack": [],
+  "data_model": [],
+  "dependencies": [
+    "WI-12",
+    "WI-14"
+  ]
+}
