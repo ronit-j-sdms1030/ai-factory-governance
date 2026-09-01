@@ -1,0 +1,17 @@
+flowchart TD
+    A[Motion Sensor Zone 1] -->|Zigbee occupancy event| B[Gateway Controller]
+    C[Motion Sensor Zone 2] -->|Zigbee occupancy event| B
+    D[Motion Sensor Zone N] -->|Zigbee occupancy event| B
+    B -->|HTTP POST event data| E[Core Application Server<br/>FastAPI + Python]
+    E -->|Rule evaluation<br/>occupancy → appliance mapping| F[Relay Control Module]
+    F -->|GPIO signal| G[Physical Switch Bank]
+    G -->|Electrical current| H[Lights/Fans/ACs<br/>per zone]
+    E -->|INSERT event log| I[PostgreSQL Database]
+    I -->|SELECT status data| J[Nginx Web Server]
+    J -->|WebSocket push| K[Staff Mobile Dashboard<br/>React Progressive Web App]
+    J -->|WebSocket push| L[Wall-mounted Display<br/>Chromium Kiosk Mode]
+    K -->|HTTP POST override command| E
+    L -->|HTTP POST override command| E
+    M[System Health Monitor] -->|metrics collection| E
+    N[Backup Power Supply] -->|power failover| B
+    N -->|power failover| E

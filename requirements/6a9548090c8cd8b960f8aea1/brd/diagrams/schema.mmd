@@ -1,0 +1,66 @@
+erDiagram
+    Zone ||--o{ MotionSensor : "contains"
+    Zone ||--o{ Appliance : "contains"
+    Zone ||--o{ SystemConfiguration : "configures"
+    MotionSensor ||--o{ OccupancyEvent : "generates"
+    Appliance ||--o{ ApplianceEvent : "records_state_changes"
+    Zone {
+        uuid zone_id PK
+        string zone_name
+        json floor_plan_coordinates
+        timestamp created_at
+        timestamp updated_at
+    }
+    MotionSensor {
+        uuid sensor_id PK
+        string zigbee_device_id
+        uuid zone_id FK
+        date installation_date
+        integer battery_level
+        timestamp last_seen_at
+        string status
+    }
+    Appliance {
+        uuid appliance_id PK
+        string appliance_name
+        enum appliance_type
+        string relay_module_id
+        integer gpio_pin
+        uuid zone_id FK
+        integer power_rating_watts
+        enum current_state
+    }
+    OccupancyEvent {
+        uuid event_id PK
+        uuid sensor_id FK
+        uuid zone_id FK
+        enum event_type
+        timestamp timestamp
+        float confidence_score
+    }
+    ApplianceEvent {
+        uuid appliance_event_id PK
+        uuid appliance_id FK
+        enum previous_state
+        enum new_state
+        enum trigger_type
+        string triggered_by
+        timestamp timestamp
+    }
+    SystemConfiguration {
+        uuid config_id PK
+        uuid zone_id FK
+        integer occupancy_threshold
+        integer turn_on_delay_seconds
+        integer turn_off_delay_seconds
+        integer stagger_delay_appliances
+        boolean is_auto_mode
+    }
+    StaffUser {
+        uuid user_id PK
+        string username
+        string hashed_password
+        enum role
+        timestamp last_login
+        timestamp created_at
+    }
