@@ -1,4 +1,7 @@
 {
   "work_items": [],
-  "integrity": {}
+  "integrity": {
+    "unowned": [],
+    "multiply_owned": []
+  }
 }
