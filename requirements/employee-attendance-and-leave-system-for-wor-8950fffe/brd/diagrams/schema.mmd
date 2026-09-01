@@ -1,0 +1,141 @@
+erDiagram
+    Employee ||--o{ AttendanceRecord : records
+    Employee ||--o{ ShiftAssignment : assigned
+    Employee ||--o{ LeaveRequest : requests
+    Employee ||--o{ LeaveBalance : has
+    Employee ||--|| FacialTemplate : optional
+    Employee ||--o{ Notification : receives
+    Employee ||--o{ OfflineOperation : queues
+    
+    Shift ||--o{ ShiftAssignment : includes
+    Shift ||--o{ AttendanceRecord : defines
+    
+    LeaveType ||--o{ LeaveRequest : of_type
+    LeaveType ||--o{ LeaveBalance : tracks
+    
+    AttendancePolicy ||--o{ AttendanceRecord : governs
+    
+    OfflineOperation ||--|| AttendanceRecord : syncs_to
+    
+    AttendanceRecord {
+        uuid id PK
+        uuid employee_id FK
+        date date
+        timestamp clock_in_time
+        timestamp clock_out_time
+        uuid shift_id FK
+        string status
+        integer late_minutes
+        integer overtime_minutes
+        jsonb device_info
+        inet ip_address
+        point gps_coordinates
+        boolean facial_verified
+        string timezone_applied
+        string sync_status
+        uuid offline_operation_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    Employee {
+        uuid id PK
+        string employee_id
+        string first_name
+        string last_name
+        string email
+        uuid department_id FK
+        uuid manager_id FK
+        uuid location_id FK
+        date joining_date
+        string employment_status
+        string shift_type
+        string timezone
+        timestamp created_at
+        timestamp updated_at
+        string entra_id
+    }
+    
+    Shift {
+        uuid id PK
+        string name
+        string type
+        timestamp start_time_utc
+        timestamp end_time_utc
+        string timezone
+        integer grace_period_minutes
+        integer half_day_threshold_hours
+        integer overtime_threshold_hours
+        boolean is_overnight
+        uuid location_id FK
+        timestamp created_at
+    }
+    
+    LeaveRequest {
+        uuid id PK
+        uuid employee_id FK
+        uuid leave_type_id FK
+        date start_date
+        date end_date
+        text reason
+        string status
+        uuid current_approver_id FK
+        jsonb approval_path
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    FacialTemplate {
+        uuid id PK
+        uuid employee_id FK
+        text encrypted_template
+        jsonb jurisdiction_compliance_flags
+        string consent_type
+        date enrollment_date
+        date consent_given_date
+        date consent_expiry_date
+        boolean is_active
+        timestamp created_at
+    }
+    
+    AuditTrail {
+        uuid id PK
+        string entity_type
+        uuid entity_id
+        string action
+        jsonb old_value
+        jsonb new_value
+        uuid actor_id FK
+        string actor_role
+        text reason
+        inet ip_address
+        timestamp created_at
+    }
+    
+    AttendancePolicy {
+        uuid id PK
+        integer policy_version
+        string name
+        text description
+        date effective_from
+        date effective_to
+        integer grace_period_minutes
+        integer overtime_threshold_hours
+        integer half_day_threshold_hours
+        uuid location_id FK
+        uuid created_by FK
+        timestamp created_at
+    }
+    
+    OfflineOperation {
+        uuid id PK
+        uuid employee_id FK
+        string operation_type
+        jsonb operation_data
+        timestamp local_timestamp
+        jsonb device_info
+        string sync_status
+        jsonb conflict_resolution
+        timestamp created_at
+        timestamp synced_at
+    }

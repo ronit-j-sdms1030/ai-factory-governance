@@ -1,0 +1,51 @@
+flowchart TD
+    Employee[Employee Browser/Mobile PWA] --> HTTPS[HTTPS Load Balancer]
+    HTTPS --> Frontend[Next.js Progressive Web App]
+    
+    Frontend --> API[Spring Boot API Gateway]
+    
+    Frontend --> OfflineSync[Offline Sync Service Worker]
+    OfflineSync --> LocalDB[(Local SQLite/IndexedDB)]
+    LocalDB --> BackgroundSync[Background Sync API]
+    BackgroundSync --> API
+    
+    API --> Auth[Auth Service]
+    API --> Attendance[Attendance Service]
+    API --> Shift[Shift Service]
+    API --> Leave[Leave Service]
+    API --> EmployeeService[Employee Service]
+    
+    Auth --> Redis[(Redis Session Cache)]
+    Auth --> EntraID[Microsoft Entra ID]
+    
+    Attendance --> PostgreSQL[(PostgreSQL Attendance DB)]
+    Attendance --> AzureFace[Azure Face API]
+    Attendance --> S3[Encrypted S3 Storage]
+    
+    Shift --> PostgreSQL
+    Leave --> PostgreSQL
+    EmployeeService --> PostgreSQL
+    
+    PostgreSQL --> Cron[Cron Job Processor]
+    Cron --> Batch[Monthly Batch Processor]
+    Batch --> Export[Payroll Export CSV/S3]
+    
+    EmployeeService --> EntraIDSync[Entra ID Sync Service]
+    EntraIDSync --> EntraID
+    
+    Attendance --> Notify[SendGrid Email Service]
+    Leave --> Notify
+    
+    AzureFace --> S3
+    S3 --> Delete[Auto-delete Temp Images]
+    
+    Manager[Manager Interface] --> Frontend
+    HR[HR Admin Interface] --> Frontend
+    Payroll[Payroll Export Interface] --> Frontend
+    
+    PolicyEngine[Policy Engine with Versioning] --> PostgreSQL
+    TimezoneEngine[Timezone-aware Calculation Engine] --> PostgreSQL
+    
+    Autoscaler[Regional Pod Autoscaler] --> EKS[EKS Cluster]
+    EKS --> Frontend
+    EKS --> API
