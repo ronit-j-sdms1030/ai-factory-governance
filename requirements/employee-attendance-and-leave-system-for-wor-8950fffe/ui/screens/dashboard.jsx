@@ -1,381 +1,349 @@
 function Dashboard() {
-  // Mock data
-  const userRole = 'Manager'; // Employee, Manager, HR
-  const employee = {
+  // Mock user data
+  const user = {
     id: 1,
-    first_name: 'Alex',
-    last_name: 'Johnson',
     employee_id: 'EMP00123',
+    first_name: 'Alex',
+    last_name: 'Morgan',
+    role: 'manager', // employee/manager/hr
     department: 'Engineering',
-    shift_type: 'Standard Office Hours',
-    timezone: 'America/New_York'
+    location: 'New York'
   };
-  
-  const todayShift = {
-    name: 'Standard Office Hours',
-    start_time: '09:00 AM',
-    end_time: '05:00 PM',
-    grace_period: 15,
-    status: 'on_time', // on_time, late, absent
-    countdown: '02:45:30'
+
+  // Mock shift data
+  const shift = {
+    name: 'Day Shift',
+    start_time: '09:00',
+    end_time: '17:00',
+    timezone: 'America/New_York',
+    grace_period: 15
   };
-  
-  const recentAttendance = [
-    { date: '2023-06-15', status: 'present', clock_in: '08:58 AM', clock_out: '05:01 PM' },
-    { date: '2023-06-14', status: 'present', clock_in: '09:02 AM', clock_out: '05:03 PM' },
-    { date: '2023-06-13', status: 'late', clock_in: '09:25 AM', clock_out: '05:10 PM' },
-    { date: '2023-06-12', status: 'present', clock_in: '08:55 AM', clock_out: '04:58 PM' },
-    { date: '2023-06-11', status: 'present', clock_in: '09:01 AM', clock_out: '05:02 PM' }
+
+  // Mock attendance data
+  const attendanceSummary = [
+    { date: '2023-06-01', status: 'present' },
+    { date: '2023-06-02', status: 'late', minutes: 25 },
+    { date: '2023-06-05', status: 'present' },
+    { date: '2023-06-06', status: 'absent' },
+    { date: '2023-06-07', status: 'present' }
   ];
-  
-  const pendingLeaveRequests = [
-    { id: 101, employee_name: 'Sarah Miller', leave_type: 'Vacation', start_date: '2023-06-20', days: 3 },
-    { id: 102, employee_name: 'James Wilson', leave_type: 'Sick Leave', start_date: '2023-06-18', days: 1 }
+
+  // Mock team data
+  const teamMembers = [
+    { id: 1, name: 'Jordan Smith', status: 'present', clockIn: '08:55' },
+    { id: 2, name: 'Taylor Kim', status: 'late', clockIn: '09:22' },
+    { id: 3, name: 'Morgan Lee', status: 'absent', clockIn: null },
+    { id: 4, name: 'Casey Brown', status: 'on_leave', clockIn: null }
   ];
-  
-  const teamAttendance = [
-    { name: 'Sarah Miller', status: 'present' },
-    { name: 'James Wilson', status: 'late' },
-    { name: 'Michael Chen', status: 'absent' },
-    { name: 'Emma Davis', status: 'on_leave' },
-    { name: 'Robert Garcia', status: 'present' }
+
+  // Mock leave requests
+  const leaveRequests = [
+    { id: 1, employee: 'Jamie Chen', type: 'PTO', dates: 'Jun 10-12', status: 'pending' },
+    { id: 2, employee: 'Riley Jones', type: 'Sick', dates: 'Jun 11', status: 'pending' }
   ];
-  
+
+  // Mock org metrics
   const orgMetrics = {
-    total_employees: 1240,
-    present_today: 987,
-    late_today: 42,
-    on_leave: 65,
-    absent: 146
+    attendanceRate: 92.4,
+    lateArrivals: 8,
+    leaveUtilization: 12.3
   };
+
+  // State
+  const [timeRemaining, setTimeRemaining] = React.useState('05:32:18');
+  const [clockStatus, setClockStatus] = React.useState('Clock Out');
+  const [notifications, setNotifications] = React.useState([
+    { id: 1, message: 'Taylor Kim clocked in at 09:22 (Late)', time: '2 mins ago' }
+  ]);
   
-  const [clockStatus, setClockStatus] = React.useState('Clocked Out');
-  const [notifications, setNotifications] = React.useState([]);
-  
-  // Simulate WebSocket connection
-  const [wsStatus, setWsStatus] = React.useState('connected');
-  
-  // Simulate offline operations
-  const [offlineCount, setOfflineCount] = React.useState(0);
-  
-  // Handle clock in/out
+  // Simulate countdown timer
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      // In a real app, this would calculate actual time remaining
+      setTimeRemaining(prev => {
+        const parts = prev.split(':').map(Number);
+        let [hours, minutes, seconds] = parts;
+        
+        seconds--;
+        if (seconds < 0) {
+          seconds = 59;
+          minutes--;
+          if (minutes < 0) {
+            minutes = 59;
+            hours--;
+            if (hours < 0) {
+              hours = 23;
+            }
+          }
+        }
+        
+        return [hours, minutes, seconds]
+          .map(t => String(t).padStart(2, '0'))
+          .join(':');
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
+  // Handlers
   const handleClockAction = () => {
-    if (clockStatus === 'Clocked Out') {
-      setClockStatus('Clocked In');
-      // Add notification
+    // In a real app, this would trigger clock in/out
+    setClockStatus(clockStatus === 'Clock In' ? 'Clock Out' : 'Clock In');
+    
+    // Add notification
+    if (clockStatus === 'Clock Out') {
       setNotifications([
-        { id: Date.now(), message: `${employee.first_name} ${employee.last_name} clocked in at ${new Date().toLocaleTimeString()}`, type: 'clock_in' },
+        { id: Date.now(), message: 'You have clocked out successfully', time: 'Just now' },
         ...notifications
       ]);
-    } else {
-      setClockStatus('Clocked Out');
     }
   };
-  
-  // Simulate receiving real-time notifications
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7 && notifications.length < 5) {
-        const names = ['Sarah Miller', 'James Wilson', 'Michael Chen', 'Emma Davis', 'Robert Garcia'];
-        const randomName = names[Math.floor(Math.random() * names.length)];
-        setNotifications([
-          { id: Date.now(), message: `${randomName} clocked in`, type: 'clock_in' },
-          ...notifications
-        ]);
-      }
-    }, 10000);
+
+  const handleApproveLeave = (id) => {
+    // In a real app, this would update leave request status
+    console.log(`Approved leave request ${id}`);
+  };
+
+  const handleRejectLeave = (id) => {
+    // In a real app, this would update leave request status
+    console.log(`Rejected leave request ${id}`);
+  };
+
+  // Status badge component
+  const StatusBadge = ({ status }) => {
+    const statusColors = {
+      present: 'bg-green-100 text-green-800',
+      late: 'bg-yellow-100 text-yellow-800',
+      absent: 'bg-red-100 text-red-800',
+      'on_leave': 'bg-blue-100 text-blue-800',
+      pending: 'bg-purple-100 text-purple-800'
+    };
     
-    return () => clearInterval(interval);
-  }, [notifications]);
-  
+    return (
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
+        {status.replace('_', ' ')}
+      </span>
+    );
+  };
+
   return (
-    <div className="dashboard" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f5f7fa' }}>
-      {/* Sidebar */}
-      <div style={{ width: '240px', backgroundColor: '#2c3e50', color: 'white', padding: '20px 0' }}>
-        <div style={{ padding: '0 20px 20px', borderBottom: '1px solid #34495e' }}>
-          <h2 style={{ margin: '0 0 10px', fontSize: '22px' }}>WorkPulse</h2>
-          <p style={{ margin: '0', fontSize: '14px', color: '#bdc3c7' }}>{employee.first_name} {employee.last_name}</p>
-          <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#95a5a6' }}>{employee.department}</p>
-        </div>
-        
-        <nav style={{ marginTop: '20px' }}>
-          <a href="/" style={{ display: 'block', padding: '12px 20px', color: 'white', textDecoration: 'none', backgroundColor: '#3498db' }}>Dashboard</a>
-          <a href="/clock" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Clock In/Out</a>
-          <a href="/attendance" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Attendance</a>
-          <a href="/leave/request" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Leave Request</a>
-          <a href="/team" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Team Attendance</a>
-          <a href="/shifts" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Shift Roster</a>
-          <a href="/payroll" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Payroll Export</a>
-          <a href="/profile/face" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Facial Enrollment</a>
-          <a href="/settings" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Settings</a>
-          <a href="/admin/policies" style={{ display: 'block', padding: '12px 20px', color: '#bdc3c7', textDecoration: 'none' }}>Admin</a>
-        </nav>
-      </div>
-      
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: '20px' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div>
-            <h1 style={{ margin: '0 0 5px', color: '#2c3e50' }}>Dashboard</h1>
-            <p style={{ margin: '0', color: '#7f8c8d' }}>Welcome back, {employee.first_name}</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">WorkPulse Dashboard</h1>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center text-sm text-gray-500">
+              <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+              Connected
+            </div>
+            <div className="relative">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+              <button className="p-1 text-gray-500 hover:text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex items-center">
+              <div className="mr-3 text-right">
+                <p className="text-sm font-medium text-gray-900">{user.first_name} {user.last_name}</p>
+                <p className="text-xs text-gray-500">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">
+                {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+              </div>
+            </div>
           </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            {/* Role Switcher */}
-            <div style={{ display: 'flex', backgroundColor: '#ecf0f1', borderRadius: '20px', padding: '3px' }}>
-              {['Employee', 'Manager', 'HR'].map(role => (
-                <button 
-                  key={role}
-                  onClick={() => {}}
-                  style={{
-                    padding: '6px 15px',
-                    borderRadius: '17px',
-                    border: 'none',
-                    backgroundColor: userRole === role ? '#3498db' : 'transparent',
-                    color: userRole === role ? 'white' : '#7f8c8d',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        {/* Today's Shift Card */}
+        <div className="bg-white shadow rounded-lg mb-6">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">Today's Shift</h2>
+                <p className="mt-1 text-sm text-gray-500">{shift.name} • {shift.start_time} - {shift.end_time}</p>
+              </div>
+              <div className="mt-4 md:mt-0">
+                <button
+                  onClick={handleClockAction}
+                  className={`px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${clockStatus === 'Clock In' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
                 >
-                  {role}
+                  {clockStatus}
                 </button>
-              ))}
+              </div>
             </div>
             
-            {/* Connection Status */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: wsStatus === 'connected' ? '#2ecc71' : '#e74c3c'
-              }}></div>
-              <span style={{ fontSize: '14px', color: '#7f8c8d' }}>
-                {wsStatus === 'connected' ? 'Online' : 'Offline'}
-              </span>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm font-medium text-blue-800">Time Remaining</p>
+                <p className="mt-1 text-2xl font-bold text-blue-900">{timeRemaining}</p>
+              </div>
+              <div className="bg-indigo-50 p-4 rounded-lg">
+                <p className="text-sm font-medium text-indigo-800">Grace Period</p>
+                <p className="mt-1 text-2xl font-bold text-indigo-900">{shift.grace_period} min</p>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <p className="text-sm font-medium text-purple-800">Location</p>
+                <p className="mt-1 text-2xl font-bold text-purple-900">{user.location}</p>
+              </div>
             </div>
-            
-            {/* Offline Queue Badge */}
-            {offlineCount > 0 && (
-              <div style={{
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                borderRadius: '10px',
-                padding: '2px 8px',
-                fontSize: '12px'
-              }}>
-                {offlineCount}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Recent Attendance Summary */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-4 py-5 sm:px-6">
+                <h2 className="text-lg font-medium text-gray-900">Recent Attendance</h2>
+              </div>
+              <div className="border-t border-gray-200">
+                <ul className="divide-y divide-gray-200">
+                  {attendanceSummary.map((record, index) => (
+                    <li key={index} className="px-4 py-4 sm:px-6">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900">{new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                        <div className="flex items-center">
+                          <StatusBadge status={record.status} />
+                          {record.status === 'late' && (
+                            <span className="ml-2 text-sm text-gray-500">+{record.minutes} min</span>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Team Attendance (Manager View) */}
+            {user.role === 'manager' && (
+              <div className="bg-white shadow rounded-lg">
+                <div className="px-4 py-5 sm:px-6">
+                  <h2 className="text-lg font-medium text-gray-900">Team Attendance</h2>
+                </div>
+                <div className="border-t border-gray-200">
+                  <ul className="divide-y divide-gray-200">
+                    {teamMembers.map((member) => (
+                      <li key={member.id} className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-gray-900">{member.name}</p>
+                          <div className="flex items-center">
+                            <StatusBadge status={member.status} />
+                            {member.clockIn && (
+                              <span className="ml-2 text-sm text-gray-500">{member.clockIn}</span>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Org Metrics (HR View) */}
+            {user.role === 'hr' && (
+              <div className="bg-white shadow rounded-lg">
+                <div className="px-4 py-5 sm:px-6">
+                  <h2 className="text-lg font-medium text-gray-900">Organization Metrics</h2>
+                </div>
+                <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
+                  <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                    <div className="px-4 py-5 bg-white shadow rounded-lg overflow-hidden sm:p-6">
+                      <dt className="text-sm font-medium text-gray-500 truncate">Attendance Rate</dt>
+                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{orgMetrics.attendanceRate}%</dd>
+                    </div>
+                    <div className="px-4 py-5 bg-white shadow rounded-lg overflow-hidden sm:p-6">
+                      <dt className="text-sm font-medium text-gray-500 truncate">Late Arrivals</dt>
+                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{orgMetrics.lateArrivals}</dd>
+                    </div>
+                    <div className="px-4 py-5 bg-white shadow rounded-lg overflow-hidden sm:p-6">
+                      <dt className="text-sm font-medium text-gray-500 truncate">Leave Utilization</dt>
+                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{orgMetrics.leaveUtilization}%</dd>
+                    </div>
+                  </dl>
+                </div>
               </div>
             )}
           </div>
-        </div>
-        
-        {/* Dashboard Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-          {/* Today's Shift Card */}
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', gridColumn: 'span 2' }}>
-            <h3 style={{ margin: '0 0 15px', color: '#2c3e50' }}>Today's Shift</h3>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ margin: '0 0 5px', fontSize: '18px', fontWeight: '600' }}>{todayShift.name}</p>
-                <p style={{ margin: '0', color: '#7f8c8d' }}>{todayShift.start_time} - {todayShift.end_time}</p>
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
-                  <span style={{
-                    padding: '3px 10px',
-                    borderRadius: '12px',
-                    backgroundColor: todayShift.status === 'on_time' ? '#2ecc71' : todayShift.status === 'late' ? '#f39c12' : '#e74c3c',
-                    color: 'white',
-                    fontSize: '12px',
-                    marginRight: '10px'
-                  }}>
-                    {todayShift.status === 'on_time' ? 'On Time' : todayShift.status === 'late' ? 'Late' : 'Absent'}
-                  </span>
-                  <span style={{ color: '#7f8c8d', fontSize: '14px' }}>Grace period: {todayShift.grace_period} mins</span>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Pending Leave Approvals (Manager View) */}
+            {user.role === 'manager' && (
+              <div className="bg-white shadow rounded-lg">
+                <div className="px-4 py-5 sm:px-6">
+                  <h2 className="text-lg font-medium text-gray-900">Pending Approvals</h2>
+                </div>
+                <div className="border-t border-gray-200">
+                  <ul className="divide-y divide-gray-200">
+                    {leaveRequests.map((request) => (
+                      <li key={request.id} className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{request.employee}</p>
+                            <p className="text-sm text-gray-500">{request.type} • {request.dates}</p>
+                          </div>
+                          <StatusBadge status={request.status} />
+                        </div>
+                        <div className="mt-3 flex space-x-3">
+                          <button
+                            onClick={() => handleApproveLeave(request.id)}
+                            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectLeave(request.id)}
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ margin: '0 0 5px', color: '#7f8c8d' }}>Time Remaining</p>
-                <p style={{ margin: '0', fontSize: '24px', fontWeight: '600', color: '#2c3e50' }}>{todayShift.countdown}</p>
+            )}
+
+            {/* Real-time Notifications */}
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-4 py-5 sm:px-6">
+                <h2 className="text-lg font-medium text-gray-900">Recent Activity</h2>
               </div>
-            </div>
-          </div>
-          
-          {/* Clock Action Card */}
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <p style={{ margin: '0 0 15px', color: '#7f8c8d' }}>Current Status</p>
-            <p style={{ margin: '0 0 20px', fontSize: '20px', fontWeight: '600', color: clockStatus === 'Clocked In' ? '#2ecc71' : '#e74c3c' }}>{clockStatus}</p>
-            <button 
-              onClick={handleClockAction}
-              style={{
-                padding: '12px 30px',
-                backgroundColor: clockStatus === 'Clocked Out' ? '#2ecc71' : '#e74c3c',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                width: '100%'
-              }}
-            >
-              {clockStatus === 'Clocked Out' ? 'Clock In' : 'Clock Out'}
-            </button>
-          </div>
-          
-          {/* Recent Attendance Summary */}
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', gridColumn: 'span 2' }}>
-            <h3 style={{ margin: '0 0 15px', color: '#2c3e50' }}>Recent Attendance</h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #ecf0f1' }}>
-                    <th style={{ textAlign: 'left', padding: '10px 0', color: '#7f8c8d' }}>Date</th>
-                    <th style={{ textAlign: 'left', padding: '10px 0', color: '#7f8c8d' }}>Status</th>
-                    <th style={{ textAlign: 'left', padding: '10px 0', color: '#7f8c8d' }}>Clock In</th>
-                    <th style={{ textAlign: 'left', padding: '10px 0', color: '#7f8c8d' }}>Clock Out</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentAttendance.map((record, index) => (
-                    <tr key={index} style={{ borderBottom: '1px solid #ecf0f1' }}>
-                      <td style={{ padding: '10px 0' }}>{record.date}</td>
-                      <td style={{ padding: '10px 0' }}>
-                        <span style={{
-                          padding: '3px 10px',
-                          borderRadius: '12px',
-                          backgroundColor: 
-                            record.status === 'present' ? '#2ecc71' : 
-                            record.status === 'late' ? '#f39c12' : '#e74c3c',
-                          color: 'white',
-                          fontSize: '12px'
-                        }}>
-                          {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                        </span>
-                      </td>
-                      <td style={{ padding: '10px 0' }}>{record.clock_in}</td>
-                      <td style={{ padding: '10px 0' }}>{record.clock_out}</td>
-                    </tr>
+              <div className="border-t border-gray-200">
+                <ul className="divide-y divide-gray-200">
+                  {notifications.map((notification) => (
+                    <li key={notification.id} className="px-4 py-4 sm:px-6">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                          <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <p className="text-sm font-medium text-gray-900">{notification.message}</p>
+                          <p className="mt-1 text-xs text-gray-500">{notification.time}</p>
+                        </div>
+                      </div>
+                    </li>
                   ))}
-                </tbody>
-              </table>
+                </ul>
+              </div>
             </div>
           </div>
-          
-          {/* Pending Leave Requests (Manager View) */}
-          {userRole === 'Manager' && (
-            <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-              <h3 style={{ margin: '0 0 15px', color: '#2c3e50' }}>Pending Leave Requests</h3>
-              {pendingLeaveRequests.length > 0 ? (
-                <div>
-                  {pendingLeaveRequests.map(request => (
-                    <div key={request.id} style={{ marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #ecf0f1' }}>
-                      <p style={{ margin: '0 0 5px', fontWeight: '600' }}>{request.employee_name}</p>
-                      <p style={{ margin: '0', fontSize: '14px', color: '#7f8c8d' }}>{request.leave_type} • {request.days} days</p>
-                      <p style={{ margin: '5px 0 0', fontSize: '14px', color: '#7f8c8d' }}>Starting {request.start_date}</p>
-                      <button style={{ marginTop: '10px', padding: '6px 12px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer' }}>
-                        Review Request
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ margin: '0', color: '#7f8c8d' }}>No pending requests</p>
-              )}
-            </div>
-          )}
-          
-          {/* Team Attendance Grid (Manager View) */}
-          {userRole === 'Manager' && (
-            <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', gridColumn: 'span 3' }}>
-              <h3 style={{ margin: '0 0 15px', color: '#2c3e50' }}>Team Attendance Today</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px' }}>
-                {teamAttendance.map((member, index) => (
-                  <div key={index} style={{
-                    padding: '15px',
-                    borderRadius: '6px',
-                    backgroundColor: 
-                      member.status === 'present' ? '#e8f6ef' : 
-                      member.status === 'late' ? '#fef9e7' : 
-                      member.status === 'absent' ? '#fadbd8' : '#ebf5fb',
-                    border: `1px solid ${
-                      member.status === 'present' ? '#2ecc71' : 
-                      member.status === 'late' ? '#f39c12' : 
-                      member.status === 'absent' ? '#e74c3c' : '#3498db'}50`,
-                    textAlign: 'center'
-                  }}>
-                    <p style={{ margin: '0 0 8px', fontWeight: '600' }}>{member.name}</p>
-                    <span style={{
-                      padding: '3px 10px',
-                      borderRadius: '12px',
-                      backgroundColor: 
-                        member.status === 'present' ? '#2ecc71' : 
-                        member.status === 'late' ? '#f39c12' : 
-                        member.status === 'absent' ? '#e74c3c' : '#3498db',
-                      color: 'white',
-                      fontSize: '12px'
-                    }}>
-                      {member.status.replace('_', ' ').toUpperCase()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Organization Metrics (HR View) */}
-          {userRole === 'HR' && (
-            <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', gridColumn: 'span 3' }}>
-              <h3 style={{ margin: '0 0 15px', color: '#2c3e50' }}>Organization Attendance Metrics</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px' }}>
-                <div style={{ padding: '15px', backgroundColor: '#e8f6ef', borderRadius: '6px', textAlign: 'center' }}>
-                  <p style={{ margin: '0 0 5px', fontSize: '24px', fontWeight: '600', color: '#27ae60' }}>{orgMetrics.total_employees}</p>
-                  <p style={{ margin: '0', color: '#2c3e50' }}>Total Employees</p>
-                </div>
-                <div style={{ padding: '15px', backgroundColor: '#e8f6ef', borderRadius: '6px', textAlign: 'center' }}>
-                  <p style={{ margin: '0 0 5px', fontSize: '24px', fontWeight: '600', color: '#27ae60' }}>{orgMetrics.present_today}</p>
-                  <p style={{ margin: '0', color: '#2c3e50' }}>Present Today</p>
-                </div>
-                <div style={{ padding: '15px', backgroundColor: '#fef9e7', borderRadius: '6px', textAlign: 'center' }}>
-                  <p style={{ margin: '0 0 5px', fontSize: '24px', fontWeight: '600', color: '#f39c12' }}>{orgMetrics.late_today}</p>
-                  <p style={{ margin: '0', color: '#2c3e50' }}>Late Arrivals</p>
-                </div>
-                <div style={{ padding: '15px', backgroundColor: '#ebf5fb', borderRadius: '6px', textAlign: 'center' }}>
-                  <p style={{ margin: '0 0 5px', fontSize: '24px', fontWeight: '600', color: '#3498db' }}>{orgMetrics.on_leave}</p>
-                  <p style={{ margin: '0', color: '#2c3e50' }}>On Leave</p>
-                </div>
-                <div style={{ padding: '15px', backgroundColor: '#fadbd8', borderRadius: '6px', textAlign: 'center' }}>
-                  <p style={{ margin: '0 0 5px', fontSize: '24px', fontWeight: '600', color: '#e74c3c' }}>{orgMetrics.absent}</p>
-                  <p style={{ margin: '0', color: '#2c3e50' }}>Absent</p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-        
-        {/* Real-time Notifications */}
-        <div style={{ marginTop: '20px', backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: '0 0 15px', color: '#2c3e50' }}>Recent Activity</h3>
-          {notifications.length > 0 ? (
-            <div>
-              {notifications.map(notification => (
-                <div key={notification.id} style={{ padding: '12px 0', borderBottom: '1px solid #ecf0f1', display: 'flex', alignItems: 'center' }}>
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: notification.type === 'clock_in' ? '#2ecc71' : '#3498db',
-                    marginRight: '12px'
-                  }}></div>
-                  <p style={{ margin: '0', color: '#2c3e50' }}>{notification.message}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ margin: '0', color: '#7f8c8d' }}>No recent activity</p>
-          )}
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

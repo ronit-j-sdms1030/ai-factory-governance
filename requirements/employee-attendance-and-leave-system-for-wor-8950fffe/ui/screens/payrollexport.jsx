@@ -1,273 +1,273 @@
 function PayrollExport() {
-  const [selectedMonth, setSelectedMonth] = React.useState('2024-03');
-  const [isLocked, setIsLocked] = React.useState(true);
-  const [exportPreview, setExportPreview] = React.useState([]);
-  const [apiKey, setApiKey] = React.useState('sk_live_51J...');
-  const [showApiKey, setShowApiKey] = React.useState(false);
-  const [columnConfig, setColumnConfig] = React.useState({
-    employeeId: true,
-    fullName: true,
-    department: true,
-    workedHours: true,
-    overtime: true,
-    lateArrivals: true,
-    leavesTaken: true,
-    policyVersion: true
-  });
+  // Mock data
+  const [selectedMonth, setSelectedMonth] = React.useState('2023-10');
+  const [isLocked, setIsLocked] = React.useState(false);
+  const [csvGenerated, setCsvGenerated] = React.useState(false);
+  const [policyVersion, setPolicyVersion] = React.useState('v2.1.4');
   
-  // Mock data for export preview
-  React.useEffect(() => {
-    setExportPreview([
-      { id: 'EMP001', name: 'Sarah Johnson', department: 'Engineering', hours: 176, overtime: 8.5, late: 2, leaves: 1, policy: 'v2.1' },
-      { id: 'EMP002', name: 'Michael Chen', department: 'Marketing', hours: 160, overtime: 0, late: 0, leaves: 3, policy: 'v2.1' },
-      { id: 'EMP003', name: 'Priya Sharma', department: 'Sales', hours: 168, overtime: 4.2, late: 1, leaves: 0, policy: 'v2.1' },
-      { id: 'EMP004', name: 'James Wilson', department: 'Support', hours: 152, overtime: 0, late: 4, leaves: 2, policy: 'v2.1' },
-      { id: 'EMP005', name: 'Fatima Al-Mansoori', department: 'Operations', hours: 172, overtime: 6.8, late: 0, leaves: 1, policy: 'v2.1' }
-    ]);
-  }, [selectedMonth]);
-
-  const toggleColumn = (column) => {
-    setColumnConfig(prev => ({
-      ...prev,
-      [column]: !prev[column]
-    }));
+  // Mock audit log data
+  const auditLogs = [
+    { id: 1, actor: 'HR Manager (ID: 1001)', timestamp: '2023-10-05 14:30:22', action: 'Generated payroll export' },
+    { id: 2, actor: 'System', timestamp: '2023-10-01 00:05:10', action: 'Locked period' },
+    { id: 3, actor: 'Finance Lead (ID: 2005)', timestamp: '2023-09-30 18:45:00', action: 'Generated payroll export' }
+  ];
+  
+  // Mock API keys
+  const [apiKeys, setApiKeys] = React.useState([
+    { id: 'key_1', name: 'QuickBooks Integration', lastUsed: '2023-10-04 09:15:33', status: 'Active' },
+    { id: 'key_2', name: 'Zoho Payroll Sync', lastUsed: '2023-09-28 16:42:11', status: 'Active' }
+  ]);
+  
+  // Handlers
+  const handleLockPeriod = () => {
+    setIsLocked(true);
+    alert(`Payroll for ${selectedMonth} has been locked.`);
   };
-
-  const generateCSV = () => {
-    // In a real app, this would create and download a CSV file
-    alert('CSV file generated successfully!');
+  
+  const handleGenerateCSV = () => {
+    setCsvGenerated(true);
+    alert('Payroll CSV generated successfully!');
   };
-
-  const regenerateReport = () => {
-    alert('Payroll report regenerated');
+  
+  const handleDownload = () => {
+    alert('Downloading payroll_export_2023-10.csv');
   };
-
-  const togglePeriodLock = () => {
-    setIsLocked(!isLocked);
+  
+  const handleRevokeKey = (id) => {
+    setApiKeys(apiKeys.map(key => 
+      key.id === id ? {...key, status: 'Revoked'} : key
+    ));
   };
-
-  const regenerateApiKey = () => {
-    setApiKey('sk_live_' + Math.random().toString(36).substr(2, 10));
-  };
-
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Payroll Export</h1>
-            <div className="flex space-x-3">
-              <button 
-                onClick={generateCSV}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f5f7fa' }}>
+      {/* Sidebar */}
+      <div style={{ width: '240px', backgroundColor: '#2c3e50', color: 'white', padding: '20px 0' }}>
+        <h2 style={{ padding: '0 20px 20px', borderBottom: '1px solid #34495e' }}>WorkPulse</h2>
+        <nav>
+          {['Dashboard', 'Clock In/Out', 'Attendance', 'Leave Request', 'Leave Approvals', 'My Leave', 'Shift Roster', 'Payroll Export', 'My Profile', 'Offline Sync', 'Policies', 'Audit Trail'].map((item, index) => {
+            const paths = ['/', '/clock', '/attendance', '/leave/new', '/leave/pending', '/leave/calendar', '/shifts', '/payroll', '/profile', '/sync', '/admin/policies', '/admin/audit'];
+            return (
+              <a 
+                key={index} 
+                href={paths[index]} 
+                style={{
+                  display: 'block',
+                  padding: '12px 20px',
+                  color: paths[index] === '/payroll' ? '#3498db' : 'rgba(255,255,255,0.7)',
+                  textDecoration: 'none',
+                  fontWeight: paths[index] === '/payroll' ? '600' : '400',
+                  borderLeft: paths[index] === '/payroll' ? '4px solid #3498db' : 'none',
+                  backgroundColor: paths[index] === '/payroll' ? 'rgba(52, 152, 219, 0.1)' : 'transparent'
+                }}
               >
-                <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-                Download CSV
-              </button>
-              <button 
-                onClick={regenerateReport}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
-              >
-                Regenerate Report
-              </button>
+                {item}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+      
+      {/* Main Content */}
+      <div style={{ flex: 1, padding: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <h1 style={{ color: '#2c3e50', margin: 0 }}>Payroll Export</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Policy Version:</span>
+              <span style={{ fontWeight: '600', color: '#3498db' }}>{policyVersion}</span>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Month Picker and Lock Status */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-gray-900">Payroll Period</h2>
-                <div className="flex items-center space-x-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${isLocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                    <svg className="-ml-1 mr-1.5 h-2 w-2 text-current" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="3" />
-                    </svg>
-                    {isLocked ? 'Locked' : 'Unlocked'}
-                  </span>
-                  <button
-                    onClick={togglePeriodLock}
-                    className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${
-                      isLocked 
-                        ? 'text-orange-700 bg-orange-100 hover:bg-orange-200' 
-                        : 'text-blue-700 bg-blue-100 hover:bg-blue-200'
-                    }`}
-                  >
-                    {isLocked ? 'Unlock Period' : 'Lock Period'}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="month-picker" className="block text-sm font-medium text-gray-700 mb-1">
-                    Select Month
-                  </label>
-                  <input
-                    type="month"
-                    id="month-picker"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Policy Version
-                  </label>
-                  <div className="mt-1 flex items-center">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                      v2.1 (Effective: Jan 2024)
-                    </span>
-                  </div>
+        
+        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', padding: '25px', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#2c3e50' }}>Select Payroll Month</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <input 
+                  type="month" 
+                  value={selectedMonth} 
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px' }}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    backgroundColor: isLocked ? '#e74c3c' : '#2ecc71'
+                  }}></div>
+                  <span>{isLocked ? 'Locked' : 'Unlocked'}</span>
                 </div>
               </div>
             </div>
-
-            {/* Export Preview */}
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Export Preview</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Showing first 5 records. {exportPreview.length} total records for this period.
-                </p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      {columnConfig.employeeId && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>}
-                      {columnConfig.fullName && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>}
-                      {columnConfig.department && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>}
-                      {columnConfig.workedHours && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Worked Hours</th>}
-                      {columnConfig.overtime && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overtime (hrs)</th>}
-                      {columnConfig.lateArrivals && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Late Arrivals</th>}
-                      {columnConfig.leavesTaken && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leaves Taken</th>}
-                      {columnConfig.policyVersion && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Policy Version</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {exportPreview.map((record) => (
-                      <tr key={record.id}>
-                        {columnConfig.employeeId && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.id}</td>}
-                        {columnConfig.fullName && <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{record.name}</td>}
-                        {columnConfig.department && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.department}</td>}
-                        {columnConfig.workedHours && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.hours}</td>}
-                        {columnConfig.overtime && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.overtime}</td>}
-                        {columnConfig.lateArrivals && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.late}</td>}
-                        {columnConfig.leavesTaken && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.leaves}</td>}
-                        {columnConfig.policyVersion && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.policy}</td>}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Column Configuration */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Column Configuration</h3>
-              <div className="space-y-3">
-                {Object.entries(columnConfig).map(([key, enabled]) => (
-                  <div key={key} className="flex items-center">
-                    <input
-                      id={`col-${key}`}
-                      name={`col-${key}`}
-                      type="checkbox"
-                      checked={enabled}
-                      onChange={() => toggleColumn(key)}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor={`col-${key}`} className="ml-3 text-sm text-gray-700 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* API Key Management */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">API Access</h3>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  REST API Key
-                </label>
-                <div className="flex">
-                  <input
-                    type={showApiKey ? "text" : "password"}
-                    value={apiKey}
-                    readOnly
-                    className="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  />
-                  <button
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm"
-                  >
-                    {showApiKey ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </div>
-              <button
-                onClick={regenerateApiKey}
-                className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+            
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={handleLockPeriod}
+                disabled={isLocked}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: isLocked ? '#bdc3c7' : '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isLocked ? 'not-allowed' : 'pointer',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
               >
-                Regenerate Key
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4H3.5a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5H11z"/>
+                </svg>
+                Lock Period
+              </button>
+              
+              <button 
+                onClick={handleGenerateCSV}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+                Generate CSV
+              </button>
+              
+              <button 
+                onClick={handleDownload}
+                disabled={!csvGenerated}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: csvGenerated ? '#2ecc71' : '#bdc3c7',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: csvGenerated ? 'pointer' : 'not-allowed',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+                Download
               </button>
             </div>
-
-            {/* Audit Trail */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
-              <ul className="space-y-3">
-                <li className="text-sm">
-                  <div className="font-medium text-gray-900">Report Generated</div>
-                  <div className="text-gray-500">by HR Manager • Today, 09:30 AM</div>
-                </li>
-                <li className="text-sm">
-                  <div className="font-medium text-gray-900">Period Locked</div>
-                  <div className="text-gray-500">by System Admin • Mar 1, 2024</div>
-                </li>
-                <li className="text-sm">
-                  <div className="font-medium text-gray-900">Column Configuration Updated</div>
-                  <div className="text-gray-500">by Finance Lead • Feb 28, 2024</div>
-                </li>
-                <li className="text-sm">
-                  <div className="font-medium text-gray-900">API Key Regenerated</div>
-                  <div className="text-gray-500">by IT Admin • Feb 25, 2024</div>
-                </li>
-              </ul>
+          </div>
+          
+          <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '6px', border: '1px solid #e9ecef' }}>
+            <h3 style={{ marginTop: 0, color: '#2c3e50' }}>Generated CSV will include:</h3>
+            <ul style={{ color: '#34495e', paddingLeft: '20px' }}>
+              <li>employee_id</li>
+              <li>days_present</li>
+              <li>late_count</li>
+              <li>overtime_hours</li>
+              <li>leave_days</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+          {/* API Keys Section */}
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', padding: '25px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, color: '#2c3e50', fontSize: '20px' }}>API Key Management</h2>
+              <button style={{
+                padding: '8px 16px',
+                backgroundColor: '#2c3e50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}>
+                + New Key
+              </button>
             </div>
-
-            {/* Export History */}
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Export History</h3>
-              <ul className="space-y-3">
-                <li className="text-sm">
-                  <div className="font-medium text-gray-900">March 2024 Report</div>
-                  <div className="text-gray-500">Generated: Mar 5, 2024 • 12.4MB</div>
-                </li>
-                <li className="text-sm">
-                  <div className="font-medium text-gray-900">February 2024 Report</div>
-                  <div className="text-gray-500">Generated: Feb 5, 2024 • 11.8MB</div>
-                </li>
-                <li className="text-sm">
-                  <div className="font-medium text-gray-900">January 2024 Report</div>
-                  <div className="text-gray-500">Generated: Jan 7, 2024 • 13.2MB</div>
-                </li>
-              </ul>
+            
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f8f9fa', textAlign: 'left' }}>
+                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Name</th>
+                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Last Used</th>
+                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Status</th>
+                    <th style={{ padding: '12px 15px', borderBottom: '2px solid #e9ecef' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {apiKeys.map(key => (
+                    <tr key={key.id}>
+                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>{key.name}</td>
+                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>{key.lastUsed}</td>
+                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          backgroundColor: key.status === 'Active' ? '#d4edda' : '#f8d7da',
+                          color: key.status === 'Active' ? '#155724' : '#721c24',
+                          fontSize: '12px',
+                          fontWeight: '500'
+                        }}>
+                          {key.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 15px', borderBottom: '1px solid #e9ecef' }}>
+                        <button 
+                          onClick={() => handleRevokeKey(key.id)}
+                          disabled={key.status === 'Revoked'}
+                          style={{
+                            padding: '6px 12px',
+                            backgroundColor: key.status === 'Revoked' ? '#bdc3c7' : '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: key.status === 'Revoked' ? 'not-allowed' : 'pointer',
+                            fontSize: '14px'
+                          }}
+                        >
+                          {key.status === 'Revoked' ? 'Revoked' : 'Revoke'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          {/* Audit Log */}
+          <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', padding: '25px' }}>
+            <h2 style={{ margin: '0 0 20px 0', color: '#2c3e50', fontSize: '20px' }}>Audit Log</h2>
+            
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {auditLogs.map(log => (
+                <div key={log.id} style={{ padding: '15px 0', borderBottom: '1px solid #eee' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <span style={{ fontWeight: '500', color: '#2c3e50' }}>{log.actor}</span>
+                    <span style={{ color: '#7f8c8d', fontSize: '14px' }}>{log.timestamp}</span>
+                  </div>
+                  <div style={{ color: '#34495e' }}>{log.action}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

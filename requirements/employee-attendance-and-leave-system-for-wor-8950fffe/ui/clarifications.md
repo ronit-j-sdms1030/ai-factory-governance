@@ -1,7 +1,10 @@
-- Does facial verification have separate enrollment and verification interfaces, or is it a single flow? The BRD mentions '/profile/facial' for enrollment but facial verification during clock-in - should these be separate screens?
-- What should happen when a manager views the team attendance grid - should it show today only, or a date range? Should managers be able to see historical team attendance?
-- For the conflict resolution interface mentioned in '/leave/approvals' - should this be part of the TeamAttendance screen or a separate dedicated conflict resolution area?
-- The BRD mentions both '/admin/policies' and '/offline/sync' as separate pages. Should offline sync management be part of Settings or Admin area, or both?
-- Should there be separate navigation paths for Employee, Manager, and HR roles, or a unified navigation that shows/hides items based on permissions?
-- What's the intended behavior for the 'timezone view' filter in attendance history - does this show records converted to selected timezone, or filter by employee timezone?
-- For the payroll export - should HR be able to preview calculations before locking a period, or is locking required before export generation?
+- Should the ShiftRoster screen be accessible to managers for their teams only, or HR only? BRD says 'HR shift management' but managers might need to view team schedules.
+- For facial verification: Should consent be required every clock-in or only during enrollment? BRD mentions 'consent workflows' but not frequency.
+- What's the conflict resolution workflow for offline attendance discrepancies? BRD mentions 'manager review flag for discrepancies' but not the actual UI flow.
+- Should there be a separate 'Team Dashboard' for managers vs. the main dashboard? BRD mentions managers seeing team grid but not if it's same screen.
+- For payroll export: Who can lock periods? BRD says 'Once locked by HR' but not which HR roles specifically.
+- Should employees be able to view their shift assignments beyond today on their dashboard? BRD only mentions today's shift.
+- What happens when an employee's timezone differs from shift timezone? BRD mentions timezone-aware calculations but not conflict resolution.
+- For leave approvals: Should managers see leave balance impact before approval? BRD shows it in approval queue but not calculation method.
+- What notification preferences should employees control? BRD mentions notifications but not preference settings.
+- Should there be a 'Quick Clock' feature on dashboard vs. full ClockInterface? BRD has both but not differentiation.
