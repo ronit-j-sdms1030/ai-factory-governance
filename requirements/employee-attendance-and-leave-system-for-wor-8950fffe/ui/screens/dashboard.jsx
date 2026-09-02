@@ -31,8 +31,8 @@ const Dashboard = () => {
   };
 
   const pendingApprovals = [
-    { id: 101, employee: 'Morgan Lee', type: 'Annual Leave', dates: 'Jun 20-22', submitted: '2 days ago' },
-    { id: 102, employee: 'Patric Chen', type: 'Sick Leave', dates: 'Jun 18', submitted: '3 days ago' }
+    { id: 101, employee: 'Morgan Lee', type: 'Annual Leave', dates: '15/06/2025 14:15', submitted: '2 days ago' },
+    { id: 102, employee: 'Patric Chen', type: 'Sick Leave', dates: '15/06/2025 14:15', submitted: '3 days ago' }
   ];
 
   const markAsRead = (id) => {
