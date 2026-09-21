@@ -27,7 +27,7 @@ Staff coordinate room bookings via shared spreadsheet. No visibility into real-t
 - Email or SMS notifications
 
 ## Success
-Staff book rooms without spreadsheet coordination. Office manager sees real-time occupancy and no-show patterns without manual tracking. Facilities coordinators can override holds with audit trail. No double-bookings occur.
+Meeting Room Booking System. Staff book rooms without spreadsheet coordination. Office manager sees real-time occupancy and no-show patterns without manual tracking. Facilities coordinators can override holds with audit trail. No double-bookings occur.
 
 ## Non-functional
 - Data: booking records, user roles, room inventory, cancellation timestamps — no personal health or financial data
