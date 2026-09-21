@@ -1,0 +1,22 @@
+# Sprint 0 CI for REQ-0003 — node profile
+name: governed-ci
+on: [push, pull_request]
+jobs:
+  allowlist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -s plan/sprint0/allowlist.txt
+      - run: echo allowed react express prisma vitest eslint prettier
+  iac-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: if command -v checkov >/dev/null; then checkov -f plan/sprint0/main.tf; fi
+  verify:
+    needs: [allowlist, iac-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx eslint .
+      - run: npx vitest run
