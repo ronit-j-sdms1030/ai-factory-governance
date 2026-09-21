@@ -1,0 +1,101 @@
+[
+  {
+    "id": "REQ-0003-W1",
+    "title": "schema + migration, including the exclusion constraint",
+    "depends_on": [],
+    "trace": [
+      "REQ-0003-R01"
+    ],
+    "department": "development",
+    "paths": [
+      "prisma/schema.prisma",
+      "prisma/migrations/**"
+    ]
+  },
+  {
+    "id": "REQ-0003-W2",
+    "title": "availability API",
+    "depends_on": [
+      "REQ-0003-W1"
+    ],
+    "trace": [
+      "REQ-0003-R01"
+    ],
+    "department": "development",
+    "paths": [
+      "src/api/**"
+    ]
+  },
+  {
+    "id": "REQ-0003-W3",
+    "title": "create booking API",
+    "depends_on": [
+      "REQ-0003-W1",
+      "REQ-0003-W2"
+    ],
+    "trace": [
+      "REQ-0003-R01",
+      "REQ-0003-R02"
+    ],
+    "department": "development",
+    "paths": [
+      "src/api/**"
+    ]
+  },
+  {
+    "id": "REQ-0003-W4",
+    "title": "cancel API + admin rule",
+    "depends_on": [
+      "REQ-0003-W3"
+    ],
+    "trace": [
+      "REQ-0003-R06"
+    ],
+    "department": "development",
+    "paths": [
+      "src/api/**"
+    ]
+  },
+  {
+    "id": "REQ-0003-W5",
+    "title": "REQ0003R01REQ0003R01 screen",
+    "depends_on": [
+      "REQ-0003-W2"
+    ],
+    "trace": [
+      "REQ-0003-R01"
+    ],
+    "department": "development",
+    "paths": [
+      "src/ui/**"
+    ]
+  },
+  {
+    "id": "REQ-0003-W6",
+    "title": "REQ0003R02REQ0003R02 screen",
+    "depends_on": [
+      "REQ-0003-W5"
+    ],
+    "trace": [
+      "REQ-0003-R01"
+    ],
+    "department": "development",
+    "paths": [
+      "src/ui/**"
+    ]
+  },
+  {
+    "id": "REQ-0003-W7",
+    "title": "REQ0003R03REQ0003R03 screen",
+    "depends_on": [
+      "REQ-0003-W6"
+    ],
+    "trace": [
+      "REQ-0003-R01"
+    ],
+    "department": "development",
+    "paths": [
+      "src/ui/**"
+    ]
+  }
+]
