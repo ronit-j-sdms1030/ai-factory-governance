@@ -1,0 +1,8 @@
+{
+  "owners": {
+    "ESLint": "development",
+    "PostgreSQL": "development",
+    "HTTPS": "development"
+  },
+  "collisions": []
+}
