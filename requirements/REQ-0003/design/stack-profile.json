@@ -1,0 +1,10 @@
+{
+  "id": "node",
+  "frontend": "React",
+  "api": "Express",
+  "data_access": "Prisma ORM",
+  "migrations": "Prisma Migrate",
+  "tests": "Vitest",
+  "lint": "ESLint + Prettier",
+  "database": "PostgreSQL"
+}
