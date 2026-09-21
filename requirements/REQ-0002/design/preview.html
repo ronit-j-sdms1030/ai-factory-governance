@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'><title>Preview REQ-0002</title>
+<style>body{font-family:system-ui,sans-serif;margin:0;background:#0f1419;color:#e7ecf1}
+header{padding:1rem 1.5rem;border-bottom:1px solid #243041} section{padding:1.5rem}
+pre{white-space:pre-wrap;background:#161d27;padding:1rem;border-radius:8px}</style></head><body>
+<header><p>Preview URL /preview/REQ-0002</p>
+<h1>REQ-0002</h1></header>
+<section id='REQ0002R01REQ0002R01'><h2>REQ0002R01REQ0002R01 <code>/req0002r01req0002r01</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function REQ0002R01REQ0002R01() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;REQ-0002-R01&lt;/h1&gt;
+      &lt;p&gt;REQ-0002-R01&lt;/p&gt;
+      &lt;p&gt;Sibling screens: none yet&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;REQ-0002-R01 input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;REQ-0002-R01&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='REQ0002R02REQ0002R02'><h2>REQ0002R02REQ0002R02 <code>/req0002r02req0002r02</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function REQ0002R02REQ0002R02() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;REQ-0002-R02&lt;/h1&gt;
+      &lt;p&gt;REQ-0002-R02&lt;/p&gt;
+      &lt;p&gt;Sibling screens: REQ0002R01REQ0002R01&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;REQ-0002-R02 input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;REQ-0002-R02&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='AdminCancel'><h2>AdminCancel <code>/admincancel</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function AdminCancel() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;AdminCancel&lt;/h1&gt;
+      &lt;p&gt;Admin cancels any booking&lt;/p&gt;
+      &lt;p&gt;Sibling screens: REQ0002R01REQ0002R01, REQ0002R02REQ0002R02&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;AdminCancel input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;AdminCancel&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+</body></html>
