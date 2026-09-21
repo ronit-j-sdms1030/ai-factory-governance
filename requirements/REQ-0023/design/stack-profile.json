@@ -1,0 +1,10 @@
+{
+  "id": "python",
+  "frontend": "React",
+  "api": "FastAPI",
+  "data_access": "SQLAlchemy",
+  "migrations": "Alembic",
+  "tests": "Pytest",
+  "lint": "Ruff",
+  "database": "PostgreSQL"
+}
