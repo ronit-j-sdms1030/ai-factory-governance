@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'><title>Preview REQ-0023</title>
+<style>body{font-family:system-ui,sans-serif;margin:0;background:#0f1419;color:#e7ecf1}
+header{padding:1rem 1.5rem;border-bottom:1px solid #243041} section{padding:1.5rem}
+pre{white-space:pre-wrap;background:#161d27;padding:1rem;border-radius:8px}</style></head><body>
+<header><p>Preview URL /preview/REQ-0023</p>
+<h1>REQ-0023</h1></header>
+<section id='CalendarViewShowing'><h2>CalendarViewShowing <code>/calendarviewshowing</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function CalendarViewShowing() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;CalendarViewShowing&lt;/h1&gt;
+      &lt;p&gt;Calendar view showing room availability in 15-minute increments, 08:00–18:00 weekdays only&lt;/p&gt;
+      &lt;p&gt;Sibling screens: none yet&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;CalendarViewShowing input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;CalendarViewShowing&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='StaffCanBook'><h2>StaffCanBook <code>/staffcanbook</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCanBook() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;StaffCanBook&lt;/h1&gt;
+      &lt;p&gt;Staff can book any start/end time within building hours, max 4 hours per booking (coordinators can extend)&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;StaffCanBook input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;StaffCanBook&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='ConflictDetectionReject'><h2>ConflictDetectionReject <code>/conflictdetectionreject</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function ConflictDetectionReject() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;ConflictDetectionReject&lt;/h1&gt;
+      &lt;p&gt;Conflict detection: reject overlapping bookings, show who holds the room and until when, offer next three free windows&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;ConflictDetectionReject input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;ConflictDetectionReject&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='BookingCancellationImmediate'><h2>BookingCancellationImmediate <code>/bookingcancellationimmediate</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function BookingCancellationImmediate() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;BookingCancellationImmediate&lt;/h1&gt;
+      &lt;p&gt;Booking cancellation: immediate slot release, no-shows under 15 minutes logged for facilities review&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;BookingCancellationImmediate input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;BookingCancellationImmediate&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='RecurringWeeklyBookings'><h2>RecurringWeeklyBookings <code>/recurringweeklybookings</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function RecurringWeeklyBookings() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;RecurringWeeklyBookings&lt;/h1&gt;
+      &lt;p&gt;Recurring weekly bookings (staff can create, edit, cancel series)&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;RecurringWeeklyBookings input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;RecurringWeeklyBookings&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='OfficeManagerDashboard'><h2>OfficeManagerDashboard <code>/officemanagerdashboard</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function OfficeManagerDashboard() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;OfficeManagerDashboard&lt;/h1&gt;
+      &lt;p&gt;Office manager dashboard: all rooms, occupancy status (confirmed/cancelled/no-show), today&#x27;s view with 15–30 second polling&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate, RecurringWeeklyBookings&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;OfficeManagerDashboard input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;OfficeManagerDashboard&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='OfficeManagerCan'><h2>OfficeManagerCan <code>/officemanagercan</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function OfficeManagerCan() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;OfficeManagerCan&lt;/h1&gt;
+      &lt;p&gt;Office manager can edit/cancel any booking, move bookings between rooms, add walk-in holds&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate, RecurringWeeklyBookings, OfficeManagerDashboard&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;OfficeManagerCan input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;OfficeManagerCan&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='DayBookingHistory'><h2>DayBookingHistory <code>/daybookinghistory</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function DayBookingHistory() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;DayBookingHistory&lt;/h1&gt;
+      &lt;p&gt;90-day booking history filterable by room and person, exportable as CSV&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate, RecurringWeeklyBookings, OfficeManagerDashboard, OfficeManagerCan&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;DayBookingHistory input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;DayBookingHistory&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='WeeklySummaryBooking'><h2>WeeklySummaryBooking <code>/weeklysummarybooking</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function WeeklySummaryBooking() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;WeeklySummaryBooking&lt;/h1&gt;
+      &lt;p&gt;Weekly summary: booking count, cancellations under 15 minutes, empty-room holds&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate, RecurringWeeklyBookings, OfficeManagerDashboard, OfficeManagerCan, DayBookingHistory&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;WeeklySummaryBooking input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;WeeklySummaryBooking&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='RoleBasedAccess'><h2>RoleBasedAccess <code>/rolebasedaccess</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function RoleBasedAccess() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;RoleBasedAccess&lt;/h1&gt;
+      &lt;p&gt;Role-based access: staff see only their own bookings; reception and coordinators see full board; only coordinators can bump existing…&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate, RecurringWeeklyBookings, OfficeManagerDashboard, OfficeManagerCan, DayBookingHistory, WeeklySummaryBooking&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;RoleBasedAccess input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;RoleBasedAccess&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='AdminCancel'><h2>AdminCancel <code>/admincancel</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function AdminCancel() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;AdminCancel&lt;/h1&gt;
+      &lt;p&gt;Admin cancels any booking&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate, RecurringWeeklyBookings, OfficeManagerDashboard, OfficeManagerCan, DayBookingHistory, WeeklySummaryBooking, RoleBasedAccess&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;AdminCancel input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;AdminCancel&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='DayBookingHistory2'><h2>DayBookingHistory2 <code>/daybookinghistory2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function DayBookingHistory2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;DayBookingHistory&lt;/h1&gt;
+      &lt;p&gt;90-day booking history filterable by room and person, exportable as CSV&lt;/p&gt;
+      &lt;p&gt;Sibling screens: CalendarViewShowing, StaffCanBook, ConflictDetectionReject, BookingCancellationImmediate, RecurringWeeklyBookings, OfficeManagerDashboard, OfficeManagerCan, DayBookingHistory, WeeklySummaryBooking, RoleBasedAccess, AdminCancel&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;DayBookingHistory input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;DayBookingHistory&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+</body></html>
