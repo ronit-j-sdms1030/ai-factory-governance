@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: req-0002-uat
+spec:
+  project: default
+  source:
+    repoURL: https://github.example/governed.git
+    path: deploy/uat
+    targetRevision: main
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: uat
+  syncPolicy: {}
