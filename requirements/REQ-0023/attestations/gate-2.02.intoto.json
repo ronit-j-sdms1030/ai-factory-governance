@@ -1,0 +1,48 @@
+{
+  "payload": {
+    "_type": "https://in-toto.io/Statement/v1",
+    "predicate": {
+      "actor": "u-ctl",
+      "contextInputs": {
+        "connectors": [],
+        "precedentEnabled": false,
+        "retrievalDocumentIds": [],
+        "skillFileVersions": {
+          "bmad-advanced-elicitation": "795026e",
+          "bmad-agent-analyst": "795026e",
+          "design_system": "shipped",
+          "intake": "795026e",
+          "intake.skill": "795026e",
+          "spec-driven-development": "795026e"
+        }
+      },
+      "decision": "approve",
+      "gate": 2,
+      "producedBy": {
+        "model": "deterministic/brd",
+        "modelVersion": "phase1-1",
+        "promptVersion": "brd.template.md"
+      },
+      "requirementId": "REQ-0023",
+      "timestamp": "2026-09-21T13:34:54Z",
+      "workflowTemplate": "full_governance"
+    },
+    "predicateType": "https://starkdigital.in/attestations/GateApproval/v1",
+    "subject": [
+      {
+        "digest": {
+          "gitCommit": "c491549"
+        },
+        "name": "REQ-0023/gate-2"
+      }
+    ]
+  },
+  "payloadType": "https://in-toto.io/Statement/v1",
+  "signatures": [
+    {
+      "alg": "hmac-sha256",
+      "keyid": "phase1-dev",
+      "sig": "bb0cd0c984604ff1a25ed4bf11b29d9d7fcdd881129383e1f8fc38d869627afe"
+    }
+  ]
+}
