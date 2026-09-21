@@ -1,0 +1,56 @@
+{
+  "repaired": [
+    "AdminCancel",
+    "DayBookingHistory2"
+  ],
+  "extras": [
+    "DayBookingHistory",
+    "DayBookingHistory2"
+  ],
+  "pages": [
+    {
+      "id": "CalendarViewShowing",
+      "description": "Calendar view showing room availability in 15-minute increments, 08:00\u201318:00 weekdays only"
+    },
+    {
+      "id": "StaffCanBook",
+      "description": "Staff can book any start/end time within building hours, max 4 hours per booking (coordinators can extend)"
+    },
+    {
+      "id": "ConflictDetectionReject",
+      "description": "Conflict detection: reject overlapping bookings, show who holds the room and until when, offer next three free windows"
+    },
+    {
+      "id": "BookingCancellationImmediate",
+      "description": "Booking cancellation: immediate slot release, no-shows under 15 minutes logged for facilities review"
+    },
+    {
+      "id": "RecurringWeeklyBookings",
+      "description": "Recurring weekly bookings (staff can create, edit, cancel series)"
+    },
+    {
+      "id": "OfficeManagerDashboard",
+      "description": "Office manager dashboard: all rooms, occupancy status (confirmed/cancelled/no-show), today's view with 15\u201330 second polling"
+    },
+    {
+      "id": "OfficeManagerCan",
+      "description": "Office manager can edit/cancel any booking, move bookings between rooms, add walk-in holds"
+    },
+    {
+      "id": "DayBookingHistory",
+      "description": "90-day booking history filterable by room and person, exportable as CSV"
+    },
+    {
+      "id": "WeeklySummaryBooking",
+      "description": "Weekly summary: booking count, cancellations under 15 minutes, empty-room holds"
+    },
+    {
+      "id": "RoleBasedAccess",
+      "description": "Role-based access: staff see only their own bookings; reception and coordinators see full board; only coordinators can bump existing\u2026"
+    },
+    {
+      "id": "AdminCancel",
+      "description": "Admin cancels any booking"
+    }
+  ]
+}
