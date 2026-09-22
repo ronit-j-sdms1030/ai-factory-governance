@@ -15,11 +15,17 @@ function StaffCanBook2() {
     <Page>
       <h1>Staff Can Book</h1>
       <p>Room-selector, date-picker, start-time and end-time inputs, and a Submit button. On submit, clash detection runs server-side; success inserts the new booking into the same-day list in place; failure surfaces a conflict banner naming the clashing interval. No page reload on either path.</p>
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+        <Button>StaffCanExtend</Button>
+        <Button>ClashDetectionThe</Button>
+      </nav>
       <Field name="room" label="Room" />
       <Field name="starts" label="Starts" />
       <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
+      <Button type="submit">Save</Button>
+      <Table heading="Staff Can Book">
         <tr><td>10:00 Booked</td></tr>
         <tr><td>12:00 Blocked</td></tr>
         <tr><td>14:00 Open</td></tr>
