@@ -15,13 +15,20 @@ function FacilitiesCoordinatorCan2() {
     <Page>
       <h1>Facilities Coordinator Can</h1>
       <p>Modal or inline form on the same-day list: room selector, date defaults to today , start time, end time, optional note. On save, the block appears immediately in the list and clash detection is active for the interval.</p>
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+        <Button>StaffCanExtend</Button>
+        <Button>ClashDetectionThe</Button>
+      </nav>
       <Field name="room" label="Room" />
       <Field name="starts" label="Starts" />
       <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
+      <Field name="note" label="Note" />
+      <Button type="submit">Save this block</Button>
+      <Table heading="Facilities Coordinator Can">
         <tr><td>10:00 Booked</td></tr>
-        <tr><td>12:00 Blocked</td></tr>
+        <tr><td>12:00 Blocked for maintenance</td></tr>
         <tr><td>14:00 Open</td></tr>
       </Table>
     </Page>
