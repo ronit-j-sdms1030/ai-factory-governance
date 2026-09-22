@@ -1,0 +1,6 @@
+react
+express
+prisma
+vitest
+eslint
+prettier
