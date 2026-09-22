@@ -18,8 +18,8 @@ function StaffCanBook() {
       <Field name="room" label="Room" />
       <Field name="starts" label="Starts" />
       <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
+      <Button type="submit">Save</Button>
+      <Table heading="Staff Can Book">
         <tr><td>10:00 Booked</td></tr>
         <tr><td>12:00 Blocked</td></tr>
         <tr><td>14:00 Open</td></tr>
