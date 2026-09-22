@@ -291,11 +291,9 @@ function OfficeManagerCan() {
       &lt;h1
         style={{
           color: &#x27;var(--color-text)&#x27;,
-          fontFamily: &#x27;var(--font-sans)&#x27;,
           marginBottom: &#x27;var(--space-md)&#x27;,
           fontSize: &#x27;1.75rem&#x27;,
-          fontWeight: 700,
-          textAlign: &#x27;center&#x27;,
+          fontFamily: &#x27;var(--font-sans)&#x27;,
         }}
       &gt;
         {heading}
@@ -319,10 +317,10 @@ function Field({ id, label, type = &#x27;text&#x27;, value, onChange, autoComple
       &lt;label
         htmlFor={id}
         style={{
-          fontFamily: &#x27;var(--font-sans)&#x27;,
           color: &#x27;var(--color-text)&#x27;,
-          fontSize: &#x27;0.9rem&#x27;,
-          fontWeight: 600,
+          fontFamily: &#x27;var(--font-sans)&#x27;,
+          fontSize: &#x27;0.875rem&#x27;,
+          fontWeight: &#x27;600&#x27;,
         }}
       &gt;
         {label}
@@ -335,12 +333,12 @@ function Field({ id, label, type = &#x27;text&#x27;, value, onChange, autoComple
         onChange={onChange}
         autoComplete={autoComplete}
         style={{
-          fontFamily: &#x27;var(--font-sans)&#x27;,
-          color: &#x27;var(--color-text)&#x27;,
+          padding: &#x27;var(--space-md)&#x27;,
           background: &#x27;var(--color-bg)&#x27;,
-          border: &#x27;1.5px solid var(--color-text)&#x27;,
+          color: &#x27;var(--color-text)&#x27;,
+          border: &#x27;1.5px solid var(--color-accent)&#x27;,
           borderRadius: &#x27;4px&#x27;,
-          padding: &#x27;0.5rem 0.75rem&#x27;,
+          fontFamily: &#x27;var(--font-sans)&#x27;,
           fontSize: &#x27;1rem&#x27;,
           outline: &#x27;none&#x27;,
           width: &#x27;100%&#x27;,
@@ -351,24 +349,25 @@ function Field({ id, label, type = &#x27;text&#x27;, value, onChange, autoComple
   );
 }
 
-function Button({ type = &#x27;button&#x27;, onClick, children, disabled }) {
+function Button({ children, onClick, type = &#x27;button&#x27;, disabled }) {
   return (
     &lt;button
       type={type}
       onClick={onClick}
       disabled={disabled}
       style={{
-        fontFamily: &#x27;var(--font-sans)&#x27;,
         background: &#x27;var(--color-accent)&#x27;,
         color: &#x27;var(--color-bg)&#x27;,
+        fontFamily: &#x27;var(--font-sans)&#x27;,
+        fontSize: &#x27;1rem&#x27;,
+        fontWeight: &#x27;700&#x27;,
         border: &#x27;none&#x27;,
         borderRadius: &#x27;4px&#x27;,
-        padding: &#x27;0.65rem 1.5rem&#x27;,
-        fontSize: &#x27;1rem&#x27;,
-        fontWeight: 700,
+        padding: &#x27;var(--space-md)&#x27;,
+        width: &#x27;100%&#x27;,
         cursor: disabled ? &#x27;not-allowed&#x27; : &#x27;pointer&#x27;,
         opacity: disabled ? 0.6 : 1,
-        width: &#x27;100%&#x27;,
+        letterSpacing: &#x27;0.02em&#x27;,
       }}
     &gt;
       {children}
@@ -393,11 +392,14 @@ function Table({ columns, rows }) {
             {columns.map((col) =&gt; (
               &lt;th
                 key={col}
+                scope=&quot;col&quot;
                 style={{
                   textAlign: &#x27;left&#x27;,
-                  padding: &#x27;0.5rem 0.75rem&#x27;,
+                  padding: &#x27;var(--space-md)&#x27;,
                   borderBottom: &#x27;2px solid var(--color-accent)&#x27;,
-                  fontWeight: 700,
+                  fontFamily: &#x27;var(--font-sans)&#x27;,
+                  color: &#x27;var(--color-accent)&#x27;,
+                  fontWeight: &#x27;700&#x27;,
                   whiteSpace: &#x27;nowrap&#x27;,
                 }}
               &gt;
@@ -413,8 +415,10 @@ function Table({ columns, rows }) {
                 &lt;td
                   key={j}
                   style={{
-                    padding: &#x27;0.5rem 0.75rem&#x27;,
+                    padding: &#x27;var(--space-md)&#x27;,
                     borderBottom: &#x27;1px solid var(--color-text)&#x27;,
+                    fontFamily: &#x27;var(--font-sans)&#x27;,
+                    color: &#x27;var(--color-text)&#x27;,
                   }}
                 &gt;
                   {cell}
@@ -432,7 +436,7 @@ function LoginViaEmail() {
   const [email, setEmail] = React.useState(&#x27;&#x27;);
   const [password, setPassword] = React.useState(&#x27;&#x27;);
   const [error, setError] = React.useState(&#x27;&#x27;);
-  const [loading, setLoading] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -441,32 +445,28 @@ function LoginViaEmail() {
       setError(&#x27;Please enter your email address and password.&#x27;);
       return;
     }
-    setLoading(true);
-    // Simulate authentication attempt; real implementation posts to /api/auth/login
+    setBusy(true);
     setTimeout(() =&gt; {
-      setLoading(false);
-      // Generic error — no account enumeration
-      setError(&#x27;The email address or password is incorrect. Please try again.&#x27;);
+      setBusy(false);
+      setError(&#x27;Your email address or password is incorrect. Please try again.&#x27;);
     }, 900);
   }
 
   return (
-    &lt;Page heading=&quot;Sign In&quot;&gt;
+    &lt;Page heading=&quot;Sign in to Room Bookings&quot;&gt;
       &lt;form
         onSubmit={handleSubmit}
         noValidate
+        aria-label=&quot;Sign in form&quot;
         style={{
           width: &#x27;100%&#x27;,
           maxWidth: &#x27;400px&#x27;,
           background: &#x27;var(--color-bg)&#x27;,
-          border: &#x27;1.5px solid var(--color-text)&#x27;,
-          borderRadius: &#x27;8px&#x27;,
           padding: &#x27;var(--space-md)&#x27;,
+          borderRadius: &#x27;6px&#x27;,
+          border: &#x27;1px solid var(--color-accent)&#x27;,
           boxSizing: &#x27;border-box&#x27;,
-          display: &#x27;flex&#x27;,
-          flexDirection: &#x27;column&#x27;,
         }}
-        aria-label=&quot;Sign in to your account&quot;
       &gt;
         &lt;Field
           id=&quot;email&quot;
@@ -487,21 +487,24 @@ function LoginViaEmail() {
         {error &amp;&amp; (
           &lt;p
             role=&quot;alert&quot;
+            aria-live=&quot;assertive&quot;
             style={{
-              fontFamily: &#x27;var(--font-sans)&#x27;,
               color: &#x27;var(--color-accent)&#x27;,
-              fontSize: &#x27;0.9rem&#x27;,
-              margin: &#x27;0 0 var(--space-md) 0&#x27;,
-              padding: &#x27;0.5rem 0.75rem&#x27;,
+              fontFamily: &#x27;var(--font-sans)&#x27;,
+              fontSize: &#x27;0.875rem&#x27;,
+              marginBottom: &#x27;var(--space-md)&#x27;,
+              marginTop: 0,
+              padding: &#x27;var(--space-md)&#x27;,
               border: &#x27;1px solid var(--color-accent)&#x27;,
               borderRadius: &#x27;4px&#x27;,
+              background: &#x27;var(--color-bg)&#x27;,
             }}
           &gt;
             {error}
           &lt;/p&gt;
         )}
-        &lt;Button type=&quot;submit&quot; disabled={loading}&gt;
-          {loading ? &#x27;Signing in…&#x27; : &#x27;Sign In&#x27;}
+        &lt;Button type=&quot;submit&quot; disabled={busy}&gt;
+          {busy ? &#x27;Signing in…&#x27; : &#x27;Sign In&#x27;}
         &lt;/Button&gt;
       &lt;/form&gt;
     &lt;/Page&gt;
