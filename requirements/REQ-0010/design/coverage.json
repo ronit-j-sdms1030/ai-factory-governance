@@ -1,39 +1,8 @@
 {
   "repaired": [
-    "AdminCancel",
-    "StaffCanBook2",
-    "StaffCanCreate2",
-    "StaffCanExtend2",
-    "ClashDetectionThe2",
-    "FacilitiesCoordinatorSees2",
-    "FacilitiesCoordinatorCan2",
-    "CalendarUpdatesIn2",
-    "OfficeManagerCan2",
-    "LoginViaEmail2",
-    "ResponsiveDesignStaff2"
+    "AdminCancel"
   ],
-  "extras": [
-    "StaffCanBook",
-    "StaffCanCreate",
-    "StaffCanExtend",
-    "ClashDetectionThe",
-    "FacilitiesCoordinatorSees",
-    "FacilitiesCoordinatorCan",
-    "CalendarUpdatesIn",
-    "OfficeManagerCan",
-    "LoginViaEmail",
-    "ResponsiveDesignStaff",
-    "StaffCanBook2",
-    "StaffCanCreate2",
-    "StaffCanExtend2",
-    "ClashDetectionThe2",
-    "FacilitiesCoordinatorSees2",
-    "FacilitiesCoordinatorCan2",
-    "CalendarUpdatesIn2",
-    "OfficeManagerCan2",
-    "LoginViaEmail2",
-    "ResponsiveDesignStaff2"
-  ],
+  "extras": [],
   "pages": [
     {
       "id": "StaffCanBook",
