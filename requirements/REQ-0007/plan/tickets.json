@@ -1,0 +1,105 @@
+[
+  {
+    "id": "TKT-0001",
+    "title": "Implement same-day calendar view showing all rooms and bookings in a single grid",
+    "depends_on": [],
+    "trace": [
+      "REQ-0007-R01"
+    ],
+    "department": "development",
+    "paths": [
+      "src/ui/calendar/**",
+      "src/api/bookings/**"
+    ]
+  },
+  {
+    "id": "TKT-0002",
+    "title": "Enable staff to create, view, and cancel bookings with 30-minute time steps and display booker name and department",
+    "depends_on": [
+      "TKT-0001"
+    ],
+    "trace": [
+      "REQ-0007-R02"
+    ],
+    "department": "development",
+    "paths": [
+      "src/ui/bookings/**",
+      "src/api/bookings/**"
+    ]
+  },
+  {
+    "id": "TKT-0003",
+    "title": "Support recurring bookings with series creation, editing, and cancellation of individual instances or entire series",
+    "depends_on": [
+      "TKT-0002"
+    ],
+    "trace": [
+      "REQ-0007-R03"
+    ],
+    "department": "development",
+    "paths": [
+      "src/api/recurring_bookings/**",
+      "src/ui/recurring/**"
+    ]
+  },
+  {
+    "id": "TKT-0004",
+    "title": "Coordinator view: show bookings with booker name, creation time, and allow cancel or move bookings with in-app notifications",
+    "depends_on": [
+      "TKT-0001",
+      "TKT-0002"
+    ],
+    "trace": [
+      "REQ-0007-R04",
+      "REQ-0007-R08"
+    ],
+    "department": "development",
+    "paths": [
+      "src/ui/coordinator/**",
+      "src/api/notifications/**"
+    ]
+  },
+  {
+    "id": "TKT-0005",
+    "title": "Facilities coordinators manage administrative blocks with color-coded labels and recurring block support",
+    "depends_on": [
+      "TKT-0001"
+    ],
+    "trace": [
+      "REQ-0007-R05",
+      "REQ-0007-R06"
+    ],
+    "department": "development",
+    "paths": [
+      "src/api/blocks/**",
+      "src/ui/blocks/**"
+    ]
+  },
+  {
+    "id": "TKT-0006",
+    "title": "Implement session-based authentication with email/password login, demo account creation, and cookie-based sessions with idle timeout",
+    "depends_on": [],
+    "trace": [
+      "REQ-0007-R07"
+    ],
+    "department": "development",
+    "paths": [
+      "src/api/auth/**",
+      "src/ui/auth/**"
+    ]
+  },
+  {
+    "id": "TKT-0007",
+    "title": "Ensure responsive design for mobile browsers",
+    "depends_on": [
+      "TKT-0001"
+    ],
+    "trace": [
+      "REQ-0007-R09"
+    ],
+    "department": "development",
+    "paths": [
+      "src/ui/**"
+    ]
+  }
+]
