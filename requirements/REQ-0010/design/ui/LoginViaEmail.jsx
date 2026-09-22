@@ -16,11 +16,9 @@ function Page({ heading, children }) {
       <h1
         style={{
           color: 'var(--color-text)',
-          fontFamily: 'var(--font-sans)',
           marginBottom: 'var(--space-md)',
           fontSize: '1.75rem',
-          fontWeight: 700,
-          textAlign: 'center',
+          fontFamily: 'var(--font-sans)',
         }}
       >
         {heading}
@@ -44,10 +42,10 @@ function Field({ id, label, type = 'text', value, onChange, autoComplete }) {
       <label
         htmlFor={id}
         style={{
-          fontFamily: 'var(--font-sans)',
           color: 'var(--color-text)',
-          fontSize: '0.9rem',
-          fontWeight: 600,
+          fontFamily: 'var(--font-sans)',
+          fontSize: '0.875rem',
+          fontWeight: '600',
         }}
       >
         {label}
@@ -60,12 +58,12 @@ function Field({ id, label, type = 'text', value, onChange, autoComplete }) {
         onChange={onChange}
         autoComplete={autoComplete}
         style={{
-          fontFamily: 'var(--font-sans)',
-          color: 'var(--color-text)',
+          padding: 'var(--space-md)',
           background: 'var(--color-bg)',
-          border: '1.5px solid var(--color-text)',
+          color: 'var(--color-text)',
+          border: '1.5px solid var(--color-accent)',
           borderRadius: '4px',
-          padding: '0.5rem 0.75rem',
+          fontFamily: 'var(--font-sans)',
           fontSize: '1rem',
           outline: 'none',
           width: '100%',
@@ -76,24 +74,25 @@ function Field({ id, label, type = 'text', value, onChange, autoComplete }) {
   );
 }
 
-function Button({ type = 'button', onClick, children, disabled }) {
+function Button({ children, onClick, type = 'button', disabled }) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
       style={{
-        fontFamily: 'var(--font-sans)',
         background: 'var(--color-accent)',
         color: 'var(--color-bg)',
+        fontFamily: 'var(--font-sans)',
+        fontSize: '1rem',
+        fontWeight: '700',
         border: 'none',
         borderRadius: '4px',
-        padding: '0.65rem 1.5rem',
-        fontSize: '1rem',
-        fontWeight: 700,
+        padding: 'var(--space-md)',
+        width: '100%',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.6 : 1,
-        width: '100%',
+        letterSpacing: '0.02em',
       }}
     >
       {children}
@@ -118,11 +117,14 @@ function Table({ columns, rows }) {
             {columns.map((col) => (
               <th
                 key={col}
+                scope="col"
                 style={{
                   textAlign: 'left',
-                  padding: '0.5rem 0.75rem',
+                  padding: 'var(--space-md)',
                   borderBottom: '2px solid var(--color-accent)',
-                  fontWeight: 700,
+                  fontFamily: 'var(--font-sans)',
+                  color: 'var(--color-accent)',
+                  fontWeight: '700',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -138,8 +140,10 @@ function Table({ columns, rows }) {
                 <td
                   key={j}
                   style={{
-                    padding: '0.5rem 0.75rem',
+                    padding: 'var(--space-md)',
                     borderBottom: '1px solid var(--color-text)',
+                    fontFamily: 'var(--font-sans)',
+                    color: 'var(--color-text)',
                   }}
                 >
                   {cell}
@@ -157,7 +161,7 @@ function LoginViaEmail() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -166,32 +170,28 @@ function LoginViaEmail() {
       setError('Please enter your email address and password.');
       return;
     }
-    setLoading(true);
-    // Simulate authentication attempt; real implementation posts to /api/auth/login
+    setBusy(true);
     setTimeout(() => {
-      setLoading(false);
-      // Generic error — no account enumeration
-      setError('The email address or password is incorrect. Please try again.');
+      setBusy(false);
+      setError('Your email address or password is incorrect. Please try again.');
     }, 900);
   }
 
   return (
-    <Page heading="Sign In">
+    <Page heading="Sign in to Room Bookings">
       <form
         onSubmit={handleSubmit}
         noValidate
+        aria-label="Sign in form"
         style={{
           width: '100%',
           maxWidth: '400px',
           background: 'var(--color-bg)',
-          border: '1.5px solid var(--color-text)',
-          borderRadius: '8px',
           padding: 'var(--space-md)',
+          borderRadius: '6px',
+          border: '1px solid var(--color-accent)',
           boxSizing: 'border-box',
-          display: 'flex',
-          flexDirection: 'column',
         }}
-        aria-label="Sign in to your account"
       >
         <Field
           id="email"
@@ -212,21 +212,24 @@ function LoginViaEmail() {
         {error && (
           <p
             role="alert"
+            aria-live="assertive"
             style={{
-              fontFamily: 'var(--font-sans)',
               color: 'var(--color-accent)',
-              fontSize: '0.9rem',
-              margin: '0 0 var(--space-md) 0',
-              padding: '0.5rem 0.75rem',
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.875rem',
+              marginBottom: 'var(--space-md)',
+              marginTop: 0,
+              padding: 'var(--space-md)',
               border: '1px solid var(--color-accent)',
               borderRadius: '4px',
+              background: 'var(--color-bg)',
             }}
           >
             {error}
           </p>
         )}
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Signing in…' : 'Sign In'}
+        <Button type="submit" disabled={busy}>
+          {busy ? 'Signing in…' : 'Sign In'}
         </Button>
       </form>
     </Page>
