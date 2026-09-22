@@ -15,13 +15,18 @@ function ClashDetectionThe2() {
     <Page>
       <h1>Clash Detection The</h1>
       <p>Not a standalone screen — clash feedback is an inline banner on StaffCanBook, StaffCanCreate, and StaffCanExtend. Banner text identifies the room, the conflicting interval, and whether the conflict is a booking or a maintenance block.</p>
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+        <Button>StaffCanExtend</Button>
+        <Button>ClashDetectionThe</Button>
+      </nav>
       <Field name="room" label="Room" />
-      <Field name="starts" label="Starts" />
       <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
+      <Button type="submit">Save this block</Button>
+      <Table heading="Clash Detection The">
         <tr><td>10:00 Booked</td></tr>
-        <tr><td>12:00 Blocked</td></tr>
+        <tr><td>12:00 Blocked for maintenance</td></tr>
         <tr><td>14:00 Open</td></tr>
       </Table>
     </Page>
