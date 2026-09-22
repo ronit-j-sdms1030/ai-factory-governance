@@ -1,116 +1,38 @@
-function Page({ children, heading }) {
+function Page({ children }) {
   return (
-    <main
-      style={{
-        background: "var(--color-bg)",
-        color: "var(--color-text)",
-        fontFamily: "var(--font-sans)",
-        padding: "var(--space-md)",
-        minHeight: "100vh",
-      }}
-    >
-      <h1 style={{ marginBottom: "var(--space-md)" }}>{heading}</h1>
+    <main style={{ background: "var(--color-bg)", padding: "var(--space-md)", fontFamily: "var(--font-sans)", color: "var(--color-text)" }}>
+      <h1>Clash Detection</h1>
       {children}
     </main>
   );
 }
 
-function Button({ onClick, children, type = "button" }) {
+function Button({ label, onClick }) {
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      style={{
-        background: "var(--color-accent)",
-        color: "var(--color-bg)",
-        fontFamily: "var(--font-sans)",
-        border: "none",
-        padding: "calc(var(--space-md) * 0.5) var(--space-md)",
-        cursor: "pointer",
-        fontSize: "1rem",
-      }}
-    >
-      {children}
+    <button onClick={onClick} style={{ background: "var(--color-accent)", color: "var(--color-text)", padding: "var(--space-md)", border: "none", cursor: "pointer", fontFamily: "var(--font-sans)" }}>
+      {label}
     </button>
   );
 }
 
-function Field({ id, label, type = "text", value, onChange }) {
+function Field({ label, id, value, onChange }) {
   return (
     <div style={{ marginBottom: "var(--space-md)" }}>
-      <label
-        htmlFor={id}
-        style={{
-          display: "block",
-          marginBottom: "calc(var(--space-md) * 0.25)",
-          color: "var(--color-text)",
-          fontFamily: "var(--font-sans)",
-        }}
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        style={{
-          fontFamily: "var(--font-sans)",
-          color: "var(--color-text)",
-          background: "var(--color-bg)",
-          border: "1px solid var(--color-text)",
-          padding: "calc(var(--space-md) * 0.5)",
-          fontSize: "1rem",
-          width: "100%",
-          boxSizing: "border-box",
-        }}
-      />
+      <label htmlFor={id} style={{ display: "block", marginBottom: "var(--space-md)" }}>{label}</label>
+      <input id={id} value={value} onChange={onChange} style={{ fontFamily: "var(--font-sans)", padding: "var(--space-md)" }} />
     </div>
   );
 }
 
-function Table({ columns, rows }) {
+function Table({ rows }) {
   return (
-    <table
-      style={{
-        width: "100%",
-        borderCollapse: "collapse",
-        fontFamily: "var(--font-sans)",
-        color: "var(--color-text)",
-      }}
-    >
+    <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-sans)" }}>
       <thead>
-        <tr>
-          {columns.map((col) => (
-            <th
-              key={col}
-              style={{
-                textAlign: "left",
-                borderBottom: "2px solid var(--color-accent)",
-                padding: "calc(var(--space-md) * 0.5)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              {col}
-            </th>
-          ))}
-        </tr>
+        <tr>{["Room", "Conflicting Interval", "Conflict Type", "Appears On"].map(h => <th key={h} style={{ textAlign: "left", padding: "var(--space-md)", borderBottom: "1px solid var(--color-text)" }}>{h}</th>)}</tr>
       </thead>
       <tbody>
-        {rows.map((row, i) => (
-          <tr key={i}>
-            {row.map((cell, j) => (
-              <td
-                key={j}
-                style={{
-                  borderBottom: "1px solid var(--color-text)",
-                  padding: "calc(var(--space-md) * 0.5)",
-                }}
-              >
-                {cell}
-              </td>
-            ))}
-          </tr>
+        {rows.map((r, i) => (
+          <tr key={i}>{[r.room, r.interval, r.type, r.screen].map((c, j) => <td key={j} style={{ padding: "var(--space-md)" }}>{c}</td>)}</tr>
         ))}
       </tbody>
     </table>
@@ -118,98 +40,17 @@ function Table({ columns, rows }) {
 }
 
 function ClashDetectionThe() {
+  const rows = [
+    { room: "Room A", interval: "Mon 09:00–10:00", type: "Booking", screen: "StaffCanBook" },
+    { room: "Room B", interval: "Tue 14:00–15:30", type: "Maintenance Block", screen: "StaffCanExtend" },
+    { room: "Room C", interval: "Wed 11:00–12:00", type: "Booking", screen: "StaffCanCreate" },
+  ];
   return (
-    <Page heading="Clash Detection">
-      <p
-        style={{
-          fontFamily: "var(--font-sans)",
-          color: "var(--color-text)",
-          marginBottom: "var(--space-md)",
-          lineHeight: 1.5,
-        }}
-      >
-        Clash feedback is not a standalone screen. When a booking, creation, or
-        extension request conflicts with an existing interval, an inline banner
-        appears on the originating form — StaffCanBook, StaffCanCreate, or
-        StaffCanExtend — identifying the room, the conflicting interval, and
-        whether the conflict is a booking or a maintenance block.
-      </p>
-
-      <section style={{ marginBottom: "var(--space-md)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-sans)",
-            color: "var(--color-text)",
-            marginBottom: "var(--space-md)",
-          }}
-        >
-          Example banner preview
-        </h2>
-
-        <div
-          role="alert"
-          aria-live="assertive"
-          style={{
-            background: "var(--color-accent)",
-            color: "var(--color-bg)",
-            fontFamily: "var(--font-sans)",
-            padding: "var(--space-md)",
-            marginBottom: "var(--space-md)",
-          }}
-        >
-          <strong>Clash detected</strong> — Room: Seminar Room B &nbsp;|&nbsp;
-          Conflicting interval: 14:00–15:30 on 12 Aug 2025 &nbsp;|&nbsp; Type:
-          Maintenance block
-        </div>
-
-        <div
-          role="alert"
-          aria-live="assertive"
-          style={{
-            background: "var(--color-accent)",
-            color: "var(--color-bg)",
-            fontFamily: "var(--font-sans)",
-            padding: "var(--space-md)",
-            marginBottom: "var(--space-md)",
-          }}
-        >
-          <strong>Clash detected</strong> — Room: Lecture Hall A &nbsp;|&nbsp;
-          Conflicting interval: 09:00–10:00 on 15 Aug 2025 &nbsp;|&nbsp; Type:
-          Existing booking
-        </div>
-      </section>
-
-      <section style={{ marginBottom: "var(--space-md)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-sans)",
-            color: "var(--color-text)",
-            marginBottom: "var(--space-md)",
-          }}
-        >
-          Banner anatomy
-        </h2>
-
-        <Table
-          columns={["Field", "Description"]}
-          rows={[
-            ["Room", "The display name of the room involved in the clash"],
-            [
-              "Conflicting interval",
-              "Start and end time, and date, of the blocking interval",
-            ],
-            [
-              "Conflict type",
-              'Either "Existing booking" or "Maintenance block"',
-            ],
-            [
-              "Placement",
-              "Inline on StaffCanBook, StaffCanCreate, or StaffCanExtend",
-            ],
-            ["Role", "role=alert with aria-live=assertive for screen readers"],
-          ]}
-        />
-      </section>
+    <Page>
+      <Field label="Filter by Room" id="room-filter" value="" onChange={() => {}} />
+      <Field label="Filter by Conflict Type" id="type-filter" value="" onChange={() => {}} />
+      <Button label="Run Clash Check" onClick={() => {}} />
+      <Table rows={rows} />
     </Page>
   );
 }
