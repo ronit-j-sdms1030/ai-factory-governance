@@ -5,36 +5,66 @@ header{padding:1rem 1.5rem;border-bottom:1px solid #243041} section{padding:1.5r
 pre{white-space:pre-wrap;background:#161d27;padding:1rem;border-radius:8px}</style></head><body>
 <header><p>Preview URL /preview/REQ-0010</p>
 <h1>REQ-0010</h1></header>
-<section id='StaffCanBook'><h2>StaffCanBook <code>/staffcanbook</code></h2><pre>function Page(props) {
-  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
-}
-function Button(props) {
-  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
-}
-function Field(props) {
-  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
-}
-function Table(props) {
-  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
-}
-function StaffCanBook() {
+<section id='StaffCanBook'><h2>StaffCanBook <code>/staffcanbook</code></h2><pre>function Page({ children }) {
   return (
-    &lt;Page&gt;
-      &lt;h1&gt;Staff Can Book&lt;/h1&gt;
-      &lt;p&gt;Room-selector, date-picker, start-time and end-time inputs, and a Submit button. On submit, clash detection runs server-side; success inserts the new booking into the same-day list in place; failure surfaces a conflict banner naming the clashing interval. No page reload on either path.&lt;/p&gt;
-      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
-      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
-      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
-      &lt;Button type=&quot;submit&quot;&gt;Save&lt;/Button&gt;
-      &lt;Table heading=&quot;Staff Can Book&quot;&gt;
-        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
-      &lt;/Table&gt;
-    &lt;/Page&gt;
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      &lt;h1&gt;Book a Room&lt;/h1&gt;
+      {children}
+    &lt;/main&gt;
   );
 }
-</pre></section>
+
+function Button({ onClick, children }) {
+  return &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, padding: &quot;var(--space-md)&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;{children}&lt;/button&gt;;
+}
+
+function Field({ label, type, value, onChange }) {
+  const id = label.replace(/\s+/g, &quot;-&quot;).toLowerCase();
+  return (
+    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;4px&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} type={type} value={value} onChange={onChange} style={{ fontFamily: &quot;var(--font-sans)&quot;, padding: &quot;var(--space-md)&quot;, width: &quot;100%&quot; }} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+function Table({ bookings }) {
+  return (
+    &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, marginTop: &quot;var(--space-md)&quot; }}&gt;
+      &lt;thead&gt;&lt;tr&gt;{[&quot;Room&quot;,&quot;Date&quot;,&quot;Start&quot;,&quot;End&quot;].map(h =&gt; &lt;th key={h} style={{ textAlign: &quot;left&quot;, padding: &quot;var(--space-md)&quot;, borderBottom: &quot;1px solid var(--color-accent)&quot; }}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;&lt;/thead&gt;
+      &lt;tbody&gt;{bookings.map((b, i) =&gt; &lt;tr key={i}&gt;{[b.room, b.date, b.start, b.end].map((v, j) =&gt; &lt;td key={j} style={{ padding: &quot;var(--space-md)&quot; }}&gt;{v}&lt;/td&gt;)}&lt;/tr&gt;)}&lt;/tbody&gt;
+    &lt;/table&gt;
+  );
+}
+
+function StaffCanBook() {
+  const [room, setRoom] = React.useState(&quot;&quot;);
+  const [date, setDate] = React.useState(&quot;&quot;);
+  const [start, setStart] = React.useState(&quot;&quot;);
+  const [end, setEnd] = React.useState(&quot;&quot;);
+  const [bookings, setBookings] = React.useState([]);
+  const [conflict, setConflict] = React.useState(null);
+
+  const handleSubmit = async () =&gt; {
+    setConflict(null);
+    const res = await fetch(&quot;/api/bookings&quot;, { method: &quot;POST&quot;, headers: { &quot;Content-Type&quot;: &quot;application/json&quot; }, body: JSON.stringify({ room, date, start, end }) });
+    const data = await res.json();
+    if (!res.ok) { setConflict(`Conflict with existing booking: ${data.clashStart}–${data.clashEnd}`); return; }
+    setBookings(prev =&gt; [...prev.filter(b =&gt; b.date !== date), data, ...prev.filter(b =&gt; b.date === date &amp;&amp; b !== data)].sort((a, b) =&gt; a.start.localeCompare(b.start)));
+  };
+
+  return (
+    &lt;Page&gt;
+      {conflict &amp;&amp; &lt;div role=&quot;alert&quot; style={{ padding: &quot;var(--space-md)&quot;, border: &quot;2px solid var(--color-accent)&quot;, marginBottom: &quot;var(--space-md)&quot; }}&gt;{conflict}&lt;/div&gt;}
+      &lt;Field label=&quot;Room&quot; type=&quot;text&quot; value={room} onChange={e =&gt; setRoom(e.target.value)} /&gt;
+      &lt;Field label=&quot;Date&quot; type=&quot;date&quot; value={date} onChange={e =&gt; setDate(e.target.value)} /&gt;
+      &lt;Field label=&quot;Start Time&quot; type=&quot;time&quot; value={start} onChange={e =&gt; setStart(e.target.value)} /&gt;
+      &lt;Field label=&quot;End Time&quot; type=&quot;time&quot; value={end} onChange={e =&gt; setEnd(e.target.value)} /&gt;
+      &lt;Button onClick={handleSubmit}&gt;Submit&lt;/Button&gt;
+      &lt;Table bookings={bookings} /&gt;
+    &lt;/Page&gt;
+  );
+}</pre></section>
 <section id='StaffCanCreate'><h2>StaffCanCreate <code>/staffcancreate</code></h2><pre>function Page(props) {
   return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
 }
@@ -66,151 +96,90 @@ function StaffCanCreate() {
   );
 }
 </pre></section>
-<section id='StaffCanExtend'><h2>StaffCanExtend <code>/staffcanextend</code></h2><pre>function Page(props) {
-  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
-}
-function Button(props) {
-  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
-}
-function Field(props) {
-  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
-}
-function Table(props) {
-  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
-}
-function StaffCanExtend() {
+<section id='StaffCanExtend'><h2>StaffCanExtend <code>/staffcanextend</code></h2><pre>function Page({ children }) {
   return (
-    &lt;Page&gt;
-      &lt;h1&gt;Staff Can Extend&lt;/h1&gt;
-      &lt;p&gt;Accessed from an existing booking or series detail. Shows current end time or series end date with an editable field. On submit, clash detection covers the extended interval only; conflict or success feedback appears in place.&lt;/p&gt;
-      &lt;nav&gt;
-        &lt;Button&gt;StaffCanBook&lt;/Button&gt;
-        &lt;Button&gt;StaffCanCreate&lt;/Button&gt;
-      &lt;/nav&gt;
-      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
-      &lt;Button type=&quot;submit&quot;&gt;Save&lt;/Button&gt;
-      &lt;Table heading=&quot;Staff Can Extend&quot;&gt;
-        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
-      &lt;/Table&gt;
-    &lt;/Page&gt;
-  );
-}
-</pre></section>
-<section id='ClashDetectionThe'><h2>ClashDetectionThe <code>/clashdetectionthe</code></h2><pre>function Page({ children, heading }) {
-  return (
-    &lt;main
-      style={{
-        background: &quot;var(--color-bg)&quot;,
-        color: &quot;var(--color-text)&quot;,
-        fontFamily: &quot;var(--font-sans)&quot;,
-        padding: &quot;var(--space-md)&quot;,
-        minHeight: &quot;100vh&quot;,
-      }}
-    &gt;
-      &lt;h1 style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;{heading}&lt;/h1&gt;
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      &lt;h1&gt;Extend Booking&lt;/h1&gt;
       {children}
     &lt;/main&gt;
   );
 }
 
-function Button({ onClick, children, type = &quot;button&quot; }) {
+function Button({ children, onClick }) {
   return (
-    &lt;button
-      type={type}
-      onClick={onClick}
-      style={{
-        background: &quot;var(--color-accent)&quot;,
-        color: &quot;var(--color-bg)&quot;,
-        fontFamily: &quot;var(--font-sans)&quot;,
-        border: &quot;none&quot;,
-        padding: &quot;calc(var(--space-md) * 0.5) var(--space-md)&quot;,
-        cursor: &quot;pointer&quot;,
-        fontSize: &quot;1rem&quot;,
-      }}
-    &gt;
+    &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, padding: &quot;var(--space-md)&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
       {children}
     &lt;/button&gt;
   );
 }
 
-function Field({ id, label, type = &quot;text&quot;, value, onChange }) {
+function Field({ label, id, type = &quot;text&quot;, defaultValue }) {
   return (
     &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
-      &lt;label
-        htmlFor={id}
-        style={{
-          display: &quot;block&quot;,
-          marginBottom: &quot;calc(var(--space-md) * 0.25)&quot;,
-          color: &quot;var(--color-text)&quot;,
-          fontFamily: &quot;var(--font-sans)&quot;,
-        }}
-      &gt;
-        {label}
-      &lt;/label&gt;
-      &lt;input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        style={{
-          fontFamily: &quot;var(--font-sans)&quot;,
-          color: &quot;var(--color-text)&quot;,
-          background: &quot;var(--color-bg)&quot;,
-          border: &quot;1px solid var(--color-text)&quot;,
-          padding: &quot;calc(var(--space-md) * 0.5)&quot;,
-          fontSize: &quot;1rem&quot;,
-          width: &quot;100%&quot;,
-          boxSizing: &quot;border-box&quot;,
-        }}
-      /&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;var(--space-md)&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} type={type} defaultValue={defaultValue} style={{ fontFamily: &quot;var(--font-sans)&quot;, padding: &quot;var(--space-md)&quot;, width: &quot;100%&quot; }} /&gt;
     &lt;/div&gt;
   );
 }
 
 function Table({ columns, rows }) {
   return (
-    &lt;table
-      style={{
-        width: &quot;100%&quot;,
-        borderCollapse: &quot;collapse&quot;,
-        fontFamily: &quot;var(--font-sans)&quot;,
-        color: &quot;var(--color-text)&quot;,
-      }}
-    &gt;
+    &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
+      &lt;thead&gt;&lt;tr&gt;{columns.map(c =&gt; &lt;th key={c} style={{ textAlign: &quot;left&quot;, padding: &quot;var(--space-md)&quot;, borderBottom: &quot;1px solid var(--color-accent)&quot; }}&gt;{c}&lt;/th&gt;)}&lt;/tr&gt;&lt;/thead&gt;
+      &lt;tbody&gt;{rows.map((r, i) =&gt; &lt;tr key={i}&gt;{r.map((cell, j) =&gt; &lt;td key={j} style={{ padding: &quot;var(--space-md)&quot; }}&gt;{cell}&lt;/td&gt;)}&lt;/tr&gt;)}&lt;/tbody&gt;
+    &lt;/table&gt;
+  );
+}
+
+function StaffCanExtend() {
+  return (
+    &lt;Page&gt;
+      &lt;Field label=&quot;Current end time / series end date&quot; id=&quot;current-end&quot; type=&quot;datetime-local&quot; defaultValue=&quot;2025-06-10T17:00&quot; /&gt;
+      &lt;Field label=&quot;New end time / series end date&quot; id=&quot;new-end&quot; type=&quot;datetime-local&quot; defaultValue=&quot;2025-06-10T19:00&quot; /&gt;
+      &lt;Field label=&quot;Reason for extension&quot; id=&quot;reason&quot; /&gt;
+      &lt;Button&gt;Check clashes and extend&lt;/Button&gt;
+      &lt;Table
+        columns={[&quot;Interval checked&quot;, &quot;Resource&quot;, &quot;Clash&quot;, &quot;Status&quot;]}
+        rows={[[&quot;17:00 – 19:00&quot;, &quot;Room 4B&quot;, &quot;None&quot;, &quot;Ready to confirm&quot;]]}
+      /&gt;
+    &lt;/Page&gt;
+  );
+}</pre></section>
+<section id='ClashDetectionThe'><h2>ClashDetectionThe <code>/clashdetectionthe</code></h2><pre>function Page({ children }) {
+  return (
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      &lt;h1&gt;Clash Detection&lt;/h1&gt;
+      {children}
+    &lt;/main&gt;
+  );
+}
+
+function Button({ label, onClick }) {
+  return (
+    &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, padding: &quot;var(--space-md)&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
+      {label}
+    &lt;/button&gt;
+  );
+}
+
+function Field({ label, id, value, onChange }) {
+  return (
+    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;var(--space-md)&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} value={value} onChange={onChange} style={{ fontFamily: &quot;var(--font-sans)&quot;, padding: &quot;var(--space-md)&quot; }} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+function Table({ rows }) {
+  return (
+    &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
       &lt;thead&gt;
-        &lt;tr&gt;
-          {columns.map((col) =&gt; (
-            &lt;th
-              key={col}
-              style={{
-                textAlign: &quot;left&quot;,
-                borderBottom: &quot;2px solid var(--color-accent)&quot;,
-                padding: &quot;calc(var(--space-md) * 0.5)&quot;,
-                fontFamily: &quot;var(--font-sans)&quot;,
-              }}
-            &gt;
-              {col}
-            &lt;/th&gt;
-          ))}
-        &lt;/tr&gt;
+        &lt;tr&gt;{[&quot;Room&quot;, &quot;Conflicting Interval&quot;, &quot;Conflict Type&quot;, &quot;Appears On&quot;].map(h =&gt; &lt;th key={h} style={{ textAlign: &quot;left&quot;, padding: &quot;var(--space-md)&quot;, borderBottom: &quot;1px solid var(--color-text)&quot; }}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;
       &lt;/thead&gt;
       &lt;tbody&gt;
-        {rows.map((row, i) =&gt; (
-          &lt;tr key={i}&gt;
-            {row.map((cell, j) =&gt; (
-              &lt;td
-                key={j}
-                style={{
-                  borderBottom: &quot;1px solid var(--color-text)&quot;,
-                  padding: &quot;calc(var(--space-md) * 0.5)&quot;,
-                }}
-              &gt;
-                {cell}
-              &lt;/td&gt;
-            ))}
-          &lt;/tr&gt;
+        {rows.map((r, i) =&gt; (
+          &lt;tr key={i}&gt;{[r.room, r.interval, r.type, r.screen].map((c, j) =&gt; &lt;td key={j} style={{ padding: &quot;var(--space-md)&quot; }}&gt;{c}&lt;/td&gt;)}&lt;/tr&gt;
         ))}
       &lt;/tbody&gt;
     &lt;/table&gt;
@@ -218,513 +187,360 @@ function Table({ columns, rows }) {
 }
 
 function ClashDetectionThe() {
+  const rows = [
+    { room: &quot;Room A&quot;, interval: &quot;Mon 09:00–10:00&quot;, type: &quot;Booking&quot;, screen: &quot;StaffCanBook&quot; },
+    { room: &quot;Room B&quot;, interval: &quot;Tue 14:00–15:30&quot;, type: &quot;Maintenance Block&quot;, screen: &quot;StaffCanExtend&quot; },
+    { room: &quot;Room C&quot;, interval: &quot;Wed 11:00–12:00&quot;, type: &quot;Booking&quot;, screen: &quot;StaffCanCreate&quot; },
+  ];
   return (
-    &lt;Page heading=&quot;Clash Detection&quot;&gt;
-      &lt;p
-        style={{
-          fontFamily: &quot;var(--font-sans)&quot;,
-          color: &quot;var(--color-text)&quot;,
-          marginBottom: &quot;var(--space-md)&quot;,
-          lineHeight: 1.5,
-        }}
-      &gt;
-        Clash feedback is not a standalone screen. When a booking, creation, or
-        extension request conflicts with an existing interval, an inline banner
-        appears on the originating form — StaffCanBook, StaffCanCreate, or
-        StaffCanExtend — identifying the room, the conflicting interval, and
-        whether the conflict is a booking or a maintenance block.
-      &lt;/p&gt;
-
-      &lt;section style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
-        &lt;h2
-          style={{
-            fontFamily: &quot;var(--font-sans)&quot;,
-            color: &quot;var(--color-text)&quot;,
-            marginBottom: &quot;var(--space-md)&quot;,
-          }}
-        &gt;
-          Example banner preview
-        &lt;/h2&gt;
-
-        &lt;div
-          role=&quot;alert&quot;
-          aria-live=&quot;assertive&quot;
-          style={{
-            background: &quot;var(--color-accent)&quot;,
-            color: &quot;var(--color-bg)&quot;,
-            fontFamily: &quot;var(--font-sans)&quot;,
-            padding: &quot;var(--space-md)&quot;,
-            marginBottom: &quot;var(--space-md)&quot;,
-          }}
-        &gt;
-          &lt;strong&gt;Clash detected&lt;/strong&gt; — Room: Seminar Room B &amp;nbsp;|&amp;nbsp;
-          Conflicting interval: 14:00–15:30 on 12 Aug 2025 &amp;nbsp;|&amp;nbsp; Type:
-          Maintenance block
-        &lt;/div&gt;
-
-        &lt;div
-          role=&quot;alert&quot;
-          aria-live=&quot;assertive&quot;
-          style={{
-            background: &quot;var(--color-accent)&quot;,
-            color: &quot;var(--color-bg)&quot;,
-            fontFamily: &quot;var(--font-sans)&quot;,
-            padding: &quot;var(--space-md)&quot;,
-            marginBottom: &quot;var(--space-md)&quot;,
-          }}
-        &gt;
-          &lt;strong&gt;Clash detected&lt;/strong&gt; — Room: Lecture Hall A &amp;nbsp;|&amp;nbsp;
-          Conflicting interval: 09:00–10:00 on 15 Aug 2025 &amp;nbsp;|&amp;nbsp; Type:
-          Existing booking
-        &lt;/div&gt;
-      &lt;/section&gt;
-
-      &lt;section style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
-        &lt;h2
-          style={{
-            fontFamily: &quot;var(--font-sans)&quot;,
-            color: &quot;var(--color-text)&quot;,
-            marginBottom: &quot;var(--space-md)&quot;,
-          }}
-        &gt;
-          Banner anatomy
-        &lt;/h2&gt;
-
-        &lt;Table
-          columns={[&quot;Field&quot;, &quot;Description&quot;]}
-          rows={[
-            [&quot;Room&quot;, &quot;The display name of the room involved in the clash&quot;],
-            [
-              &quot;Conflicting interval&quot;,
-              &quot;Start and end time, and date, of the blocking interval&quot;,
-            ],
-            [
-              &quot;Conflict type&quot;,
-              &#x27;Either &quot;Existing booking&quot; or &quot;Maintenance block&quot;&#x27;,
-            ],
-            [
-              &quot;Placement&quot;,
-              &quot;Inline on StaffCanBook, StaffCanCreate, or StaffCanExtend&quot;,
-            ],
-            [&quot;Role&quot;, &quot;role=alert with aria-live=assertive for screen readers&quot;],
-          ]}
-        /&gt;
-      &lt;/section&gt;
+    &lt;Page&gt;
+      &lt;Field label=&quot;Filter by Room&quot; id=&quot;room-filter&quot; value=&quot;&quot; onChange={() =&gt; {}} /&gt;
+      &lt;Field label=&quot;Filter by Conflict Type&quot; id=&quot;type-filter&quot; value=&quot;&quot; onChange={() =&gt; {}} /&gt;
+      &lt;Button label=&quot;Run Clash Check&quot; onClick={() =&gt; {}} /&gt;
+      &lt;Table rows={rows} /&gt;
     &lt;/Page&gt;
   );
 }</pre></section>
-<section id='FacilitiesCoordinatorSees'><h2>FacilitiesCoordinatorSees <code>/facilitiescoordinatorsees</code></h2><pre>function Page(props) {
-  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
-}
-function Button(props) {
-  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
-}
-function Field(props) {
-  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
-}
-function Table(props) {
-  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
-}
-function FacilitiesCoordinatorSees() {
+<section id='FacilitiesCoordinatorSees'><h2>FacilitiesCoordinatorSees <code>/facilitiescoordinatorsees</code></h2><pre>function Page({ children }) {
   return (
-    &lt;Page&gt;
-      &lt;h1&gt;Facilities Coordinator Sees&lt;/h1&gt;
-      &lt;p&gt;Full-width same-day list, sorted by start time. Each row: room name, time interval, staff name bookings or &#x27;Maintenance&#x27; blocks , status chip Booked / Blocked . Auto-refreshes in place; no manual reload needed. Coordinator can initiate a maintenance block from this view.&lt;/p&gt;
-      &lt;nav&gt;
-        &lt;Button&gt;StaffCanBook&lt;/Button&gt;
-        &lt;Button&gt;StaffCanCreate&lt;/Button&gt;
-        &lt;Button&gt;StaffCanExtend&lt;/Button&gt;
-        &lt;Button&gt;ClashDetectionThe&lt;/Button&gt;
-      &lt;/nav&gt;
-      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
-      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
-      &lt;Button type=&quot;submit&quot;&gt;Save this block&lt;/Button&gt;
-      &lt;Table heading=&quot;Facilities Coordinator Sees&quot;&gt;
-        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;12:00 Blocked for maintenance&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
-      &lt;/Table&gt;
-    &lt;/Page&gt;
-  );
-}
-</pre></section>
-<section id='FacilitiesCoordinatorCan'><h2>FacilitiesCoordinatorCan <code>/facilitiescoordinatorcan</code></h2><pre>function Page(props) {
-  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
-}
-function Button(props) {
-  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
-}
-function Field(props) {
-  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
-}
-function Table(props) {
-  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
-}
-function FacilitiesCoordinatorCan() {
-  return (
-    &lt;Page&gt;
-      &lt;h1&gt;Facilities Coordinator Can&lt;/h1&gt;
-      &lt;p&gt;Modal or inline form on the same-day list: room selector, date defaults to today , start time, end time, optional note. On save, the block appears immediately in the list and clash detection is active for the interval.&lt;/p&gt;
-      &lt;nav&gt;
-        &lt;Button&gt;StaffCanBook&lt;/Button&gt;
-        &lt;Button&gt;StaffCanCreate&lt;/Button&gt;
-        &lt;Button&gt;StaffCanExtend&lt;/Button&gt;
-        &lt;Button&gt;ClashDetectionThe&lt;/Button&gt;
-      &lt;/nav&gt;
-      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
-      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
-      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
-      &lt;Field name=&quot;note&quot; label=&quot;Note&quot; /&gt;
-      &lt;Button type=&quot;submit&quot;&gt;Save this block&lt;/Button&gt;
-      &lt;Table heading=&quot;Facilities Coordinator Can&quot;&gt;
-        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;12:00 Blocked for maintenance&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
-      &lt;/Table&gt;
-    &lt;/Page&gt;
-  );
-}
-</pre></section>
-<section id='CalendarUpdatesIn'><h2>CalendarUpdatesIn <code>/calendarupdatesin</code></h2><pre>function Page({ heading, children }) {
-  return (
-    &lt;main
-      style={{
-        background: &quot;var(--color-bg)&quot;,
-        color: &quot;var(--color-text)&quot;,
-        fontFamily: &quot;var(--font-sans)&quot;,
-        padding: &quot;var(--space-md)&quot;,
-        minHeight: &quot;100vh&quot;,
-      }}
-    &gt;
-      &lt;h1 style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;{heading}&lt;/h1&gt;
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      &lt;h1&gt;Today&#x27;s Room Schedule&lt;/h1&gt;
       {children}
     &lt;/main&gt;
   );
 }
 
-function Button({ onClick, children, type = &quot;button&quot; }) {
+function Button({ onClick, children }) {
   return (
-    &lt;button
-      type={type}
-      onClick={onClick}
-      style={{
-        background: &quot;var(--color-accent)&quot;,
-        color: &quot;var(--color-bg)&quot;,
-        fontFamily: &quot;var(--font-sans)&quot;,
-        border: &quot;none&quot;,
-        padding: &quot;var(--space-md)&quot;,
-        cursor: &quot;pointer&quot;,
-        fontSize: &quot;1rem&quot;,
-      }}
-    &gt;
+    &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-bg)&quot;, border: &quot;none&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, cursor: &quot;pointer&quot;, borderRadius: 4 }}&gt;
       {children}
     &lt;/button&gt;
   );
 }
 
-function Field({ id, label, value, onChange, type = &quot;text&quot; }) {
+function Field({ label, id, value, onChange }) {
   return (
-    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
-      &lt;label
-        htmlFor={id}
-        style={{
-          display: &quot;block&quot;,
-          marginBottom: &quot;calc(var(--space-md) / 2)&quot;,
-          color: &quot;var(--color-text)&quot;,
-          fontFamily: &quot;var(--font-sans)&quot;,
-        }}
-      &gt;
-        {label}
-      &lt;/label&gt;
-      &lt;input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        style={{
-          fontFamily: &quot;var(--font-sans)&quot;,
-          color: &quot;var(--color-text)&quot;,
-          background: &quot;var(--color-bg)&quot;,
-          border: &quot;1px solid var(--color-text)&quot;,
-          padding: &quot;calc(var(--space-md) / 2)&quot;,
-          fontSize: &quot;1rem&quot;,
-          width: &quot;100%&quot;,
-          boxSizing: &quot;border-box&quot;,
-        }}
-      /&gt;
+    &lt;div style={{ display: &quot;flex&quot;, flexDirection: &quot;column&quot;, gap: 4 }}&gt;
+      &lt;label htmlFor={id} style={{ fontFamily: &quot;var(--font-sans)&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} value={value} onChange={onChange} style={{ padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, border: &quot;1px solid var(--color-text)&quot;, borderRadius: 4 }} /&gt;
     &lt;/div&gt;
   );
 }
 
-function Table({ columns, rows }) {
+function Table({ rows }) {
   return (
-    &lt;table
-      style={{
-        width: &quot;100%&quot;,
-        borderCollapse: &quot;collapse&quot;,
-        fontFamily: &quot;var(--font-sans)&quot;,
-        color: &quot;var(--color-text)&quot;,
-      }}
-    &gt;
-      &lt;thead&gt;
-        &lt;tr&gt;
-          {columns.map((col) =&gt; (
-            &lt;th
-              key={col}
-              style={{
-                textAlign: &quot;left&quot;,
-                borderBottom: &quot;2px solid var(--color-accent)&quot;,
-                padding: &quot;calc(var(--space-md) / 2)&quot;,
-              }}
-            &gt;
-              {col}
-            &lt;/th&gt;
-          ))}
+    &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, marginTop: &quot;var(--space-md)&quot; }}&gt;
+      &lt;thead&gt;&lt;tr&gt;{[&quot;Room&quot;, &quot;Time&quot;, &quot;Name&quot;, &quot;Status&quot;].map(h =&gt; &lt;th key={h} style={{ textAlign: &quot;left&quot;, padding: &quot;var(--space-md)&quot;, borderBottom: &quot;2px solid var(--color-accent)&quot; }}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;&lt;/thead&gt;
+      &lt;tbody&gt;{rows.map((r, i) =&gt; (
+        &lt;tr key={i} style={{ borderBottom: &quot;1px solid var(--color-text)&quot; }}&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;{r.room}&lt;/td&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;{r.time}&lt;/td&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;{r.name}&lt;/td&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;&lt;span style={{ background: r.status === &quot;Booked&quot; ? &quot;var(--color-accent)&quot; : &quot;var(--color-text)&quot;, color: &quot;var(--color-bg)&quot;, borderRadius: 12, padding: &quot;2px 10px&quot;, fontSize: &quot;0.85em&quot; }}&gt;{r.status}&lt;/span&gt;&lt;/td&gt;
         &lt;/tr&gt;
-      &lt;/thead&gt;
-      &lt;tbody&gt;
-        {rows.map((row, i) =&gt; (
-          &lt;tr key={i}&gt;
-            {row.map((cell, j) =&gt; (
-              &lt;td
-                key={j}
-                style={{
-                  borderBottom: &quot;1px solid var(--color-text)&quot;,
-                  padding: &quot;calc(var(--space-md) / 2)&quot;,
-                }}
-              &gt;
-                {cell}
-              &lt;/td&gt;
-            ))}
-          &lt;/tr&gt;
-        ))}
-      &lt;/tbody&gt;
+      ))}&lt;/tbody&gt;
+    &lt;/table&gt;
+  );
+}
+
+function FacilitiesCoordinatorSees() {
+  const [rows, setRows] = React.useState([
+    { room: &quot;Elm Suite&quot;, time: &quot;08:00–09:00&quot;, name: &quot;Dr. Patel&quot;, status: &quot;Booked&quot; },
+    { room: &quot;Cedar Room&quot;, time: &quot;09:30–10:30&quot;, name: &quot;Maintenance&quot;, status: &quot;Blocked&quot; },
+    { room: &quot;Oak Hall&quot;, time: &quot;11:00–12:00&quot;, name: &quot;J. Okonkwo&quot;, status: &quot;Booked&quot; },
+  ]);
+  const [room, setRoom] = React.useState(&quot;&quot;);
+  const [time, setTime] = React.useState(&quot;&quot;);
+  React.useEffect(() =&gt; { const id = setInterval(() =&gt; setRows(r =&gt; [...r]), 30000); return () =&gt; clearInterval(id); }, []);
+  const addBlock = () =&gt; { if (room &amp;&amp; time) { setRows(r =&gt; [...r, { room, time, name: &quot;Maintenance&quot;, status: &quot;Blocked&quot; }].sort((a, b) =&gt; a.time.localeCompare(b.time))); setRoom(&quot;&quot;); setTime(&quot;&quot;); } };
+  return (
+    &lt;Page&gt;
+      &lt;div style={{ display: &quot;flex&quot;, gap: &quot;var(--space-md)&quot;, flexWrap: &quot;wrap&quot;, alignItems: &quot;flex-end&quot;, marginBottom: &quot;var(--space-md)&quot; }}&gt;
+        &lt;Field label=&quot;Room&quot; id=&quot;block-room&quot; value={room} onChange={e =&gt; setRoom(e.target.value)} /&gt;
+        &lt;Field label=&quot;Time (e.g. 14:00–15:00)&quot; id=&quot;block-time&quot; value={time} onChange={e =&gt; setTime(e.target.value)} /&gt;
+        &lt;Button onClick={addBlock}&gt;Add Maintenance Block&lt;/Button&gt;
+      &lt;/div&gt;
+      &lt;Table rows={rows} /&gt;
+    &lt;/Page&gt;
+  );
+}</pre></section>
+<section id='FacilitiesCoordinatorCan'><h2>FacilitiesCoordinatorCan <code>/facilitiescoordinatorcan</code></h2><pre>function Page({ children }) {
+  return (
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      &lt;h1&gt;Same-Day Room Blocking&lt;/h1&gt;
+      {children}
+    &lt;/main&gt;
+  );
+}
+
+function Button({ onClick, children }) {
+  return &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, padding: &quot;var(--space-md)&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;{children}&lt;/button&gt;;
+}
+
+function Field({ label, type = &quot;text&quot;, value, onChange, required }) {
+  const id = label.toLowerCase().replace(/\s+/g, &quot;-&quot;);
+  return (
+    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;4px&quot; }}&gt;{label}{required &amp;&amp; &quot; *&quot;}&lt;/label&gt;
+      &lt;input id={id} type={type} value={value} onChange={onChange} style={{ fontFamily: &quot;var(--font-sans)&quot;, padding: &quot;var(--space-md)&quot;, width: &quot;100%&quot; }} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+function Table({ blocks }) {
+  return (
+    &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, marginTop: &quot;var(--space-md)&quot; }}&gt;
+      &lt;thead&gt;&lt;tr&gt;{[&quot;Room&quot;,&quot;Date&quot;,&quot;Start&quot;,&quot;End&quot;,&quot;Note&quot;,&quot;Clash&quot;].map(h =&gt; &lt;th key={h} style={{ textAlign: &quot;left&quot;, padding: &quot;var(--space-md)&quot;, borderBottom: &quot;1px solid var(--color-accent)&quot; }}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;&lt;/thead&gt;
+      &lt;tbody&gt;{blocks.map((b, i) =&gt; &lt;tr key={i}&gt;{[b.room, b.date, b.start, b.end, b.note || &quot;—&quot;, b.clash ? &quot;⚠ Clash&quot; : &quot;Clear&quot;].map((v, j) =&gt; &lt;td key={j} style={{ padding: &quot;var(--space-md)&quot;, color: j === 5 &amp;&amp; b.clash ? &quot;var(--color-accent)&quot; : &quot;var(--color-text)&quot; }}&gt;{v}&lt;/td&gt;)}&lt;/tr&gt;)}&lt;/tbody&gt;
+    &lt;/table&gt;
+  );
+}
+
+function FacilitiesCoordinatorCan() {
+  const today = new Date().toISOString().slice(0, 10);
+  const [room, setRoom] = React.useState(&quot;&quot;);
+  const [date, setDate] = React.useState(today);
+  const [start, setStart] = React.useState(&quot;&quot;);
+  const [end, setEnd] = React.useState(&quot;&quot;);
+  const [note, setNote] = React.useState(&quot;&quot;);
+  const [blocks, setBlocks] = React.useState([]);
+  const hasClash = (b) =&gt; blocks.some(x =&gt; x.room === b.room &amp;&amp; x.date === b.date &amp;&amp; b.start &lt; x.end &amp;&amp; b.end &gt; x.start);
+  const save = () =&gt; {
+    if (!room || !date || !start || !end || start &gt;= end) return;
+    const entry = { room, date, start, end, note };
+    setBlocks(prev =&gt; [...prev.map(x =&gt; x.room === room &amp;&amp; x.date === date &amp;&amp; start &lt; x.end &amp;&amp; end &gt; x.start ? { ...x, clash: true } : x), { ...entry, clash: hasClash(entry) }]);
+    setRoom(&quot;&quot;); setStart(&quot;&quot;); setEnd(&quot;&quot;); setNote(&quot;&quot;);
+  };
+  return (
+    &lt;Page&gt;
+      &lt;Field label=&quot;Room&quot; value={room} onChange={e =&gt; setRoom(e.target.value)} required /&gt;
+      &lt;Field label=&quot;Date&quot; type=&quot;date&quot; value={date} onChange={e =&gt; setDate(e.target.value)} required /&gt;
+      &lt;Field label=&quot;Start Time&quot; type=&quot;time&quot; value={start} onChange={e =&gt; setStart(e.target.value)} required /&gt;
+      &lt;Field label=&quot;End Time&quot; type=&quot;time&quot; value={end} onChange={e =&gt; setEnd(e.target.value)} required /&gt;
+      &lt;Field label=&quot;Note&quot; value={note} onChange={e =&gt; setNote(e.target.value)} /&gt;
+      &lt;Button onClick={save}&gt;Save Block&lt;/Button&gt;
+      &lt;Table blocks={blocks} /&gt;
+    &lt;/Page&gt;
+  );
+}</pre></section>
+<section id='CalendarUpdatesIn'><h2>CalendarUpdatesIn <code>/calendarupdatesin</code></h2><pre>function Page({ children }) {
+  return (
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      {children}
+    &lt;/main&gt;
+  );
+}
+
+function Button({ onClick, children }) {
+  return (
+    &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, padding: &quot;var(--space-md)&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
+      {children}
+    &lt;/button&gt;
+  );
+}
+
+function Field({ label, id, value, onChange }) {
+  return (
+    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;4px&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} value={value} onChange={onChange} style={{ fontFamily: &quot;var(--font-sans)&quot;, padding: &quot;var(--space-md)&quot;, width: &quot;100%&quot; }} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+function Table({ rows }) {
+  return (
+    &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
+      &lt;thead&gt;&lt;tr&gt;{[&quot;Time&quot;, &quot;Title&quot;, &quot;Status&quot;].map(h =&gt; &lt;th key={h} style={{ textAlign: &quot;left&quot;, padding: &quot;var(--space-md)&quot;, borderBottom: &quot;1px solid var(--color-accent)&quot; }}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;&lt;/thead&gt;
+      &lt;tbody&gt;{rows.map((r, i) =&gt; &lt;tr key={i}&gt;{[r.time, r.title, r.status].map((c, j) =&gt; &lt;td key={j} style={{ padding: &quot;var(--space-md)&quot; }}&gt;{c}&lt;/td&gt;)}&lt;/tr&gt;)}&lt;/tbody&gt;
     &lt;/table&gt;
   );
 }
 
 function CalendarUpdatesIn() {
-  const [loading, setLoading] = React.useState(false);
   const [title, setTitle] = React.useState(&quot;&quot;);
   const [time, setTime] = React.useState(&quot;&quot;);
-  const [events, setEvents] = React.useState([
-    [&quot;09:00&quot;, &quot;Team standup&quot;, &quot;Confirmed&quot;],
-    [&quot;11:30&quot;, &quot;Design review&quot;, &quot;Confirmed&quot;],
-    [&quot;14:00&quot;, &quot;Client call&quot;, &quot;Confirmed&quot;],
-  ]);
-
-  const todayLabel = new Date().toLocaleDateString(undefined, {
-    weekday: &quot;long&quot;,
-    year: &quot;numeric&quot;,
-    month: &quot;long&quot;,
-    day: &quot;numeric&quot;,
-  });
-
-  function handleAdd(e) {
-    e.preventDefault();
-    if (!title.trim() || !time.trim()) return;
-
+  const [loading, setLoading] = React.useState(false);
+  const [events, setEvents] = React.useState([{ time: &quot;09:00&quot;, title: &quot;Standup&quot;, status: &quot;confirmed&quot; }]);
+  const handleWrite = () =&gt; {
     setLoading(true);
-
-    const deadline = setTimeout(() =&gt; {
-      setLoading(false);
-    }, 2000);
-
-    setTimeout(() =&gt; {
-      setEvents((prev) =&gt; {
-        const next = [...prev, [time, title, &quot;Pending&quot;]];
-        next.sort((a, b) =&gt; a[0].localeCompare(b[0]));
-        return next;
-      });
-      setTitle(&quot;&quot;);
-      setTime(&quot;&quot;);
-      clearTimeout(deadline);
-      setLoading(false);
-    }, 800);
-  }
-
+    setTimeout(() =&gt; { setEvents(ev =&gt; [...ev, { time, title, status: &quot;pending&quot; }].map(e =&gt; e.title === title ? { ...e, status: &quot;confirmed&quot; } : e)); setLoading(false); }, 1800);
+  };
   return (
-    &lt;Page heading=&quot;Today&#x27;s Calendar&quot;&gt;
-      &lt;p
-        style={{
-          marginBottom: &quot;var(--space-md)&quot;,
-          color: &quot;var(--color-text)&quot;,
-          fontFamily: &quot;var(--font-sans)&quot;,
-        }}
-      &gt;
-        {todayLabel}
-      &lt;/p&gt;
-
-      &lt;form
-        onSubmit={handleAdd}
-        aria-label=&quot;Add event&quot;
-        style={{ marginBottom: &quot;var(--space-md)&quot; }}
-      &gt;
-        &lt;Field
-          id=&quot;event-title&quot;
-          label=&quot;Event title&quot;
-          value={title}
-          onChange={(e) =&gt; setTitle(e.target.value)}
-        /&gt;
-        &lt;Field
-          id=&quot;event-time&quot;
-          label=&quot;Start time (HH:MM)&quot;
-          value={time}
-          onChange={(e) =&gt; setTime(e.target.value)}
-          type=&quot;time&quot;
-        /&gt;
-        &lt;div
-          style={{
-            display: &quot;flex&quot;,
-            alignItems: &quot;center&quot;,
-            gap: &quot;var(--space-md)&quot;,
-          }}
-        &gt;
-          &lt;Button type=&quot;submit&quot;&gt;Add event&lt;/Button&gt;
-          {loading &amp;&amp; (
-            &lt;span
-              role=&quot;status&quot;
-              aria-live=&quot;polite&quot;
-              style={{
-                color: &quot;var(--color-accent)&quot;,
-                fontFamily: &quot;var(--font-sans)&quot;,
-              }}
-            &gt;
-              Updating…
-            &lt;/span&gt;
-          )}
-        &lt;/div&gt;
-      &lt;/form&gt;
-
-      &lt;section aria-label=&quot;Same-day events&quot;&gt;
-        &lt;h2
-          style={{
-            fontFamily: &quot;var(--font-sans)&quot;,
-            color: &quot;var(--color-text)&quot;,
-            marginBottom: &quot;var(--space-md)&quot;,
-            fontSize: &quot;1.1rem&quot;,
-          }}
-        &gt;
-          Events today
-        &lt;/h2&gt;
-        {events.length === 0 ? (
-          &lt;p style={{ fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
-            No events scheduled for today.
-          &lt;/p&gt;
-        ) : (
-          &lt;Table
-            columns={[&quot;Time&quot;, &quot;Title&quot;, &quot;Status&quot;]}
-            rows={events}
-          /&gt;
-        )}
-      &lt;/section&gt;
+    &lt;Page&gt;
+      &lt;h1&gt;Today&#x27;s Calendar&lt;/h1&gt;
+      &lt;Field label=&quot;Event title&quot; id=&quot;evt-title&quot; value={title} onChange={e =&gt; setTitle(e.target.value)} /&gt;
+      &lt;Field label=&quot;Start time&quot; id=&quot;evt-time&quot; value={time} onChange={e =&gt; setTime(e.target.value)} /&gt;
+      &lt;Button onClick={handleWrite}&gt;{loading ? &quot;Saving…&quot; : &quot;Add event&quot;}&lt;/Button&gt;
+      &lt;Table rows={events} /&gt;
     &lt;/Page&gt;
   );
 }</pre></section>
-<section id='OfficeManagerCan'><h2>OfficeManagerCan <code>/officemanagercan</code></h2><pre>function Page(props) {
-  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+<section id='OfficeManagerCan'><h2>OfficeManagerCan <code>/officemanagercan</code></h2><pre>function Page({ children }) {
+  return (
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      &lt;h1&gt;Staff Account Management&lt;/h1&gt;
+      {children}
+    &lt;/main&gt;
+  );
 }
-function Button(props) {
-  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+
+function Button({ onClick, children }) {
+  return (
+    &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, padding: &quot;var(--space-md)&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
+      {children}
+    &lt;/button&gt;
+  );
 }
-function Field(props) {
-  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+
+function Field({ label, type = &quot;text&quot;, value, onChange }) {
+  const id = label.toLowerCase().replace(/\s+/g, &quot;-&quot;);
+  return (
+    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;4px&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} type={type} value={value} onChange={onChange} style={{ fontFamily: &quot;var(--font-sans)&quot;, padding: &quot;var(--space-md)&quot;, width: &quot;100%&quot; }} /&gt;
+    &lt;/div&gt;
+  );
 }
-function Table(props) {
-  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+
+function Table({ rows, onRemove }) {
+  return (
+    &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, marginTop: &quot;var(--space-md)&quot; }}&gt;
+      &lt;thead&gt;&lt;tr&gt;{[&quot;Name&quot;,&quot;Email&quot;,&quot;Role&quot;,&quot;Action&quot;].map(h =&gt; &lt;th key={h} style={{ textAlign:&quot;left&quot;, padding:&quot;var(--space-md)&quot;, borderBottom:&quot;1px solid var(--color-text)&quot; }}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;&lt;/thead&gt;
+      &lt;tbody&gt;{rows.map(r =&gt; (
+        &lt;tr key={r.email} style={{ opacity: r.deactivated ? 0.4 : 1 }}&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;{r.name}&lt;/td&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;{r.email}&lt;/td&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;{r.role}&lt;/td&gt;
+          &lt;td style={{ padding: &quot;var(--space-md)&quot; }}&gt;{!r.deactivated &amp;&amp; &lt;Button onClick={() =&gt; { if (window.confirm(`Deactivate ${r.name}?`)) onRemove(r.email); }}&gt;Remove&lt;/Button&gt;}&lt;/td&gt;
+        &lt;/tr&gt;
+      ))}&lt;/tbody&gt;
+    &lt;/table&gt;
+  );
 }
+
 function OfficeManagerCan() {
+  const [staff, setStaff] = React.useState([{ name:&quot;Ada Lovelace&quot;, email:&quot;ada@co.com&quot;, role:&quot;Engineer&quot;, deactivated:false },{ name:&quot;Grace Hopper&quot;, email:&quot;grace@co.com&quot;, role:&quot;Manager&quot;, deactivated:false }]);
+  const [name, setName] = React.useState(&quot;&quot;); const [email, setEmail] = React.useState(&quot;&quot;); const [pass, setPass] = React.useState(&quot;&quot;);
+  const add = () =&gt; { if (name &amp;&amp; email &amp;&amp; pass) { setStaff([...staff, { name, email, role:&quot;Staff&quot;, deactivated:false }]); setName(&quot;&quot;); setEmail(&quot;&quot;); setPass(&quot;&quot;); } };
+  const remove = (e) =&gt; setStaff(staff.map(s =&gt; s.email === e ? { ...s, deactivated:true } : s));
   return (
     &lt;Page&gt;
-      &lt;h1&gt;Office Manager Can&lt;/h1&gt;
-      &lt;p&gt;User-management screen listing current staff accounts name, email, role . &#x27;Add login&#x27; form: name, email, temporary password. &#x27;Remove&#x27; action with a confirmation step. Removed accounts are deactivated immediately.&lt;/p&gt;
-      &lt;nav&gt;
-        &lt;Button&gt;StaffCanBook&lt;/Button&gt;
-        &lt;Button&gt;StaffCanCreate&lt;/Button&gt;
-        &lt;Button&gt;StaffCanExtend&lt;/Button&gt;
-        &lt;Button&gt;ClashDetectionThe&lt;/Button&gt;
-      &lt;/nav&gt;
-      &lt;Field name=&quot;email&quot; label=&quot;Email&quot; /&gt;
-      &lt;Field name=&quot;password&quot; label=&quot;Password&quot; /&gt;
-      &lt;Button type=&quot;submit&quot;&gt;Sign in&lt;/Button&gt;
-      &lt;Table heading=&quot;Office Manager Can&quot;&gt;
-        &lt;tr&gt;&lt;td&gt;Office manager&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;Staff&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;Facilities coordinator&lt;/td&gt;&lt;/tr&gt;
-      &lt;/Table&gt;
+      &lt;Field label=&quot;Full Name&quot; value={name} onChange={e =&gt; setName(e.target.value)} /&gt;
+      &lt;Field label=&quot;Email Address&quot; type=&quot;email&quot; value={email} onChange={e =&gt; setEmail(e.target.value)} /&gt;
+      &lt;Field label=&quot;Temporary Password&quot; type=&quot;password&quot; value={pass} onChange={e =&gt; setPass(e.target.value)} /&gt;
+      &lt;Button onClick={add}&gt;Add Login&lt;/Button&gt;
+      &lt;Table rows={staff} onRemove={remove} /&gt;
     &lt;/Page&gt;
   );
+}</pre></section>
+<section id='LoginViaEmail'><h2>LoginViaEmail <code>/loginviaemail</code></h2><pre>function Page({ children }) {
+  return (
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot; }}&gt;
+      &lt;h1&gt;Sign In&lt;/h1&gt;
+      {children}
+    &lt;/main&gt;
+  );
 }
-</pre></section>
-<section id='LoginViaEmail'><h2>LoginViaEmail <code>/loginviaemail</code></h2><pre>function Page(props) {
-  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+
+function Button({ children, onClick, type = &quot;submit&quot; }) {
+  return (
+    &lt;button type={type} onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, padding: &quot;var(--space-md)&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
+      {children}
+    &lt;/button&gt;
+  );
 }
-function Button(props) {
-  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+
+function Field({ label, id, type = &quot;text&quot;, value, onChange }) {
+  return (
+    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;var(--space-md)&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} type={type} value={value} onChange={onChange} style={{ fontFamily: &quot;var(--font-sans)&quot;, padding: &quot;var(--space-md)&quot;, width: &quot;100%&quot; }} /&gt;
+    &lt;/div&gt;
+  );
 }
-function Field(props) {
-  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+
+function Table({ rows }) {
+  return (
+    &lt;table role=&quot;table&quot; style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot;, fontFamily: &quot;var(--font-sans)&quot; }}&gt;
+      &lt;thead&gt;&lt;tr&gt;&lt;th scope=&quot;col&quot;&gt;Attempt&lt;/th&gt;&lt;th scope=&quot;col&quot;&gt;Status&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+      &lt;tbody&gt;{rows.map((r, i) =&gt; &lt;tr key={i}&gt;&lt;td&gt;{r.attempt}&lt;/td&gt;&lt;td&gt;{r.status}&lt;/td&gt;&lt;/tr&gt;)}&lt;/tbody&gt;
+    &lt;/table&gt;
+  );
 }
-function Table(props) {
-  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
-}
+
 function LoginViaEmail() {
+  const [email, setEmail] = React.useState(&quot;&quot;);
+  const [password, setPassword] = React.useState(&quot;&quot;);
+  const [error, setError] = React.useState(null);
+  const [log, setLog] = React.useState([]);
+  const handleSubmit = async (e) =&gt; {
+    e.preventDefault();
+    const res = await fakeAuth(email, password);
+    const entry = { attempt: email, status: res.ok ? &quot;success&quot; : &quot;failed&quot; };
+    setLog((prev) =&gt; [...prev, entry]);
+    if (res.ok) { window.location.href = res.role === &quot;admin&quot; ? &quot;/admin&quot; : &quot;/dashboard&quot;; }
+    else { setError(&quot;Invalid credentials. Please try again.&quot;); }
+  };
   return (
     &lt;Page&gt;
-      &lt;h1&gt;Login Via Email&lt;/h1&gt;
-      &lt;p&gt;Single-screen login: email field, password field, Sign In button. No SSO button, no social login. Failed authentication shows a generic error no account enumeration . Successful login redirects to the role-appropriate landing view.&lt;/p&gt;
-      &lt;nav&gt;
-        &lt;Button&gt;StaffCanBook&lt;/Button&gt;
-        &lt;Button&gt;StaffCanCreate&lt;/Button&gt;
-        &lt;Button&gt;StaffCanExtend&lt;/Button&gt;
-        &lt;Button&gt;ClashDetectionThe&lt;/Button&gt;
-      &lt;/nav&gt;
-      &lt;Field name=&quot;email&quot; label=&quot;Email&quot; /&gt;
-      &lt;Field name=&quot;password&quot; label=&quot;Password&quot; /&gt;
-      &lt;Button type=&quot;submit&quot;&gt;Sign in&lt;/Button&gt;
-      &lt;Table heading=&quot;Login Via Email&quot;&gt;
-        &lt;tr&gt;&lt;td&gt;Office manager&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;Staff&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;Facilities coordinator&lt;/td&gt;&lt;/tr&gt;
-      &lt;/Table&gt;
+      &lt;form onSubmit={handleSubmit} noValidate&gt;
+        &lt;Field label=&quot;Email address&quot; id=&quot;email&quot; type=&quot;email&quot; value={email} onChange={(e) =&gt; setEmail(e.target.value)} /&gt;
+        &lt;Field label=&quot;Password&quot; id=&quot;password&quot; type=&quot;password&quot; value={password} onChange={(e) =&gt; setPassword(e.target.value)} /&gt;
+        {error &amp;&amp; &lt;p role=&quot;alert&quot; style={{ color: &quot;var(--color-accent)&quot; }}&gt;{error}&lt;/p&gt;}
+        &lt;Button type=&quot;submit&quot;&gt;Sign In&lt;/Button&gt;
+      &lt;/form&gt;
+      {log.length &gt; 0 &amp;&amp; &lt;Table rows={log} /&gt;}
     &lt;/Page&gt;
   );
+}</pre></section>
+<section id='ResponsiveDesignStaff'><h2>ResponsiveDesignStaff <code>/responsivedesignstaff</code></h2><pre>function Page({ children }) {
+  return (
+    &lt;main style={{ background: &quot;var(--color-bg)&quot;, padding: &quot;var(--space-md)&quot;, fontFamily: &quot;var(--font-sans)&quot;, color: &quot;var(--color-text)&quot;, maxWidth: &quot;100%&quot;, boxSizing: &quot;border-box&quot; }}&gt;
+      {children}
+    &lt;/main&gt;
+  );
 }
-</pre></section>
-<section id='ResponsiveDesignStaff'><h2>ResponsiveDesignStaff <code>/responsivedesignstaff</code></h2><pre>function Page(props) {
-  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+
+function Button({ label, onClick }) {
+  return (
+    &lt;button onClick={onClick} style={{ background: &quot;var(--color-accent)&quot;, color: &quot;var(--color-text)&quot;, font: &quot;inherit&quot;, padding: &quot;var(--space-md)&quot;, minHeight: &quot;44px&quot;, minWidth: &quot;44px&quot;, border: &quot;none&quot;, cursor: &quot;pointer&quot;, width: &quot;100%&quot;, boxSizing: &quot;border-box&quot; }}&gt;
+      {label}
+    &lt;/button&gt;
+  );
 }
-function Button(props) {
-  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+
+function Field({ id, label }) {
+  return (
+    &lt;div style={{ marginBottom: &quot;var(--space-md)&quot; }}&gt;
+      &lt;label htmlFor={id} style={{ display: &quot;block&quot;, marginBottom: &quot;4px&quot; }}&gt;{label}&lt;/label&gt;
+      &lt;input id={id} name={id} style={{ width: &quot;100%&quot;, minHeight: &quot;44px&quot;, boxSizing: &quot;border-box&quot;, font: &quot;inherit&quot;, padding: &quot;var(--space-md)&quot; }} /&gt;
+    &lt;/div&gt;
+  );
 }
-function Field(props) {
-  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+
+function Table({ rows }) {
+  return (
+    &lt;div style={{ overflowX: &quot;auto&quot;, width: &quot;100%&quot; }}&gt;
+      &lt;table style={{ width: &quot;100%&quot;, borderCollapse: &quot;collapse&quot; }}&gt;
+        &lt;thead&gt;&lt;tr&gt;{[&quot;Screen&quot;,&quot;Min Width&quot;,&quot;Touch Target&quot;,&quot;Hover-free&quot;].map(h =&gt; &lt;th key={h} style={{ textAlign: &quot;left&quot;, padding: &quot;var(--space-md)&quot;, borderBottom: &quot;1px solid var(--color-text)&quot; }}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;&lt;/thead&gt;
+        &lt;tbody&gt;{rows.map((r, i) =&gt; &lt;tr key={i}&gt;{r.map((c, j) =&gt; &lt;td key={j} style={{ padding: &quot;var(--space-md)&quot;, borderBottom: &quot;1px solid var(--color-text)&quot; }}&gt;{c}&lt;/td&gt;)}&lt;/tr&gt;)}&lt;/tbody&gt;
+      &lt;/table&gt;
+    &lt;/div&gt;
+  );
 }
-function Table(props) {
-  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
-}
+
 function ResponsiveDesignStaff() {
   return (
     &lt;Page&gt;
-      &lt;h1&gt;Responsive Design Staff&lt;/h1&gt;
-      &lt;p&gt;Not a standalone screen — a cross-cutting constraint. All screens above must render usably at 320 px and above. Touch targets ≥ 44 px. No action hidden behind a hover state.&lt;/p&gt;
-      &lt;nav&gt;
-        &lt;Button&gt;StaffCanBook&lt;/Button&gt;
-        &lt;Button&gt;StaffCanCreate&lt;/Button&gt;
-        &lt;Button&gt;StaffCanExtend&lt;/Button&gt;
-        &lt;Button&gt;ClashDetectionThe&lt;/Button&gt;
-      &lt;/nav&gt;
-      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
-      &lt;Button type=&quot;submit&quot;&gt;Save&lt;/Button&gt;
-      &lt;Table heading=&quot;Responsive Design Staff&quot;&gt;
-        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
-        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
-      &lt;/Table&gt;
+      &lt;h1&gt;Responsive Design Constraints&lt;/h1&gt;
+      &lt;Field id=&quot;screen-name&quot; label=&quot;Screen name&quot; /&gt;
+      &lt;Field id=&quot;breakpoint&quot; label=&quot;Minimum tested width (px)&quot; /&gt;
+      &lt;Button label=&quot;Save constraint&quot; onClick={() =&gt; {}} /&gt;
+      &lt;Table rows={[[&quot;Dashboard&quot;,&quot;320 px&quot;,&quot;44 px&quot;,&quot;Yes&quot;],[&quot;Staff list&quot;,&quot;320 px&quot;,&quot;44 px&quot;,&quot;Yes&quot;],[&quot;Edit record&quot;,&quot;320 px&quot;,&quot;44 px&quot;,&quot;Yes&quot;]]} /&gt;
     &lt;/Page&gt;
   );
-}
-</pre></section>
+}</pre></section>
 <section id='AdminCancel'><h2>AdminCancel <code>/admincancel</code></h2><pre>function Page(props) {
   return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
 }
