@@ -15,14 +15,19 @@ function OfficeManagerCan() {
     <Page>
       <h1>Office Manager Can</h1>
       <p>User-management screen listing current staff accounts name, email, role . 'Add login' form: name, email, temporary password. 'Remove' action with a confirmation step. Removed accounts are deactivated immediately.</p>
-      <Field name="room" label="Room" />
-      <Field name="starts" label="Starts" />
-      <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
-        <tr><td>10:00 Booked</td></tr>
-        <tr><td>12:00 Blocked</td></tr>
-        <tr><td>14:00 Open</td></tr>
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+        <Button>StaffCanExtend</Button>
+        <Button>ClashDetectionThe</Button>
+      </nav>
+      <Field name="email" label="Email" />
+      <Field name="password" label="Password" />
+      <Button type="submit">Sign in</Button>
+      <Table heading="Office Manager Can">
+        <tr><td>Office manager</td></tr>
+        <tr><td>Staff</td></tr>
+        <tr><td>Facilities coordinator</td></tr>
       </Table>
     </Page>
   );
