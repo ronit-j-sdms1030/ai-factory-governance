@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'><title>Preview REQ-0007</title>
+<style>body{font-family:system-ui,sans-serif;margin:0;background:#0f1419;color:#e7ecf1}
+header{padding:1rem 1.5rem;border-bottom:1px solid #243041} section{padding:1.5rem}
+pre{white-space:pre-wrap;background:#161d27;padding:1rem;border-radius:8px}</style></head><body>
+<header><p>Preview URL /preview/REQ-0007</p>
+<h1>REQ-0007</h1></header>
+<section id='SameDayCalendar'><h2>SameDayCalendar <code>/samedaycalendar</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function SameDayCalendar() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;SameDayCalendar&lt;/h1&gt;
+      &lt;p&gt;Same-day calendar view 08:00–18:00 weekdays showing all rooms and bookings in a single grid&lt;/p&gt;
+      &lt;p&gt;Sibling screens: none yet&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;SameDayCalendar input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;SameDayCalendar&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='StaffCreateView'><h2>StaffCreateView <code>/staffcreateview</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCreateView() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;StaffCreateView&lt;/h1&gt;
+      &lt;p&gt;Staff create, view, and cancel bookings; choose start/end time in 30-minute steps; see booker name and department on each slot&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;StaffCreateView input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;StaffCreateView&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='RecurringBookingsStaff'><h2>RecurringBookingsStaff <code>/recurringbookingsstaff</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function RecurringBookingsStaff() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;RecurringBookingsStaff&lt;/h1&gt;
+      &lt;p&gt;Recurring bookings: staff can create series, edit or cancel individual instances, or cancel entire series; edit series start/end from a…&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;RecurringBookingsStaff input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;RecurringBookingsStaff&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='CoordinatorsViewBookings'><h2>CoordinatorsViewBookings <code>/coordinatorsviewbookings</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function CoordinatorsViewBookings() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;CoordinatorsViewBookings&lt;/h1&gt;
+      &lt;p&gt;Coordinators view bookings with booker name, creation time, and can cancel or move any booking; moved/cancelled bookings trigger in-app…&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;CoordinatorsViewBookings input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;CoordinatorsViewBookings&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='FacilitiesCoordinatorsCreate'><h2>FacilitiesCoordinatorsCreate <code>/facilitiescoordinatorscreate</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function FacilitiesCoordinatorsCreate() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;FacilitiesCoordinatorsCreate&lt;/h1&gt;
+      &lt;p&gt;Facilities coordinators create, edit, and lift administrative blocks e.g&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff, CoordinatorsViewBookings&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;FacilitiesCoordinatorsCreate input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;FacilitiesCoordinatorsCreate&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='CleaningBlocksAppear'><h2>CleaningBlocksAppear <code>/cleaningblocksappear</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function CleaningBlocksAppear() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;CleaningBlocksAppear&lt;/h1&gt;
+      &lt;p&gt;&#x27;Cleaning 12:00–13:00&#x27; ; blocks appear as first-class holds, colour/label distinguishes Booked from Blocked, reason is visible to all…&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff, CoordinatorsViewBookings, FacilitiesCoordinatorsCreate&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;CleaningBlocksAppear input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;CleaningBlocksAppear&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='SessionBasedAuthentication'><h2>SessionBasedAuthentication <code>/sessionbasedauthentication</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function SessionBasedAuthentication() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;SessionBasedAuthentication&lt;/h1&gt;
+      &lt;p&gt;Session-based authentication: email + password login, demo account creation by office manager, cookie-based sessions with idle timeout&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff, CoordinatorsViewBookings, FacilitiesCoordinatorsCreate, CleaningBlocksAppear&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;SessionBasedAuthentication input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;SessionBasedAuthentication&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='InAppNotifications'><h2>InAppNotifications <code>/inappnotifications</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function InAppNotifications() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;InAppNotifications&lt;/h1&gt;
+      &lt;p&gt;In-app notifications: staff see cancellation/move notifications on their bookings list; no email or Slack notifications in this version&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff, CoordinatorsViewBookings, FacilitiesCoordinatorsCreate, CleaningBlocksAppear, SessionBasedAuthentication&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;InAppNotifications input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;InAppNotifications&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='ResponsiveDesignWorks'><h2>ResponsiveDesignWorks <code>/responsivedesignworks</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function ResponsiveDesignWorks() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;ResponsiveDesignWorks&lt;/h1&gt;
+      &lt;p&gt;Responsive design works in mobile browser&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff, CoordinatorsViewBookings, FacilitiesCoordinatorsCreate, CleaningBlocksAppear, SessionBasedAuthentication, InAppNotifications&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;ResponsiveDesignWorks input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;ResponsiveDesignWorks&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='AdminCancel'><h2>AdminCancel <code>/admincancel</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function AdminCancel() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;AdminCancel&lt;/h1&gt;
+      &lt;p&gt;Admin cancels any booking&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff, CoordinatorsViewBookings, FacilitiesCoordinatorsCreate, CleaningBlocksAppear, SessionBasedAuthentication, InAppNotifications, ResponsiveDesignWorks&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;AdminCancel input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;AdminCancel&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='CleaningBlocksAppear2'><h2>CleaningBlocksAppear2 <code>/cleaningblocksappear2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function CleaningBlocksAppear2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;CleaningBlocksAppear&lt;/h1&gt;
+      &lt;p&gt;&#x27;Cleaning 12:00–13:00&#x27; ; blocks appear as first-class holds, colour/label distinguishes Booked from Blocked, reason is visible to all…&lt;/p&gt;
+      &lt;p&gt;Sibling screens: SameDayCalendar, StaffCreateView, RecurringBookingsStaff, CoordinatorsViewBookings, FacilitiesCoordinatorsCreate, CleaningBlocksAppear, SessionBasedAuthentication, InAppNotifications, ResponsiveDesignWorks, AdminCancel&lt;/p&gt;
+      &lt;Field name=&quot;query&quot; label=&quot;CleaningBlocksAppear input&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Continue&lt;/Button&gt;
+      &lt;Table heading=&quot;CleaningBlocksAppear&quot;&gt;&lt;tr&gt;&lt;td&gt;Ready for Gate 3 preview.&lt;/td&gt;&lt;/tr&gt;&lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+</body></html>
