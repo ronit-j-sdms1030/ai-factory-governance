@@ -1,0 +1,83 @@
+{
+  "repaired": [
+    "AdminCancel",
+    "StaffCanBook2",
+    "StaffCanCreate2",
+    "StaffCanExtend2",
+    "ClashDetectionThe2",
+    "FacilitiesCoordinatorSees2",
+    "FacilitiesCoordinatorCan2",
+    "CalendarUpdatesIn2",
+    "OfficeManagerCan2",
+    "LoginViaEmail2",
+    "ResponsiveDesignStaff2"
+  ],
+  "extras": [
+    "StaffCanBook",
+    "StaffCanCreate",
+    "StaffCanExtend",
+    "ClashDetectionThe",
+    "FacilitiesCoordinatorSees",
+    "FacilitiesCoordinatorCan",
+    "CalendarUpdatesIn",
+    "OfficeManagerCan",
+    "LoginViaEmail",
+    "ResponsiveDesignStaff",
+    "StaffCanBook2",
+    "StaffCanCreate2",
+    "StaffCanExtend2",
+    "ClashDetectionThe2",
+    "FacilitiesCoordinatorSees2",
+    "FacilitiesCoordinatorCan2",
+    "CalendarUpdatesIn2",
+    "OfficeManagerCan2",
+    "LoginViaEmail2",
+    "ResponsiveDesignStaff2"
+  ],
+  "pages": [
+    {
+      "id": "StaffCanBook",
+      "description": "Room-selector, date-picker, start-time and end-time inputs, and a Submit button. On submit, clash detection runs server-side; success inserts the new booking into the same-day list in place; failure surfaces a conflict banner naming the clashing interval. No page reload on either path."
+    },
+    {
+      "id": "StaffCanCreate",
+      "description": "Extends the booking form with a recurrence panel (frequency selector, end-date for the series). Preview shows the first and last occurrence before confirm. On save, all occurrences are written atomically. A \"Manage series\" view lists occurrences with per-occurrence and whole-series cancel controls."
+    },
+    {
+      "id": "StaffCanExtend",
+      "description": "Accessed from an existing booking or series detail. Shows current end time (or series end date) with an editable field. On submit, clash detection covers the extended interval only; conflict or success feedback appears in place."
+    },
+    {
+      "id": "ClashDetectionThe",
+      "description": "Not a standalone screen \u2014 clash feedback is an inline banner on StaffCanBook, StaffCanCreate, and StaffCanExtend. Banner text identifies the room, the conflicting interval, and whether the conflict is a booking or a maintenance block."
+    },
+    {
+      "id": "FacilitiesCoordinatorSees",
+      "description": "Full-width same-day list, sorted by start time. Each row: room name, time interval, staff name (bookings) or \"Maintenance\" (blocks), status chip (Booked / Blocked). Auto-refreshes in place; no manual reload needed. Coordinator can initiate a maintenance block from this view."
+    },
+    {
+      "id": "FacilitiesCoordinatorCan",
+      "description": "Modal or inline form on the same-day list: room selector, date (defaults to today), start time, end time, optional note. On save, the block appears immediately in the list and clash detection is active for the interval."
+    },
+    {
+      "id": "CalendarUpdatesIn",
+      "description": "Not a standalone screen \u2014 a cross-cutting behaviour. After any write action the same-day list patch is applied client-side within 2 seconds. A loading indicator is shown during the round-trip; no spinner persists beyond 2 seconds on a normal connection."
+    },
+    {
+      "id": "OfficeManagerCan",
+      "description": "User-management screen listing current staff accounts (name, email, role). \"Add login\" form: name, email, temporary password. \"Remove\" action with a confirmation step. Removed accounts are deactivated immediately."
+    },
+    {
+      "id": "LoginViaEmail",
+      "description": "Single-screen login: email field, password field, Sign In button. No SSO button, no social login. Failed authentication shows a generic error (no account enumeration). Successful login redirects to the role-appropriate landing view."
+    },
+    {
+      "id": "ResponsiveDesignStaff",
+      "description": "Not a standalone screen \u2014 a cross-cutting constraint. All screens above must render usably at 320 px and above. Touch targets \u2265 44 px. No action hidden behind a hover state."
+    },
+    {
+      "id": "AdminCancel",
+      "description": "Admin cancels any booking"
+    }
+  ]
+}
