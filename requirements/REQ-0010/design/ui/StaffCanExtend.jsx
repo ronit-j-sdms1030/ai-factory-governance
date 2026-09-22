@@ -15,11 +15,13 @@ function StaffCanExtend() {
     <Page>
       <h1>Staff Can Extend</h1>
       <p>Accessed from an existing booking or series detail. Shows current end time or series end date with an editable field. On submit, clash detection covers the extended interval only; conflict or success feedback appears in place.</p>
-      <Field name="room" label="Room" />
-      <Field name="starts" label="Starts" />
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+      </nav>
       <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
+      <Button type="submit">Save</Button>
+      <Table heading="Staff Can Extend">
         <tr><td>10:00 Booked</td></tr>
         <tr><td>12:00 Blocked</td></tr>
         <tr><td>14:00 Open</td></tr>
