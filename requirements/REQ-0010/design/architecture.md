@@ -85,31 +85,31 @@ Staff can extend an existing single booking or every future occurrence in a recu
 
 ## Architect notes
 
-# Architecture Note for Meeting Room Booking System
+# Architecture Note — Meeting Room Booking System
 
 ## Modules
 
-- **Authentication Module**: Handles email/password login and user management by the office manager, including account creation, removal, and role assignment.
-- **Booking Module**: Supports single and recurring bookings, extensions, cancellations, and enforces clash detection against active bookings and maintenance blocks.
-- **Clash Detection Service**: Centralized logic to detect overlapping bookings or maintenance blocks in real time, preventing double-booking.
-- **Facilities Coordinator Dashboard**: Displays a live same-day list of bookings and maintenance blocks with real-time updates and allows creation of maintenance blocks.
-- **UI Layer**: Responsive web frontend supporting staff, coordinator, and manager roles with in-place updates and no full page reloads.
-- **Audit Logging**: Records all user actions for accountability and traceability.
+- **Authentication & User Management**: Handles email/password login, user roles (staff, coordinator, manager), and account activation/deactivation.
+- **Booking Management**: Supports single and recurring bookings, extensions, cancellations, and enforces clash detection.
+- **Maintenance Blocks**: Allows coordinators to create time blocks that prevent bookings.
+- **Real-time Calendar & UI Updates**: Provides the same-day list with live updates within 2 seconds, avoiding full page reloads.
+- **Clash Detection Engine**: Centralized logic querying active bookings and maintenance blocks to prevent overlaps.
+- **Audit Logging**: Records user actions for accountability and traceability.
 
 ## Non-Functional Requirements (NFRs)
 
-- **Performance**: Calendar updates and clash detection responses must occur within 1–2 seconds to ensure a responsive user experience.
-- **Security**: Authentication is strictly email/password based with no SSO or external identity providers; removed accounts must be immediately deactivated.
-- **Usability**: Responsive design supporting mobile and desktop browsers with accessible touch targets and no hidden actions.
-- **Reliability**: Real-time clash detection must guarantee no overlapping bookings or blocks are saved.
-- **Testability**: Each requirement supports isolated automated tests that can fail independently without cascading failures.
+- **Responsiveness**: UI must be fully responsive and usable on mobile (≥320 px) and desktop without horizontal scrolling.
+- **Performance**: Calendar updates and UI changes must reflect within 2 seconds after any booking or block action.
+- **Security**: Authentication limited to email/password managed internally; no SSO or external identity providers.
+- **Data Integrity**: Atomic operations for recurring bookings and extensions to prevent partial updates.
+- **Scalability**: Designed to handle concurrent bookings with real-time clash detection to avoid race conditions.
+- **Usability**: Clear conflict messages and inline feedback without page reloads.
 
 ## Risks
 
-- **Race Conditions in Clash Detection**: Concurrent booking attempts may cause conflicts; requires careful transaction isolation or optimistic concurrency control in the database.
-- **Scalability of Real-Time Updates**: Ensuring the same-day list updates within 2 seconds for multiple concurrent users may require efficient push or polling mechanisms.
-- **Data Integrity in Recurring Bookings**: Atomic creation and cancellation of series and individual occurrences must be carefully managed to avoid partial updates.
-- **Security of Password Storage**: Password hashes must be securely stored and managed to prevent unauthorized access.
-- **User Role Enforcement**: Proper access control must be enforced to prevent unauthorized actions by staff, coordinators, or managers.
-
-This architecture balances simplicity and responsiveness, leveraging PostgreSQL for data integrity and real-time clash detection, with a modular design to separate concerns and facilitate testing and maintenance.
+- **Race Conditions in Clash Detection**: Concurrent booking attempts may cause conflicts; requires careful transaction isolation or locking strategies.
+- **Complexity in Recurring Booking Management**: Handling series modifications and cancellations without data inconsistency.
+- **Real-time UI Synchronization**: Ensuring all clients see consistent, up-to-date booking states within the 2-second window.
+- **Security of Password Storage and Authentication**: Must use secure hashing and protect against common vulnerabilities.
+- **User Role Enforcement**: Prevent unauthorized access to coordinator and manager functions.
+- **Data Model Ambiguities**: Capacity field nullable until clarified; potential impact on future features or validations.
