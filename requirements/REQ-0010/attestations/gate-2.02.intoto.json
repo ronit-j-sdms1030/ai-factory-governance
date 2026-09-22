@@ -1,0 +1,44 @@
+{
+  "cosignBundle": {
+    "base64Signature": "MEYCIQDrp1jDN6A2Ah6/IlWDwPI1+whuKrqhHsQGQry7hZ6QEAIhAJTh3Tfg5NrFBh80U5j/achussJuVCiJMOvj1VR4m2kf"
+  },
+  "payload": {
+    "_type": "https://in-toto.io/Statement/v1",
+    "predicate": {
+      "actor": "u-bo",
+      "contextInputs": {
+        "connectors": [],
+        "precedentEnabled": false,
+        "retrievalDocumentIds": [],
+        "skillFileVersions": {
+          "bmad-advanced-elicitation": "27275bd",
+          "bmad-agent-analyst": "27275bd",
+          "design_system": "shipped",
+          "intake": "27275bd",
+          "intake.skill": "27275bd",
+          "spec-driven-development": "27275bd"
+        }
+      },
+      "decision": "approve",
+      "gate": 2,
+      "producedBy": {
+        "model": "deterministic/brd",
+        "modelVersion": "phase1-1",
+        "promptVersion": "brd.template.md"
+      },
+      "requirementId": "REQ-0010",
+      "timestamp": "2026-09-22T06:59:17Z",
+      "workflowTemplate": "full_governance"
+    },
+    "predicateType": "https://starkdigital.in/attestations/GateApproval/v1",
+    "subject": [
+      {
+        "digest": {
+          "gitCommit": "962948f"
+        },
+        "name": "REQ-0010/gate-2"
+      }
+    ]
+  },
+  "payloadType": "https://in-toto.io/Statement/v1"
+}
