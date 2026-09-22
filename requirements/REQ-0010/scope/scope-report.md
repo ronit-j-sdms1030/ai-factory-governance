@@ -26,7 +26,7 @@ Staff and coordinator write room bookings in a shared spreadsheet. Two people of
 - Multi-day or multi-week views (scope is same-day list only)
 
 ## Success
-Staff book rooms without double-booking. Clashes are caught before save. The coordinator sees an accurate, live same-day list that matches what staff see. Maintenance blocks prevent bookings. Recurring series can be managed without manual re-entry. Login is simple and office-manager-controlled.
+Room Booking System. Staff book rooms without double-booking. Clashes are caught before save. The coordinator sees an accurate, live same-day list that matches what staff see. Maintenance blocks prevent bookings. Recurring series can be managed without manual re-entry. Login is simple and office-manager-controlled.
 
 ## Non-functional
 - Personal data (staff names, email addresses) stored in PostgreSQL. Login credentials created and managed by office manager. Responsive web app (React frontend, Node.js or Python backend, PostgreSQL database)
