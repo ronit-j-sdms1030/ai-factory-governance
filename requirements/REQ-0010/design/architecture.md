@@ -90,29 +90,28 @@ Staff can extend an existing single booking or every future occurrence in a recu
 ## Modules
 
 - **Authentication & User Management**: Handles email/password login, role-based access (staff, coordinator, manager), and account lifecycle (creation, removal, activation).
-- **Booking Management**: Supports single and recurring bookings, extensions, cancellations, and status tracking.
-- **Clash Detection**: Centralized logic to prevent overlapping bookings or maintenance blocks, ensuring data integrity and user feedback.
-- **Maintenance Blocks**: Allows coordinators to block rooms for maintenance, integrated with clash detection.
+- **Booking Management**: Supports single and recurring bookings, extensions, cancellations, and enforces booking status.
+- **Maintenance Blocks**: Allows coordinators to create time blocks that prevent bookings.
+- **Clash Detection**: Centralized logic to detect overlapping bookings or blocks, preventing double-booking.
 - **Same-Day Schedule View**: Real-time, auto-updating list of bookings and blocks for coordinators.
-- **UI Layer**: Responsive web frontend with in-place updates and no full page reloads, supporting mobile and desktop.
+- **UI Layer**: Responsive web frontend with forms and views for booking, management, and calendar updates.
 - **Audit Logging**: Records user actions for accountability and traceability.
 
 ## Non-Functional Requirements (NFRs)
 
-- **Performance**: Calendar updates and clash detection feedback must occur within 2 seconds to ensure responsiveness.
-- **Consistency**: Strong consistency in booking state to prevent double-booking; atomic operations for recurring series.
-- **Security**: Email/password authentication only; no SSO or external identity providers; immediate deactivation of removed accounts.
-- **Usability**: Responsive design with accessible touch targets (≥44 px), no horizontal scrolling, and clear conflict messaging.
-- **Scalability**: Designed for a single office environment; no native apps or physical access integration reduces complexity.
-- **Maintainability**: Modular separation of concerns; clear data model with audit trail for changes.
+- **Responsiveness**: UI updates (e.g., same-day list) must reflect changes within 2 seconds without full page reloads.
+- **Scalability**: Efficient clash detection queries to handle concurrent booking attempts without race conditions.
+- **Security**: Password-based authentication only; no SSO or external identity providers; role-based access control enforced.
+- **Usability**: Responsive design supporting mobile and desktop with accessible touch targets and no horizontal scrolling.
+- **Reliability**: Prevent double-booking and ensure data consistency, especially for recurring bookings and extensions.
+- **Testability**: Each requirement supports isolated automated tests that can fail independently.
 
 ## Risks
 
-- **Race Conditions in Clash Detection**: Concurrent booking attempts may cause conflicts; requires transactional integrity and possibly optimistic locking or serialized checks.
-- **Recurring Booking Complexity**: Managing series updates, cancellations, and history preservation can introduce edge cases and data anomalies.
-- **Real-Time UI Updates**: Ensuring reliable, low-latency updates without full reloads may require WebSocket or efficient polling strategies.
-- **Security of Password Storage**: Proper hashing and secure storage of passwords is critical to prevent breaches.
-- **User Role Enforcement**: Ensuring strict role-based access control to prevent unauthorized actions (e.g., only coordinators can create maintenance blocks).
-- **Data Integrity on Account Removal**: Prevent orphaned bookings and ensure consistent state when user accounts are deleted.
+- **Race Conditions in Clash Detection**: Concurrent booking attempts may cause conflicts; requires transactional integrity or optimistic locking.
+- **Recurring Booking Complexity**: Managing series updates, cancellations, and history preservation can introduce edge cases.
+- **Real-Time UI Updates**: Ensuring timely and consistent in-place calendar updates under varying network conditions.
+- **User Management Consistency**: Removing users must not orphan bookings; requires careful cascade or validation logic.
+- **Performance Under Load**: Clash detection and calendar updates must remain performant as booking volume grows.
 
-This architecture balances simplicity and robustness, focusing on core booking functionality with clear boundaries and real-time responsiveness.
+This architecture favors modular separation of concerns, transactional integrity for booking operations, and a reactive UI to meet responsiveness and usability goals.
