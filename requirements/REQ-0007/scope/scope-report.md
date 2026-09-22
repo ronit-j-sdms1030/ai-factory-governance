@@ -26,7 +26,7 @@ Facilities coordinators and staff book meeting rooms using a shared spreadsheet.
 - Cancelling or moving a series without affecting individual instances (series and instance are separate; only individual or whole-series operations allowed)
 
 ## Success
-Facilities coordinators and staff book meeting rooms from a same-day calendar without double-booking. Each slot is held by one person or blocked by facilities. Staff know who holds a room and can contact them. Coordinators can manage bookings and blocks, and staff are notified when their bookings are moved or cancelled.
+Room Booker — <LOCATION> HQ. Facilities coordinators and staff book meeting rooms from a same-day calendar without double-booking. Each slot is held by one person or blocked by facilities. Staff know who holds a room and can contact them. Coordinators can manage bookings and blocks, and staff are notified when their bookings are moved or cancelled.
 
 ## Non-functional
 - Data: names, departments, email addresses, booking history, session tokens — handle as internal business data; no PII export or third-party sharing
