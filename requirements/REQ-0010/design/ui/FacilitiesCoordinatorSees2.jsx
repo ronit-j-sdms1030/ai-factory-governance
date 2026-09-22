@@ -15,13 +15,18 @@ function FacilitiesCoordinatorSees2() {
     <Page>
       <h1>Facilities Coordinator Sees</h1>
       <p>Full-width same-day list, sorted by start time. Each row: room name, time interval, staff name bookings or 'Maintenance' blocks , status chip Booked / Blocked . Auto-refreshes in place; no manual reload needed. Coordinator can initiate a maintenance block from this view.</p>
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+        <Button>StaffCanExtend</Button>
+        <Button>ClashDetectionThe</Button>
+      </nav>
       <Field name="room" label="Room" />
       <Field name="starts" label="Starts" />
-      <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
+      <Button type="submit">Save this block</Button>
+      <Table heading="Facilities Coordinator Sees">
         <tr><td>10:00 Booked</td></tr>
-        <tr><td>12:00 Blocked</td></tr>
+        <tr><td>12:00 Blocked for maintenance</td></tr>
         <tr><td>14:00 Open</td></tr>
       </Table>
     </Page>
