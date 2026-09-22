@@ -1,6 +1,6 @@
 {
   "cosignBundle": {
-    "base64Signature": "MEQCIFhkYAqHQYU8SSKKJd+/4oRlRabpOAWLDKH23yT5pSMXAiB6A9PNx4oq6DbgNl2+4wCDeIcx41WPy8F7s83almfpWw=="
+    "base64Signature": "MEUCIQC4qLxBGfusjP+4zEqTSmC5lBAN+2AL0/vf6mB6n1qhqgIgHkbm8aJmWsfbtC4gqO3VQQAy97zbF0pK9onyfvhlRIY="
   },
   "payload": {
     "_type": "https://in-toto.io/Statement/v1",
@@ -27,7 +27,7 @@
         "promptVersion": "brd.template.md"
       },
       "requirementId": "REQ-0007",
-      "timestamp": "2026-09-22T05:44:52Z",
+      "timestamp": "2026-09-22T05:45:01Z",
       "workflowTemplate": "full_governance"
     },
     "predicateType": "https://starkdigital.in/attestations/GateApproval/v1",
