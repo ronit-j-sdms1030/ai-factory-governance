@@ -92,26 +92,26 @@ Staff can extend an existing single booking or every future occurrence in a recu
 - **Authentication & User Management**: Handles email/password login, role-based access (staff, coordinator, manager), and account lifecycle (creation, removal, activation).
 - **Booking Management**: Supports single and recurring bookings, extensions, cancellations, and enforces booking status.
 - **Clash Detection**: Centralized logic to detect overlapping bookings or maintenance blocks in real time, preventing double-booking.
-- **Maintenance Blocks**: Allows coordinators to block rooms for maintenance, integrated with clash detection.
-- **Same-Day Schedule View**: Real-time, auto-refreshing list of bookings and blocks for coordinators, with live updates within 2 seconds.
-- **UI Layer**: Responsive web frontend supporting mobile and desktop, with in-place updates and no full page reloads.
+- **Maintenance Blocks**: Allows coordinators to create time blocks that block room availability.
+- **Same-Day Schedule View**: Provides a live-updating list of bookings and blocks for coordinators, with in-place updates.
+- **UI Layer**: Responsive web frontend supporting all user roles and actions, with no page reloads and ≤ 2-second update latency.
 - **Audit Logging**: Records user actions for accountability and traceability.
 
 ## Non-Functional Requirements (NFRs)
 
-- **Responsiveness**: UI updates (e.g., calendar changes) must reflect within 2 seconds without full page reloads.
-- **Concurrency & Consistency**: Real-time clash detection must prevent race conditions and double-bookings.
-- **Security**: Email/password authentication only; no SSO or external identity providers; immediate deactivation of removed accounts.
-- **Usability**: Responsive design supporting ≥320 px viewport, touch targets ≥44 px, and no hidden actions behind hover.
-- **Reliability**: Booking and maintenance block data integrity with status management (active/cancelled).
+- **Responsiveness**: UI must update in place within 2 seconds after any booking or block change.
+- **Concurrency & Consistency**: Real-time clash detection must prevent race conditions and double-booking.
+- **Security**: Email/password authentication only; no SSO or external identity providers; role-based access control enforced.
+- **Usability**: Responsive design supporting mobile and desktop with accessible touch targets (≥44 px).
+- **Reliability**: Booking and cancellation operations must be atomic, especially for recurring series.
 - **Testability**: Each requirement supports isolated automated tests that can fail independently.
 
 ## Risks
 
-- **Race Conditions in Clash Detection**: Concurrent booking attempts may cause conflicts; requires transactional integrity and possibly optimistic locking or serializable isolation.
-- **Scalability of Real-Time Updates**: Frequent updates to the same-day list may stress server and client; efficient push or polling mechanisms needed.
-- **Security of Password Storage**: Proper hashing and salting of passwords mandatory to prevent credential leaks.
-- **Data Consistency in Recurring Bookings**: Atomic creation and cancellation of series and occurrences must be carefully managed to avoid partial updates.
-- **User Role Enforcement**: Ensuring strict role-based access control to prevent unauthorized actions (e.g., only coordinators can create maintenance blocks).
+- **Race Conditions in Clash Detection**: Concurrent booking attempts may cause conflicts; requires careful transaction isolation or locking strategies.
+- **Performance Under Load**: Real-time updates and clash detection queries must scale with user count and booking volume without exceeding the 2-second UI update threshold.
+- **Data Integrity for Recurring Bookings**: Managing series updates and partial cancellations without data loss or inconsistency is complex.
+- **Security of Password Storage and Authentication**: Must ensure secure password hashing and protect against common attacks (e.g., brute force, enumeration).
+- **User Experience on Mobile**: Ensuring full functionality and usability on small viewports without horizontal scrolling or hidden controls.
 
-This architecture favors modular separation, transactional integrity for booking operations, and a responsive, real-time user experience without external dependencies like SSO or native apps.
+This architecture favors a modular backend API with PostgreSQL for data integrity and concurrency control, paired with a React-based responsive frontend that uses real-time communication (e.g., WebSocket or polling) to keep the same-day list updated without reloads.
