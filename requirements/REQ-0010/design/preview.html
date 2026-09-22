@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'><title>Preview REQ-0010</title>
+<style>body{font-family:system-ui,sans-serif;margin:0;background:#0f1419;color:#e7ecf1}
+header{padding:1rem 1.5rem;border-bottom:1px solid #243041} section{padding:1.5rem}
+pre{white-space:pre-wrap;background:#161d27;padding:1rem;border-radius:8px}</style></head><body>
+<header><p>Preview URL /preview/REQ-0010</p>
+<h1>REQ-0010</h1></header>
+<section id='StaffCanBook'><h2>StaffCanBook <code>/staffcanbook</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCanBook() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Staff Can Book&lt;/h1&gt;
+      &lt;p&gt;Room-selector, date-picker, start-time and end-time inputs, and a Submit button. On submit, clash detection runs server-side; success inserts the new booking into the same-day list in place; failure surfaces a conflict banner naming the clashing interval. No page reload on either path.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='StaffCanCreate'><h2>StaffCanCreate <code>/staffcancreate</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCanCreate() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Staff Can Create&lt;/h1&gt;
+      &lt;p&gt;Extends the booking form with a recurrence panel frequency selector, end-date for the series . Preview shows the first and last occurrence before confirm. On save, all occurrences are written atomically. A &#x27;Manage series&#x27; view lists occurrences with per-occurrence and whole-series cancel controls.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='StaffCanExtend'><h2>StaffCanExtend <code>/staffcanextend</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCanExtend() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Staff Can Extend&lt;/h1&gt;
+      &lt;p&gt;Accessed from an existing booking or series detail. Shows current end time or series end date with an editable field. On submit, clash detection covers the extended interval only; conflict or success feedback appears in place.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='ClashDetectionThe'><h2>ClashDetectionThe <code>/clashdetectionthe</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function ClashDetectionThe() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Clash Detection The&lt;/h1&gt;
+      &lt;p&gt;Not a standalone screen — clash feedback is an inline banner on StaffCanBook, StaffCanCreate, and StaffCanExtend. Banner text identifies the room, the conflicting interval, and whether the conflict is a booking or a maintenance block.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='FacilitiesCoordinatorSees'><h2>FacilitiesCoordinatorSees <code>/facilitiescoordinatorsees</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function FacilitiesCoordinatorSees() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Facilities Coordinator Sees&lt;/h1&gt;
+      &lt;p&gt;Full-width same-day list, sorted by start time. Each row: room name, time interval, staff name bookings or &#x27;Maintenance&#x27; blocks , status chip Booked / Blocked . Auto-refreshes in place; no manual reload needed. Coordinator can initiate a maintenance block from this view.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='FacilitiesCoordinatorCan'><h2>FacilitiesCoordinatorCan <code>/facilitiescoordinatorcan</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function FacilitiesCoordinatorCan() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Facilities Coordinator Can&lt;/h1&gt;
+      &lt;p&gt;Modal or inline form on the same-day list: room selector, date defaults to today , start time, end time, optional note. On save, the block appears immediately in the list and clash detection is active for the interval.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='CalendarUpdatesIn'><h2>CalendarUpdatesIn <code>/calendarupdatesin</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function CalendarUpdatesIn() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Calendar Updates In&lt;/h1&gt;
+      &lt;p&gt;Not a standalone screen — a cross-cutting behaviour. After any write action the same-day list patch is applied client-side within 2 seconds. A loading indicator is shown during the round-trip; no spinner persists beyond 2 seconds on a normal connection.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='OfficeManagerCan'><h2>OfficeManagerCan <code>/officemanagercan</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function OfficeManagerCan() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Office Manager Can&lt;/h1&gt;
+      &lt;p&gt;User-management screen listing current staff accounts name, email, role . &#x27;Add login&#x27; form: name, email, temporary password. &#x27;Remove&#x27; action with a confirmation step. Removed accounts are deactivated immediately.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='LoginViaEmail'><h2>LoginViaEmail <code>/loginviaemail</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function LoginViaEmail() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Login Via Email&lt;/h1&gt;
+      &lt;p&gt;Single-screen login: email field, password field, Sign In button. No SSO button, no social login. Failed authentication shows a generic error no account enumeration . Successful login redirects to the role-appropriate landing view.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='ResponsiveDesignStaff'><h2>ResponsiveDesignStaff <code>/responsivedesignstaff</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function ResponsiveDesignStaff() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Responsive Design Staff&lt;/h1&gt;
+      &lt;p&gt;Not a standalone screen — a cross-cutting constraint. All screens above must render usably at 320 px and above. Touch targets ≥ 44 px. No action hidden behind a hover state.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='AdminCancel'><h2>AdminCancel <code>/admincancel</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function AdminCancel() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Admin Cancel&lt;/h1&gt;
+      &lt;p&gt;Admin cancels any booking&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='StaffCanBook2'><h2>StaffCanBook2 <code>/staffcanbook2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCanBook2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Staff Can Book&lt;/h1&gt;
+      &lt;p&gt;Room-selector, date-picker, start-time and end-time inputs, and a Submit button. On submit, clash detection runs server-side; success inserts the new booking into the same-day list in place; failure surfaces a conflict banner naming the clashing interval. No page reload on either path.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='StaffCanCreate2'><h2>StaffCanCreate2 <code>/staffcancreate2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCanCreate2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Staff Can Create&lt;/h1&gt;
+      &lt;p&gt;Extends the booking form with a recurrence panel frequency selector, end-date for the series . Preview shows the first and last occurrence before confirm. On save, all occurrences are written atomically. A &#x27;Manage series&#x27; view lists occurrences with per-occurrence and whole-series cancel controls.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='StaffCanExtend2'><h2>StaffCanExtend2 <code>/staffcanextend2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function StaffCanExtend2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Staff Can Extend&lt;/h1&gt;
+      &lt;p&gt;Accessed from an existing booking or series detail. Shows current end time or series end date with an editable field. On submit, clash detection covers the extended interval only; conflict or success feedback appears in place.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='ClashDetectionThe2'><h2>ClashDetectionThe2 <code>/clashdetectionthe2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function ClashDetectionThe2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Clash Detection The&lt;/h1&gt;
+      &lt;p&gt;Not a standalone screen — clash feedback is an inline banner on StaffCanBook, StaffCanCreate, and StaffCanExtend. Banner text identifies the room, the conflicting interval, and whether the conflict is a booking or a maintenance block.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='FacilitiesCoordinatorSees2'><h2>FacilitiesCoordinatorSees2 <code>/facilitiescoordinatorsees2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function FacilitiesCoordinatorSees2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Facilities Coordinator Sees&lt;/h1&gt;
+      &lt;p&gt;Full-width same-day list, sorted by start time. Each row: room name, time interval, staff name bookings or &#x27;Maintenance&#x27; blocks , status chip Booked / Blocked . Auto-refreshes in place; no manual reload needed. Coordinator can initiate a maintenance block from this view.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='FacilitiesCoordinatorCan2'><h2>FacilitiesCoordinatorCan2 <code>/facilitiescoordinatorcan2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function FacilitiesCoordinatorCan2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Facilities Coordinator Can&lt;/h1&gt;
+      &lt;p&gt;Modal or inline form on the same-day list: room selector, date defaults to today , start time, end time, optional note. On save, the block appears immediately in the list and clash detection is active for the interval.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='CalendarUpdatesIn2'><h2>CalendarUpdatesIn2 <code>/calendarupdatesin2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function CalendarUpdatesIn2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Calendar Updates In&lt;/h1&gt;
+      &lt;p&gt;Not a standalone screen — a cross-cutting behaviour. After any write action the same-day list patch is applied client-side within 2 seconds. A loading indicator is shown during the round-trip; no spinner persists beyond 2 seconds on a normal connection.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='OfficeManagerCan2'><h2>OfficeManagerCan2 <code>/officemanagercan2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function OfficeManagerCan2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Office Manager Can&lt;/h1&gt;
+      &lt;p&gt;User-management screen listing current staff accounts name, email, role . &#x27;Add login&#x27; form: name, email, temporary password. &#x27;Remove&#x27; action with a confirmation step. Removed accounts are deactivated immediately.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='LoginViaEmail2'><h2>LoginViaEmail2 <code>/loginviaemail2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function LoginViaEmail2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Login Via Email&lt;/h1&gt;
+      &lt;p&gt;Single-screen login: email field, password field, Sign In button. No SSO button, no social login. Failed authentication shows a generic error no account enumeration . Successful login redirects to the role-appropriate landing view.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+<section id='ResponsiveDesignStaff2'><h2>ResponsiveDesignStaff2 <code>/responsivedesignstaff2</code></h2><pre>function Page(props) {
+  return &lt;main className=&quot;page&quot; style={{background:&quot;var(--color-bg)&quot;, color:&quot;var(--color-text)&quot;, fontFamily:&quot;var(--font-sans)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/main&gt;;
+}
+function Button(props) {
+  return &lt;button type={props.type || &quot;button&quot;} style={{background:&quot;var(--color-accent)&quot;, color:&quot;var(--color-bg)&quot;, padding:&quot;var(--space-md)&quot;}}&gt;{props.children}&lt;/button&gt;;
+}
+function Field(props) {
+  return &lt;label&gt;{props.label}&lt;input name={props.name} /&gt;&lt;/label&gt;;
+}
+function Table(props) {
+  return &lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;{props.heading}&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;{props.children}&lt;/tbody&gt;&lt;/table&gt;;
+}
+function ResponsiveDesignStaff2() {
+  return (
+    &lt;Page&gt;
+      &lt;h1&gt;Responsive Design Staff&lt;/h1&gt;
+      &lt;p&gt;Not a standalone screen — a cross-cutting constraint. All screens above must render usably at 320 px and above. Touch targets ≥ 44 px. No action hidden behind a hover state.&lt;/p&gt;
+      &lt;Field name=&quot;room&quot; label=&quot;Room&quot; /&gt;
+      &lt;Field name=&quot;starts&quot; label=&quot;Starts&quot; /&gt;
+      &lt;Field name=&quot;ends&quot; label=&quot;Ends&quot; /&gt;
+      &lt;Button type=&quot;submit&quot;&gt;Book this slot&lt;/Button&gt;
+      &lt;Table heading=&quot;Today&quot;&gt;
+        &lt;tr&gt;&lt;td&gt;10:00 Booked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;12:00 Blocked&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;td&gt;14:00 Open&lt;/td&gt;&lt;/tr&gt;
+      &lt;/Table&gt;
+    &lt;/Page&gt;
+  );
+}
+</pre></section>
+</body></html>
