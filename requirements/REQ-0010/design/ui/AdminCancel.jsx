@@ -15,14 +15,18 @@ function AdminCancel() {
     <Page>
       <h1>Admin Cancel</h1>
       <p>Admin cancels any booking</p>
-      <Field name="room" label="Room" />
-      <Field name="starts" label="Starts" />
-      <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
-        <tr><td>10:00 Booked</td></tr>
-        <tr><td>12:00 Blocked</td></tr>
-        <tr><td>14:00 Open</td></tr>
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+        <Button>StaffCanExtend</Button>
+        <Button>ClashDetectionThe</Button>
+      </nav>
+      <Field name="detail" label="Admin Cancel" />
+      <Button type="submit">Cancel this booking</Button>
+      <Table heading="Admin Cancel">
+        <tr><td>09:00 Cancelled</td></tr>
+        <tr><td>11:00 Still booked</td></tr>
+        <tr><td>15:00 Open</td></tr>
       </Table>
     </Page>
   );
