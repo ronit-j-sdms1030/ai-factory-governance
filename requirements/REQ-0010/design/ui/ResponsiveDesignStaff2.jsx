@@ -15,11 +15,15 @@ function ResponsiveDesignStaff2() {
     <Page>
       <h1>Responsive Design Staff</h1>
       <p>Not a standalone screen — a cross-cutting constraint. All screens above must render usably at 320 px and above. Touch targets ≥ 44 px. No action hidden behind a hover state.</p>
-      <Field name="room" label="Room" />
-      <Field name="starts" label="Starts" />
+      <nav>
+        <Button>StaffCanBook</Button>
+        <Button>StaffCanCreate</Button>
+        <Button>StaffCanExtend</Button>
+        <Button>ClashDetectionThe</Button>
+      </nav>
       <Field name="ends" label="Ends" />
-      <Button type="submit">Book this slot</Button>
-      <Table heading="Today">
+      <Button type="submit">Save</Button>
+      <Table heading="Responsive Design Staff">
         <tr><td>10:00 Booked</td></tr>
         <tr><td>12:00 Blocked</td></tr>
         <tr><td>14:00 Open</td></tr>
