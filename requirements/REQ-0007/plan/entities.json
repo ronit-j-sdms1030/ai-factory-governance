@@ -1,0 +1,21 @@
+{
+  "owners": {
+    "ESLint": "development",
+    "PostgreSQL": "development",
+    "SameDayCalendar": "development",
+    "StaffCreateView": "development",
+    "RecurringBookingsStaff": "development",
+    "CoordinatorsViewBookings": "development",
+    "FacilitiesCoordinatorsCreate": "development",
+    "CleaningBlocksAppear": "development",
+    "SessionBasedAuthentication": "development",
+    "InAppNotifications": "development",
+    "ResponsiveDesignWorks": "development",
+    "HTTPS": "development",
+    "LOCATION": "development",
+    "LDAP": "development",
+    "SignIn": "development",
+    "AuditEntry": "development"
+  },
+  "collisions": []
+}
